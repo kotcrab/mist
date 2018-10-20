@@ -393,7 +393,9 @@ class DataFlowCtx {
                     varsToKill.add(varName)
                 }
             }
-            varStates.remove(nullifiedVar)
+            if (varStates[nullifiedVar] != FlowState.TopElement) {
+                varStates.remove(nullifiedVar)
+            }
         }
         varsToKill.forEach { varStates[it] = FlowState.TopElement }
     }
