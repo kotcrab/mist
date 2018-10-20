@@ -43,6 +43,9 @@ allprojects {
 kotlin { experimental { coroutines 'enable' } }
 
 project(':core') {
+    apply plugin: 'application'
+    mainClassName = "mist.AppKt"
+
     dependencies {
         compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
         compile "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion"
