@@ -18,13 +18,13 @@
 
 package mist.shl
 
-import com.google.gson.typeadapters.RuntimeTypeAdapterFactory
+import kio.util.RuntimeTypeAdapterFactory
+import kio.util.runtimeTypeAdapter
 import kio.util.toHex
 import kio.util.toInt
 import mist.asm.FpuReg
 import mist.asm.Reg
 import mist.shl.ShlExpr.*
-import mist.ui.util.runtimeTypeAdapter
 import kotlin.math.*
 
 /** @author Kotcrab */
@@ -172,7 +172,7 @@ class ShlJumpInstr constructor(addr: Int, var link: Boolean, var dest: ShlExpr) 
             Reg.at, Reg.v0, Reg.v1,
             Reg.a0, Reg.a1, Reg.a2, Reg.a3,
             Reg.t0, Reg.t1, Reg.t2, Reg.t3, Reg.t4, Reg.t5, Reg.t6, Reg.t7, Reg.t8, Reg.t9,
-            Reg.HI, Reg.LO).map { it.toString() }.toTypedArray() else emptyArray()
+            Reg.hi, Reg.lo).map { it.toString() }.toTypedArray() else emptyArray()
 
     override fun toString(): String {
         return "j${if (link) "al" else ""} $dest"
@@ -196,7 +196,7 @@ class ShlCallInstr constructor(addr: Int, var returnReg: ShlVar?, var callExpr: 
                 Reg.at, Reg.v0, Reg.v1,
                 Reg.a0, Reg.a1, Reg.a2, Reg.a3,
                 Reg.t0, Reg.t1, Reg.t2, Reg.t3, Reg.t4, Reg.t5, Reg.t6, Reg.t7, Reg.t8, Reg.t9,
-                Reg.HI, Reg.LO)
+                Reg.hi, Reg.lo)
         returnReg?.let {
             if (it.varName == "v0" || it.varName == "v1") {
                 args.remove(Reg.valueOf(it.varName))

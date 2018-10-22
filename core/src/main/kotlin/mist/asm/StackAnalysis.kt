@@ -26,6 +26,7 @@ import mist.util.logTag
 
 /** @author Kotcrab */
 
+// TODO rewrite as SHL module?
 class StackAnalysis(private val graph: Graph, private val log: DecompLog) {
     private val tag = logTag()
 
@@ -62,7 +63,7 @@ class StackAnalysis(private val graph: Graph, private val log: DecompLog) {
         graph.bfs { node ->
             val instrs = node.instrs
             instrs.forEach { instr ->
-                if (instr.matchesExact(Opcode.Addiu, isReg(sp), isReg(sp), isImm())) {
+                if (instr.matchesExact(Opcode.Addiu, isReg(sp), isReg(sp), anyImm())) {
                     val imm = instr.op3AsImm()
                     if (imm < 0) {
                         frameSize = Math.abs(imm)
@@ -86,7 +87,7 @@ class StackAnalysis(private val graph: Graph, private val log: DecompLog) {
         graph.bfs { node ->
             val instrs = node.instrs
             instrs.forEach { instr ->
-                if (instr.matches(op2 = isReg(sp), op3 = isImm())) {
+                if (instr.matches(op2 = isReg(sp), op3 = anyImm())) {
                     val imm = instr.op3AsImm()
                     if (instr.isMemoryRead()) {
                         accessMap.getOrPut(imm, { StackAccess() }).apply {
@@ -116,7 +117,7 @@ class StackAnalysis(private val graph: Graph, private val log: DecompLog) {
             // check if all related instructions work on frame register and
             // check if all instructions work on the same register
             val accessRegisterSet = access.relatedInstrs.map { it.op1AsReg() }.distinctBy { it }
-            if (access.relatedInstrs.all { instr -> instr.matches(op1 = anyReg(*frameRegs)) } == false
+            if (access.relatedInstrs.all { instr -> instr.matches(op1 = isReg(*frameRegs)) } == false
                     || accessRegisterSet.size != 1) {
                 return@forEach
             }

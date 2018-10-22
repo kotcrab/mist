@@ -16,22 +16,29 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package mist.ui.util
+package mist.asm
 
-import com.google.gson.typeadapters.RuntimeTypeAdapterFactory
-import kotlin.reflect.KClass
+import mist.asm.FpuReg
+import mist.asm.Operand
+import mist.asm.Reg
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
 /** @author Kotcrab */
 
-fun <C : Any, S : C> runtimeTypeAdapter(base: KClass<C>,
-                                        subTypes: Array<KClass<out S>>,
-                                        legacySubTypes: Array<out Pair<String, KClass<out S>>> = emptyArray()): RuntimeTypeAdapterFactory<C> {
-    val adapter = RuntimeTypeAdapterFactory.of(base.java, "_type")
-    subTypes.forEach { subClass ->
-        adapter.registerSubtype(subClass.java)
+class OperandTest {
+    @Test
+    fun `converts reg to string`() {
+        assertThat(Operand.Reg(Reg.s0).toString()).isEqualTo("s0")
     }
-    legacySubTypes.forEach { subClass ->
-        adapter.registerLegacySubtype(subClass.second.java, subClass.first)
+
+    @Test
+    fun `converts fpu reg to string`() {
+        assertThat(Operand.FpuReg(FpuReg.f0).toString()).isEqualTo("f0")
     }
-    return adapter
+
+    @Test
+    fun `converts int to string`() {
+        assertThat(Operand.Imm(0x42).toString()).isEqualTo("0x42")
+    }
 }

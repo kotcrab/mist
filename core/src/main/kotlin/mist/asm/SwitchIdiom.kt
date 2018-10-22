@@ -37,17 +37,17 @@ class SwitchAtRegIdiom : IdiomMatcher<SwitchDescriptor>(maxOffset = 12) {
 
     override fun getPhases(): Array<(Instr) -> Boolean> = arrayOf(
             { instr -> instr.matches(Opcode.Jr, isReg(at)) },
-            { instr -> instr.matches(Opcode.Lw, isReg(at), isReg(at), isImm(), matchedCallback = { jumpTableLoc += op3AsImm() }) },
-            { instr -> instr.matches(Opcode.Addu, isReg(at), isReg(at), isReg(), matchedCallback = { reg1 = op3AsReg() }) },
-            { instr -> instr.matches(Opcode.Lui, isReg(at), isImm(), matchedCallback = { jumpTableLoc += op2AsImm() shl 16 }) },
+            { instr -> instr.matches(Opcode.Lw, isReg(at), isReg(at), anyImm(), matchedCallback = { jumpTableLoc += op3AsImm() }) },
+            { instr -> instr.matches(Opcode.Addu, isReg(at), isReg(at), anyReg(), matchedCallback = { reg1 = op3AsReg() }) },
+            { instr -> instr.matches(Opcode.Lui, isReg(at), anyImm(), matchedCallback = { jumpTableLoc += op2AsImm() shl 16 }) },
             { instr -> instr.matches(Opcode.Sll, isReg(reg1), isReg(reg1), isImm(0x2)) },
             { instr ->
                 (instr.opcode == Opcode.Beq || instr.opcode == Opcode.Beql) &&
-                        instr.matches(null, isReg(), isReg(zero), matchedCallback = { reg2 = op1AsReg() })
+                        instr.matches(null, anyReg(), isReg(zero), matchedCallback = { reg2 = op1AsReg() })
             },
             { instr ->
                 (instr.opcode == Opcode.Sltiu || instr.opcode == Opcode.Slti) &&
-                        instr.matches(null, isReg(reg2), isReg(reg1), isImm(), matchedCallback = { switchCaseCount = op3AsImm() })
+                        instr.matches(null, isReg(reg2), isReg(reg1), anyImm(), matchedCallback = { switchCaseCount = op3AsImm() })
             })
 
     override fun matchedResult(relInstrs: List<Instr>): SwitchDescriptor {
@@ -70,11 +70,11 @@ class SwitchA0RegIdiom : IdiomMatcher<SwitchDescriptor>(maxOffset = 12) {
             { instr -> instr.matches(Opcode.Jr, isReg(a0)) },
             { instr -> instr.matches(Opcode.Lw, isReg(a0), isReg(v0), isImm(0x0)) },
             { instr -> instr.matches(Opcode.Addu, isReg(v0), isReg(v0), isReg(v1)) },
-            { instr -> instr.matches(Opcode.Addiu, isReg(v1), isReg(v1), isImm(), matchedCallback = { jumpTableLoc += op3AsImm() }) },
-            { instr -> instr.matches(Opcode.Sll, isReg(v0), isReg(), isImm(0x2), matchedCallback = { reg1 = op2AsReg() }) },
-            { instr -> instr.matches(Opcode.Lui, isReg(v1), isImm(), matchedCallback = { jumpTableLoc += op2AsImm() shl 16 }) },
+            { instr -> instr.matches(Opcode.Addiu, isReg(v1), isReg(v1), anyImm(), matchedCallback = { jumpTableLoc += op3AsImm() }) },
+            { instr -> instr.matches(Opcode.Sll, isReg(v0), anyReg(), isImm(0x2), matchedCallback = { reg1 = op2AsReg() }) },
+            { instr -> instr.matches(Opcode.Lui, isReg(v1), anyImm(), matchedCallback = { jumpTableLoc += op2AsImm() shl 16 }) },
             { instr -> instr.matches(Opcode.Beq, isReg(v0), isReg(zero)) },
-            { instr -> instr.matches(Opcode.Sltiu, isReg(v0), isReg(reg1), isImm(), matchedCallback = { switchCaseCount = op3AsImm() }) })
+            { instr -> instr.matches(Opcode.Sltiu, isReg(v0), isReg(reg1), anyImm(), matchedCallback = { switchCaseCount = op3AsImm() }) })
 
     override fun matchedResult(relInstrs: List<Instr>): SwitchDescriptor {
         return SwitchDescriptor(relInstrs, switchCaseCount, jumpTableLoc)

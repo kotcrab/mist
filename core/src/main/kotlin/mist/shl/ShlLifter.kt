@@ -109,40 +109,40 @@ class ShlLifter(private val projectIO: ProjectIO, private val log: DecompLog) {
                                 ShlSra(shlAuto(it.op2), shlAuto(it.op3))))
                     }
                     Opcode.Mult, Opcode.Multu -> {
-                        shl.add(ShlAssignInstr(it.addr, ShlVar(Reg.LO),
+                        shl.add(ShlAssignInstr(it.addr, ShlVar(Reg.lo),
                                 ShlAnd(
                                         ShlMul(shlAuto(it.op1), shlAuto(it.op2)),
                                         ShlConst(0xFFFF)
                                 )))
-                        shl.add(ShlAssignInstr(it.addr, ShlVar(Reg.HI),
+                        shl.add(ShlAssignInstr(it.addr, ShlVar(Reg.hi),
                                 ShlSrl(
                                         ShlMul(shlAuto(it.op1), shlAuto(it.op2)),
                                         ShlConst(16)
                                 )))
                     }
                     Opcode.Div, Opcode.Divu -> {
-                        shl.add(ShlAssignInstr(it.addr, ShlVar(Reg.LO),
+                        shl.add(ShlAssignInstr(it.addr, ShlVar(Reg.lo),
                                 ShlAnd(
                                         ShlDiv(shlAuto(it.op1), shlAuto(it.op2)),
                                         ShlConst(0xFFFF)
                                 )))
-                        shl.add(ShlAssignInstr(it.addr, ShlVar(Reg.HI),
+                        shl.add(ShlAssignInstr(it.addr, ShlVar(Reg.hi),
                                 ShlSrl(
                                         ShlDiv(shlAuto(it.op1), shlAuto(it.op2)),
                                         ShlConst(16)
                                 )))
                     }
                     Opcode.Mfhi -> {
-                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1), ShlVar(Reg.HI)))
+                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1), ShlVar(Reg.hi)))
                     }
                     Opcode.Mthi -> {
-                        shl.add(ShlAssignInstr(it.addr, ShlVar(Reg.HI), shlAuto(it.op1)))
+                        shl.add(ShlAssignInstr(it.addr, ShlVar(Reg.hi), shlAuto(it.op1)))
                     }
                     Opcode.Mflo -> {
-                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1), ShlVar(Reg.LO)))
+                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1), ShlVar(Reg.lo)))
                     }
                     Opcode.Mtlo -> {
-                        shl.add(ShlAssignInstr(it.addr, ShlVar(Reg.LO), shlAuto(it.op1)))
+                        shl.add(ShlAssignInstr(it.addr, ShlVar(Reg.lo), shlAuto(it.op1)))
                     }
                     Opcode.J, Opcode.Jr -> {
                         shl.add(ShlJumpInstr(it.addr, false, shlAuto(it.op1)))

@@ -38,9 +38,9 @@ class Graph(private val loader: BinLoader,
     val nodes = mutableListOf<Node<Instr>>()
 
     // maps jump cause to instruction that it is jumping to
-    private val jumpingTo = mutableMapOf<Instr, MutableList<Instr>>()
+    val jumpingTo = mutableMapOf<Instr, MutableSet<Instr>>()
     // maps jump target to instruction that jumps to it
-    private val jumpingToFrom = mutableMapOf<Instr, MutableList<Instr>>()
+    val jumpingToFrom = mutableMapOf<Instr, MutableSet<Instr>>()
 
     // maps unreachable instruction address to instruction at that address
     val unreachableInstrs = mutableMapOf<Int, Instr>()
@@ -63,27 +63,28 @@ class Graph(private val loader: BinLoader,
 
     private fun fillControlFlowCtx() {
         instrs.forEachIndexed { srcInstrIdx, srcInstr ->
-            if (srcInstr.isBranch()) {
-                val destAddr = srcInstr.addr + 0x4 + srcInstr.getLastImm() * 0x4
-                val destInstr = instrs.first { it.addr == destAddr }
-                jumpingTo.getOrPut(srcInstr, { mutableListOf() }).add(destInstr)
-                jumpingToFrom.getOrPut(destInstr, { mutableListOf() }).add(srcInstr)
-            }
-
-            if (srcInstr.matches(Opcode.J)) {
-                val destInstr = instrs.firstOrNull { it.addr == srcInstr.op1AsImm() }
-                if (destInstr != null) { // if jump within function
-                    jumpingTo.getOrPut(srcInstr, { mutableListOf() }).add(destInstr)
-                    jumpingToFrom.getOrPut(destInstr, { mutableListOf() }).add(srcInstr)
+            when {
+                srcInstr.isBranch() -> {
+                    val destAddr = srcInstr.addr + 0x4 + srcInstr.getLastImm() * 0x4
+                    val destInstr = instrs.firstOrNull { it.addr == destAddr }
+                            ?: log.panic(tag, "branch to instruction outside current function")
+                    jumpingTo.getOrPut(srcInstr, defaultValue = { mutableSetOf() }).add(destInstr)
+                    jumpingToFrom.getOrPut(destInstr, defaultValue = { mutableSetOf() }).add(srcInstr)
                 }
-            }
-
-            // switch case idiom detection
-            if (srcInstr.matches(Opcode.Jr, op1 = anyReg(Reg.at))) {
-                switchAtRegIdiom.matches(instrs, srcInstrIdx)?.let { handleSwitch(it) }
-            }
-            if (srcInstr.matches(Opcode.Jr, op1 = anyReg(Reg.a0))) {
-                switchA0RegIdiom.matches(instrs, srcInstrIdx)?.let { handleSwitch(it) }
+                srcInstr.matches(Opcode.J) -> {
+                    val destInstr = instrs.firstOrNull { it.addr == srcInstr.op1AsImm() }
+                    if (destInstr != null) { // if jump within function
+                        jumpingTo.getOrPut(srcInstr, defaultValue = { mutableSetOf() }).add(destInstr)
+                        jumpingToFrom.getOrPut(destInstr, defaultValue = { mutableSetOf() }).add(srcInstr)
+                    }
+                }
+                // switch case idiom detection
+                srcInstr.matches(Opcode.Jr, op1 = isReg(Reg.at)) -> {
+                    switchAtRegIdiom.matches(instrs, srcInstrIdx)?.let { handleSwitch(it) }
+                }
+                srcInstr.matches(Opcode.Jr, op1 = isReg(Reg.a0)) -> {
+                    switchA0RegIdiom.matches(instrs, srcInstrIdx)?.let { handleSwitch(it) }
+                }
             }
         }
     }
@@ -96,13 +97,13 @@ class Graph(private val loader: BinLoader,
             val caseTargetAddr = loader.readInt(result.jumpTableLoc + case * 0x4)
             val destInstr = instrs.firstOrNull { it.addr == caseTargetAddr }
             if (destInstr == null) {
-                log.warn(tag, "switch case $case jumps to instruction outside current function, " +
+                log.warn(tag, "switch case $case jumps to instruction outside current function and will be ignored, " +
                         "jump target: ${caseTargetAddr.toWHex()}")
                 return@repeat
             }
-            jumpingTo.getOrPut(srcInstr, { mutableListOf() }).add(destInstr)
-            jumpingToFrom.getOrPut(destInstr, { mutableListOf() }).add(srcInstr)
-            switchCasesInstrs.getOrPut(destInstr.addr, { SwitchCaseDescriptor(destInstr) }).cases.add(case)
+            jumpingTo.getOrPut(srcInstr, defaultValue = { mutableSetOf() }).add(destInstr)
+            jumpingToFrom.getOrPut(destInstr, defaultValue = { mutableSetOf() }).add(srcInstr)
+            switchCasesInstrs.getOrPut(destInstr.addr, defaultValue = { SwitchCaseDescriptor(destInstr) }).cases.add(case)
         }
     }
 
@@ -136,8 +137,9 @@ class Graph(private val loader: BinLoader,
                             linkJumpToNode(node, jumpTargetInstr)
                             return@forEach
                         } else {
-                            // jumping outside context of current function, handled by fall node connection bellow
-                            log.warn(tag, "unconditional jump outside of current context")
+                            // jumping outside context of current function, ignored
+                            // important: connecting this node with fallthrough edge in handled bellow
+                            log.warn(tag, "unconditional jump outside of current context will be ignored")
                         }
                     }
                     jumpCause.opcode == Opcode.Jal -> { // most likely call to other function
@@ -156,32 +158,42 @@ class Graph(private val loader: BinLoader,
                         return@forEach
                     }
                     jumpCause.opcode == Opcode.Jalr -> {
-                        log.warn(tag, "function uses jalr")
+                        log.warn(tag, "function uses jalr (if jumping within current function graph will be invalid)")
                     }
                     jumpCause.isJump() -> log.panic(tag, "unhandled jump type instruction: $jumpCause")
                 }
             }
 
+            // this will handle "b label" MIPS instruction alias
+            // and in general `beq reg1, reg2 label` where reg1 == reg2
+            // it should be enough for compiled code
             fun Instr.isUnconditionalBranch() = (opcode == Opcode.Beq
                     && op1 is Operand.Reg && op2 is Operand.Reg && op1.reg == op2.reg)
 
             val branchCause = node.getBranchCauseInstr()
 
-            // handle fall node (note: isUnconditionalBranch will only handle "b label" MIPS instruction alias but
-            // it should be enough for compiled code)
+            // handle fall node
             if (branchCause == null || branchCause.isUnconditionalBranch() == false) {
                 val fallToInstr = instrs.indexOf(node.instrs.last()) + 1
                 if (fallToInstr < instrs.size) {
                     val otherNode = getNodeForInstr(instrs[fallToInstr])
                     node.addNode(otherNode, EdgeType.Fallthrough)
+                } else {
+                    log.warn(tag, "unexpected end of function")
                 }
             }
 
             // handle jumps to other node
             if (branchCause != null) {
-                jumpingTo[branchCause]?.forEach { jumpDst ->
-                    val otherNode = getNodeForInstr(jumpDst)
-                    node.addNode(otherNode, EdgeType.JumpTaken)
+                val branchTargets = jumpingTo[branchCause]
+                if (branchTargets != null) {
+                    branchTargets.forEach { branchDst ->
+                        val otherNode = getNodeForInstr(branchDst)
+                        node.addNode(otherNode, EdgeType.JumpTaken)
+                    }
+                } else {
+                    log.panic(tag, "branch instruction '$branchCause' does not define any branch target, check control flow context " +
+                            "generation for mistakes")
                 }
             }
         }
@@ -300,11 +312,27 @@ class Graph(private val loader: BinLoader,
     }
 
     private fun markDeadCode() {
+        markDirectlyUnreachableCode()
+        markUnreachableCodeAfterReturn()
+    }
+
+    private fun markDirectlyUnreachableCode() {
         nodes.forEachIndexed { index, node ->
             if (index != 0 && node.inEdges.size == 0) {
                 node.instrs.forEach {
                     unreachableInstrs[it.addr] = it
                 }
+            }
+        }
+    }
+
+    private fun markUnreachableCodeAfterReturn() {
+        nodes.forEach nodeLoop@{ node ->
+            val returnPoint = node.instrs.indexOfFirst { it.matches(Opcode.Jr, isReg(Reg.ra)) }
+            if (returnPoint == -1) return@nodeLoop
+            for (i in returnPoint + 1 until node.instrs.size) {
+                val instr = node.instrs[i]
+                unreachableInstrs[instr.addr] = instr
             }
         }
     }
@@ -413,6 +441,10 @@ class Edge<T>(val node: Node<T>, val type: EdgeType, var kind: EdgeKind = EdgeKi
 
     operator fun component2(): EdgeType {
         return type
+    }
+
+    operator fun component3(): EdgeKind {
+        return kind
     }
 }
 
