@@ -1,4 +1,4 @@
-Mist is a interactive MIPS disassembler and decompiler.
+Mist is an interactive MIPS disassembler and decompiler.
 
 ![Showcase](https://i.imgur.com/m08iYuB.png)
 
