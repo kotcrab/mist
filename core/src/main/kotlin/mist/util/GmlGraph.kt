@@ -20,17 +20,22 @@ package mist.util
 
 import mist.util.GmlAtrib.*
 import java.io.File
+import java.io.Reader
 import java.nio.charset.Charset
 
 /** @author Kotcrab */
 
 fun parseGml(file: File, charset: Charset = Charsets.UTF_8): GmlArray {
+    return parseGml(file.reader(charset))
+}
+
+fun parseGml(reader: Reader): GmlArray {
     val floatRegex = Regex("^[-+]?[0-9]*\\.[0-9]+$")
     val intRegex = Regex("^[-+]?[0-9]+$")
     val parentStack = mutableListOf<GmlArray>()
     parentStack.add(GmlArray("root"))
     var name: String? = null
-    file.reader(charset).forEachLine { inLine ->
+    reader.forEachLine { inLine ->
         val line = inLine.replace("\t", " ")
         var i = 0
         while (i < line.length && i != -1) {

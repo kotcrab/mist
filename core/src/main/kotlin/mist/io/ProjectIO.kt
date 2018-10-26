@@ -106,7 +106,7 @@ class ProjectIO(private val projectDir: File, private val log: DecompLog) {
 
     fun getElfLoader() = elfLoader
 
-    fun provideLayout() = ExternalLayout(toolsDir.child("layout.exe"), tmpDir, log)
+    fun provideLayout() = ExternalLayout(toolsDir.child("layout.exe"), log)
 
     fun getTypes(): ShlTypes {
         return shlTypes

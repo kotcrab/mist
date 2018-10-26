@@ -19,33 +19,28 @@
 package mist.ui.node
 
 import com.badlogic.gdx.math.Vector2
+import com.google.common.io.ByteStreams
 import kio.util.appendLine
-import kio.util.child
 import kio.util.execute
-import kio.util.nullStreamHandler
 import mist.util.*
+import org.apache.commons.exec.PumpStreamHandler
+import java.io.ByteArrayOutputStream
 import java.io.File
 
 /** @author Kotcrab */
 
-class ExternalLayout(private val layoutExe: File, private val tmpDir: File, private val log: DecompLog) {
+class ExternalLayout(private val layoutExe: File, private val log: DecompLog) {
     val tag = logTag()
 
-    private val inFile = tmpDir.child("layout-wip.gml")
-    private val outFile = tmpDir.child("layout-wip-layout.gml")
-
     fun layout(nodes: List<GraphNode>) {
-        if (layoutExe.exists() == false) error("layout.exe is missing")
-        tmpDir.mkdir()
-        log.trace(tag, "writing GML")
-        writeGml(nodes)
-        log.trace(tag, "running external layout")
-        runLayout()
-        log.trace(tag, "reimporting GML")
-        reimportGml(nodes)
+        if (layoutExe.exists() == false) error("layout executable is missing")
+        log.trace(tag, "processing graph layout")
+        val gml = writeGml(nodes)
+        val processedGml = runLayout(gml)
+        reimportGml(processedGml, nodes)
     }
 
-    private fun writeGml(nodes: List<GraphNode>) {
+    private fun writeGml(nodes: List<GraphNode>): String {
         val gml = StringBuilder()
         gml.appendLine("graph [")
         gml.appendLine("\tdirected 1")
@@ -69,15 +64,18 @@ class ExternalLayout(private val layoutExe: File, private val tmpDir: File, priv
             }
         }
         gml.appendLine("]")
-        inFile.writeText(gml.toString())
+        return gml.toString()
     }
 
-    private fun runLayout() {
-        execute(layoutExe, args = arrayOf(inFile, outFile), workingDirectory = tmpDir, streamHandler = nullStreamHandler())
+
+    private fun runLayout(gml: String): String {
+        val out = ByteArrayOutputStream()
+        execute(layoutExe, streamHandler = PumpStreamHandler(out, ByteStreams.nullOutputStream(), gml.byteInputStream(Charsets.UTF_8)))
+        return out.toString(Charsets.UTF_8.name())
     }
 
-    private fun reimportGml(nodes: List<GraphNode>) {
-        val graph = parseGml(outFile)
+    private fun reimportGml(gml: String, nodes: List<GraphNode>) {
+        val graph = parseGml(gml.reader())
         val gNodes = getGmlNodes(graph)
         val gEdges = getGmlEdges(graph)
         gNodes.forEach { gNode ->
