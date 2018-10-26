@@ -18,11 +18,11 @@
 
 package mist.asm
 
+import kio.util.swap
 import kio.util.toWHex
 import mist.io.BinLoader
 import mist.util.DecompLog
 import mist.util.logTag
-import mist.util.swap
 import java.util.*
 
 /** @author Kotcrab */

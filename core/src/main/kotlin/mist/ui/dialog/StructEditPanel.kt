@@ -24,6 +24,7 @@ import com.badlogic.gdx.utils.Align
 import com.kotcrab.vis.ui.util.form.FormInputValidator
 import com.kotcrab.vis.ui.util.form.FormValidator
 import com.kotcrab.vis.ui.widget.*
+import kio.util.swap
 import kio.util.toHex
 import kio.util.toWHex
 import ktx.actors.onChange
@@ -33,7 +34,6 @@ import mist.shl.ShlStructField
 import mist.shl.ShlType
 import mist.shl.ShlTypes
 import mist.ui.util.StaticMutableListAdapter
-import mist.util.swap
 
 /** @author Kotcrab */
 class StructEditPanel(val types: ShlTypes, val struct: ShlType.ShlStruct, val onCommit: () -> Unit) : VisTable(true) {

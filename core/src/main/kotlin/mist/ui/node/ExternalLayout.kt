@@ -19,6 +19,7 @@
 package mist.ui.node
 
 import com.badlogic.gdx.math.Vector2
+import kio.util.appendLine
 import kio.util.child
 import kio.util.execute
 import kio.util.nullStreamHandler

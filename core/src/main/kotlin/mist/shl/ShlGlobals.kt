@@ -18,7 +18,7 @@
 
 package mist.shl
 
-import mist.util.swap
+import kio.util.swap
 
 /** @author Kotcrab */
 

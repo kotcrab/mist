@@ -19,7 +19,6 @@
 package mist.asm
 
 import mist.asm.FpuReg
-import mist.asm.Operand
 import mist.asm.Reg
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test

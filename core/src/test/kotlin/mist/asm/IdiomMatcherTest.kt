@@ -20,9 +20,6 @@ package mist.asm
 
 import io.mockk.spyk
 import io.mockk.verify
-import mist.asm.IdiomMatcher
-import mist.asm.Instr
-import mist.asm.Opcode
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 

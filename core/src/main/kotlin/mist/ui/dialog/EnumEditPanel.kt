@@ -25,13 +25,13 @@ import com.kotcrab.vis.ui.util.form.FormInputValidator
 import com.kotcrab.vis.ui.widget.ListView
 import com.kotcrab.vis.ui.widget.VisLabel
 import com.kotcrab.vis.ui.widget.VisTable
+import kio.util.swap
 import ktx.actors.onChange
 import ktx.vis.table
 import ktx.vis.validator
 import mist.shl.ShlEnumMembers
 import mist.shl.ShlType.ShlEnum
 import mist.ui.util.StaticMutableListAdapter
-import mist.util.swap
 
 /** @author Kotcrab */
 class EnumEditPanel(val enum: ShlEnum, val onCommit: () -> Unit) : VisTable(true) {
