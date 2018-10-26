@@ -31,6 +31,7 @@ import com.badlogic.gdx.scenes.scene2d.InputListener
 import com.badlogic.gdx.scenes.scene2d.Stage
 import com.badlogic.gdx.scenes.scene2d.ui.Table
 import com.badlogic.gdx.utils.viewport.ScreenViewport
+import com.kotcrab.vis.ui.FocusManager
 import com.kotcrab.vis.ui.widget.VisTable
 import com.kotcrab.vis.ui.widget.tabbedpane.Tab
 import ktx.inject.Context
@@ -178,6 +179,17 @@ abstract class VisualNodeTab<T : VisualNode>(protected val context: Context, clo
     override fun onShow() {
         super.onShow()
         takeInputFocus()
+    }
+
+    override fun onHide() {
+        super.onHide()
+        FocusManager.resetFocus(null)
+        if (appStage.keyboardFocus == delegateTable) {
+            appStage.keyboardFocus = null
+        }
+        if (appStage.scrollFocus == delegateTable) {
+            appStage.scrollFocus = null
+        }
     }
 
     protected fun takeInputFocus() {
