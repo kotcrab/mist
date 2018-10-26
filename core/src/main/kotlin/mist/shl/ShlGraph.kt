@@ -115,6 +115,7 @@ class ShlGraph(private val projectIO: ProjectIO, private val def: ShlFunctionDef
         }
     }
 
+    @Deprecated("Likely to be removed") //TODO consider removing this
     fun bfsFromInstr(instr: ShlInstr, visitor: (Node<ShlInstr>, List<ShlInstr>) -> BfsVisitorAction) {
         val startIdx = getNodeIdxForInstr(instr)
         var idx = startIdx

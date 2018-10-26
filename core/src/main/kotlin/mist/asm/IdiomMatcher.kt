@@ -52,8 +52,8 @@ abstract class IdiomMatcher<Result>(private val maxOffset: Int) {
 
     protected abstract fun matchedResult(relInstrs: List<Instr>): Result
 
-    protected fun Instr.matches(opcode: Opcode? = null, op1: OperandMatcher = isAny(), op2: OperandMatcher = isAny(),
-                                op3: OperandMatcher = isAny(), matchedCallback: Instr.() -> Unit): Boolean {
+    protected fun Instr.matches(opcode: Opcode? = null, op1: OperandMatcher = anyOp(), op2: OperandMatcher = anyOp(),
+                                op3: OperandMatcher = anyOp(), matchedCallback: Instr.() -> Unit): Boolean {
         val matches = matches(opcode, op1, op2, op3)
         if (matches) matchedCallback()
         return matches

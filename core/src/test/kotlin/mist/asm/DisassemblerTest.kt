@@ -16,19 +16,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package mist
+package mist.asm
 
 import kmips.Assembler
 import kmips.FpuReg.*
 import kmips.Label
 import kmips.Reg.*
 import kmips.assembleAsByteArray
-import mist.asm.*
 import mist.io.MemBinLoader
-import org.junit.jupiter.api.Assertions.*
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 /** @author Kotcrab */
+
 class DisassemblerTest {
     private val labelTarget = 0x40
     private val labelExpected = (labelTarget - 0x4) / 0x4
@@ -169,38 +169,38 @@ class DisassemblerTest {
     private fun testLabel() = Label().apply { address = labelTarget }
 
     private fun Instr.verify(opcode: Opcode, op1: Any? = null, op2: Any? = null, op3: Any? = null) {
-        assertEquals(this.opcode, opcode)
-        assertTrue(getSourceRegisters().intersect(getModifiedRegisters().asIterable()).isEmpty())
+        assertThat(this.opcode).isEqualTo(opcode)
+        assertThat(getSourceRegisters().intersect(getModifiedRegisters().asIterable())).isEmpty()
         val combinedRegisters = getSourceRegisters().union(getModifiedRegisters().asIterable()).toMutableList()
         arrayOf(Pair(this.op1, op1), Pair(this.op2, op2), Pair(this.op3, op3)).forEach {
             when {
-                it.second == null -> assertNull(it.first)
+                it.second == null -> assertThat(it.first).isNull()
                 it.second is Reg -> {
                     val reg = (it.first as Operand.Reg).reg
-                    assertEquals(it.second, reg)
+                    assertThat(it.second).isEqualTo(reg)
                     combinedRegisters.remove(reg)
                 }
                 it.second is FpuReg -> {
                     val reg = (it.first as Operand.FpuReg).reg
-                    assertEquals(it.second, reg)
+                    assertThat(it.second).isEqualTo(reg)
                     combinedRegisters.remove(reg)
                 }
-                it.second is Int -> assertEquals(it.second as Int, (it.first as Operand.Imm).value)
+                it.second is Int -> assertThat(it.second as Int).isEqualTo((it.first as Operand.Imm).value)
                 else -> println("Don't know how to verify $it, register or immediate expected")
             }
         }
         combinedRegisters.remove(Reg.ra)
         combinedRegisters.remove(Reg.pc)
-        combinedRegisters.remove(Reg.LO)
-        combinedRegisters.remove(Reg.HI)
+        combinedRegisters.remove(Reg.lo)
+        combinedRegisters.remove(Reg.hi)
         combinedRegisters.remove(FpuReg.cc)
-        assertTrue(combinedRegisters.isEmpty())
+        assertThat(combinedRegisters).isEmpty()
     }
 
     private fun testInstr(assemble: Assembler.() -> Unit, checkResult: Instr.() -> Unit) {
         val bytes = assembleAsByteArray { assemble(this) }
-        val result = disassemble(MemBinLoader(bytes), "UnitTest", 0, bytes.size)
-        assertTrue(result.instr.isNotEmpty())
+        val result = Disassembler(MemBinLoader(bytes), FunctionDef("UnitTest", 0, bytes.size)).disassembly
+        assertThat(result.instr).isNotEmpty()
         checkResult(result.instr[0])
     }
 }

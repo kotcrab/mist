@@ -18,10 +18,9 @@
 
 package mist.shl
 
-import com.google.gson.typeadapters.RuntimeTypeAdapterFactory
+import kio.util.runtimeTypeAdapter
 import kio.util.toHex
 import mist.shl.ShlType.*
-import mist.ui.util.runtimeTypeAdapter
 
 /** @author Kotcrab */
 
@@ -211,12 +210,10 @@ class ShlTypes {
 
 sealed class ShlType(val tid: Int, var name: String) {
     companion object {
-        fun provideGsonTypeAdapter(): RuntimeTypeAdapterFactory<ShlType> {
-            return runtimeTypeAdapter(ShlType::class, arrayOf(
-                    ShlStruct::class,
-                    ShlEnum::class,
-                    ShlPrimitive::class))
-        }
+        fun provideGsonTypeAdapter() = runtimeTypeAdapter(ShlType::class, arrayOf(
+                ShlStruct::class,
+                ShlEnum::class,
+                ShlPrimitive::class))
     }
 
     class ShlStruct(tid: Int, name: String) : ShlType(tid, name) {

@@ -46,11 +46,11 @@ class AsmFunctionIO(private val projectIO: ProjectIO, private val def: ShlFuncti
     private val funcFile = funcDir.child("shl.json")
     private val localHistory = LocalHistory(funcDir)
 
-    fun load(ignoreSaved: Boolean) = if (funcFile.exists() && ignoreSaved == false) doLoad() else initialDisassemble()
+    fun load(ignoreSaved: Boolean) = if (funcFile.exists() && ignoreSaved == false) loadFile() else initialDisassemble()
 
     private fun initialDisassemble(): LoadedFunc {
         log.info(tag, "performing initial disassembly")
-        val disassembly = disassemble(projectIO.getElfLoader(), def.toLLDef())
+        val disassembly = Disassembler(projectIO.getElfLoader(), def.toLLDef()).disassembly
         val graph = Graph(projectIO.getElfLoader(), disassembly.instr, log)
         graph.generateGraph()
         val stack = StackAnalysis(graph, log)
@@ -60,7 +60,7 @@ class AsmFunctionIO(private val projectIO: ProjectIO, private val def: ShlFuncti
         return LoadedFunc(shlGraph, null)
     }
 
-    private fun doLoad(): LoadedFunc {
+    private fun loadFile(): LoadedFunc {
         log.info(tag, "loading disassembly of ${def.name}")
         val funcDto: FuncDto = funcFile.readJson(gson)
         val shlGraph = ShlGraph(projectIO, def, log)
