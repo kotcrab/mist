@@ -22,7 +22,7 @@ import kmips.Assembler
 import kmips.Label
 import kmips.Reg.*
 import kmips.assembleAsByteArray
-import mist.io.MemBinLoader
+import mist.test.util.MemBinLoader
 import mist.util.DecompLog
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatIllegalStateException

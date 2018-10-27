@@ -64,7 +64,7 @@ import java.io.File
 /** @author Kotcrab */
 
 fun main(args: Array<String>) {
-    if (args.size < 1 || File(args[0]).exists() == false) error("specify project directory as first argument")
+    if (args.isEmpty() || File(args[0]).exists() == false) error("specify project directory as first argument")
     val app = App(File(args[0]))
     val c = Lwjgl3ApplicationConfiguration()
     c.setTitle("mist")

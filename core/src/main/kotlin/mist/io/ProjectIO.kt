@@ -51,7 +51,7 @@ class ProjectIO(private val projectDir: File, private val log: DecompLog) {
     private val flowGraph = projectDir.child("flowGraph.json")
     private val flowApis = projectDir.child("flowApis.json")
 
-    private val elfLoader = ElfLoader(ElfFile(ebootBin))
+    private val elfLoader = PspElfLoader(ElfFile(ebootBin), log)
     private var shlProject: ShlProject
     private var shlTypes: ShlTypes
     private var shlGlobals: ShlGlobals

@@ -90,13 +90,13 @@ class StackAnalysis(private val graph: Graph, private val log: DecompLog) {
                 if (instr.matches(op2 = isReg(sp), op3 = anyImm())) {
                     val imm = instr.op3AsImm()
                     if (instr.isMemoryRead()) {
-                        accessMap.getOrPut(imm, { StackAccess() }).apply {
+                        accessMap.getOrPut(imm, defaultValue = { StackAccess() }).apply {
                             readCount++
                             relatedInstrs.add(instr)
                         }
                     }
                     if (instr.isMemoryWrite()) {
-                        accessMap.getOrPut(imm, { StackAccess() }).apply {
+                        accessMap.getOrPut(imm, defaultValue = { StackAccess() }).apply {
                             writeCount++
                             relatedInstrs.add(instr)
                         }

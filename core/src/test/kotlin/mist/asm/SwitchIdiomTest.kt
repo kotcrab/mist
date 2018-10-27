@@ -21,7 +21,7 @@ package mist.asm
 import kmips.Label
 import kmips.Reg.*
 import kmips.assembleAsByteArray
-import mist.io.MemBinLoader
+import mist.test.util.MemBinLoader
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test

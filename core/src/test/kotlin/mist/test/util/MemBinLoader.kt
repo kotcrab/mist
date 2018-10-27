@@ -16,13 +16,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package mist.io
+package mist.test.util
 
+import kio.KioInputStream
+import mist.io.BinLoader
 import java.nio.charset.Charset
 
 /** @author Kotcrab */
 
-interface BinLoader {
-    fun readInt(at: Int): Int
-    fun readString(at: Int, charset: Charset = Charsets.US_ASCII): String
+class MemBinLoader(bytes: ByteArray) : BinLoader {
+    private val input = KioInputStream(bytes)
+
+    override fun readInt(at: Int): Int = input.readInt(at)
+    override fun readString(at: Int, charset: Charset): String = input.run {
+        setPos(at)
+        readNullTerminatedString(charset)
+    }
 }
