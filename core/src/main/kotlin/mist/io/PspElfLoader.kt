@@ -102,19 +102,12 @@ class PspElfLoader(private val elf: ElfFile, private val log: DecompLog) : BinLo
                         data += relocateTo
                     }
                     MipsRelocationType.MIPS_26 -> {
-                        data = relocate(data, 0x03FFFFFF, relocateTo shr 2) // j, jal don't include 2 lowest bits
+                        data = relocate(data, 0x3FFFFFF, relocateTo shr 2) // j, jal don't include 2 lowest bits
                     }
                     MipsRelocationType.MIPS_HI16 -> {
-                        // find corresponding MIPS_LO16 relocation, should be right after this relocation
-                        val loRelloc = relocations
-                                .subList(index + 1, relocations.size)
-                                .first { it.type == MipsRelocationType.MIPS_LO16 }
-                        val loAddr = loRelloc.addr + relloc.offset
-                        val lo = (readInt(loAddr) and 0xFFFF).toShort()
-                        var newOffset = (data and 0xFFFF) shl 16
-                        newOffset += lo
-                        newOffset += relocateTo
-                        data = (data and 0xFFFF0000.toInt()) or (newOffset shr 16)
+                        var newHi = (data and 0xFFFF) shl 16
+                        newHi += relocateTo
+                        data = (data and 0xFFFF0000.toInt()) or (newHi shr 16)
                     }
                     MipsRelocationType.MIPS_LO16 -> {
                         data = relocate(data, 0xFFFF, relocateTo)
