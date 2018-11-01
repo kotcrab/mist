@@ -58,6 +58,9 @@ class ProjectIO(private val projectDir: File, private val log: DecompLog) {
     private var userPrefs: ProjectUserPrefs
 
     init {
+        tmpDir.mkdir()
+        funcsDir.mkdir()
+        toolsDir.mkdir()
         if (arrayOf(projectDir, tmpDir, funcsDir, toolsDir, ebootBin, flowGraph, flowApis).any { it.exists() == false }) {
             log.panic(tag, "missing required project files")
         }
