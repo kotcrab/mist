@@ -46,8 +46,8 @@ import java.util.*
 
 /** @author Kotcrab */
 
-class FlowTab(context: Context, disassembleFuncCallback: (String) -> Unit, editFuncCallback: (String) -> Unit)
-    : VisualNodeTab<FlowNode>(context), ShlDefsChanged {
+class FlowTab(context: Context, disassembleFuncCallback: (String) -> Unit, editFuncCallback: (String) -> Unit) :
+    VisualNodeTab<FlowNode>(context), ShlDefsChanged {
     private val tag = logTag()
     private val apis = mutableListOf<FlowApiSet>()
 
@@ -132,11 +132,11 @@ class FlowTab(context: Context, disassembleFuncCallback: (String) -> Unit, editF
     private fun markSelectedAsApi(newApiName: String, skipCheck: Boolean = false) {
         if (skipCheck == false && selectedNodes.size > 1) {
             Dialogs.showOptionDialog(appStage, "Warning", "This will mark ${selectedNodes.size} nodes as '$newApiName'",
-                    Dialogs.OptionDialogType.YES_CANCEL, object : OptionDialogAdapter() {
-                override fun yes() {
-                    markSelectedAsApi(newApiName, true)
-                }
-            })
+                Dialogs.OptionDialogType.YES_CANCEL, object : OptionDialogAdapter() {
+                    override fun yes() {
+                        markSelectedAsApi(newApiName, true)
+                    }
+                })
         } else {
             selectedNodes.forEach {
                 it.apiName = newApiName
@@ -302,7 +302,8 @@ class FlowTab(context: Context, disassembleFuncCallback: (String) -> Unit, editF
                     selectedNodes.forEach { node ->
                         node.outEdges.forEach { outNode ->
                             if (selectedNodes.contains(outNode) == false && newNodes.contains(outNode) == false
-                                    && outNode.inEdges.map { it.apiName }.all { acceptedApis.contains(it) }) {
+                                && outNode.inEdges.map { it.apiName }.all { acceptedApis.contains(it) }
+                            ) {
                                 newNodes.add(outNode)
                             }
                         }
@@ -315,7 +316,7 @@ class FlowTab(context: Context, disassembleFuncCallback: (String) -> Unit, editF
                 selectedNodes.clear()
                 nodeList.forEach { node ->
                     if (node.outEdges.none { it.apiName == "" } &&
-                            node.inEdges.none { it.apiName == "" }) {
+                        node.inEdges.none { it.apiName == "" }) {
                         selectedNodes.add(node)
                     }
                 }

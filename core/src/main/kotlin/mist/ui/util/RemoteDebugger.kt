@@ -18,8 +18,7 @@
 
 package mist.ui.util
 
-import kotlinx.coroutines.experimental.launch
-import ktx.async.KtxAsync
+//import kotlinx.coroutines.launch
 import mist.util.DecompLog
 import mist.util.logTag
 
@@ -27,28 +26,28 @@ import mist.util.logTag
 class RemoteDebugger(val log: DecompLog) {
     private val tag = logTag()
 
-    private var remoteDebugger: PpssppClientV2? = null
+    //    private var remoteDebugger: PpssppClientV2? = null
     private val listeners = mutableListOf<RemoteDebuggerListener>()
 
     fun connect() {
-        if (remoteDebugger != null) return
-        remoteDebugger = PpssppClientV2()
-        launch(KtxAsync) {
-            log.info(tag, "remote debugger connecting")
-            remoteDebugger!!.receiveMessages(KtxAsync) { msg ->
-                //log.trace(tag, "got message ${msg::class.simpleName}")
-                listeners.forEach { it.handleMessage(msg) }
-            }
-            remoteDebugger!!.connect()
-            log.info(tag, "remote debugger connected")
-        }
+//        if (remoteDebugger != null) return
+//        remoteDebugger = PpssppClientV2()
+//        launch(KtxAsync) {
+//            log.info(tag, "remote debugger connecting")
+//            remoteDebugger!!.receiveMessages(KtxAsync) { msg ->
+//                log.trace(tag, "got message ${msg::class.simpleName}")
+//                listeners.forEach { it.handleMessage(msg) }
+//            }
+//            remoteDebugger!!.connect()
+//            log.info(tag, "remote debugger connected")
+//        }
     }
 
     fun disonnect() {
-        if (remoteDebugger == null) return
-        log.info(tag, "remote debugger disconnected")
-        remoteDebugger!!.close()
-        remoteDebugger = null
+//        if (remoteDebugger == null) return
+//        log.info(tag, "remote debugger disconnected")
+//        remoteDebugger!!.close()
+//        remoteDebugger = null
     }
 
     fun addListener(listener: RemoteDebuggerListener) {
@@ -59,9 +58,9 @@ class RemoteDebugger(val log: DecompLog) {
         listeners.remove(listener)
     }
 
-    fun getClient(): PpssppClientV2? {
-        return remoteDebugger
-    }
+//    fun getClient(): PpssppClientV2? {
+//        return remoteDebugger
+//    }
 }
 
 interface RemoteDebuggerListener {

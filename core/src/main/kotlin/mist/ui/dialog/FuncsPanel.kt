@@ -42,8 +42,10 @@ import com.badlogic.gdx.utils.Array as GdxArray
 
 /** @author Kotcrab */
 
-class FuncsPanel(private val context: Context,
-                 private val listener: FuncsWindowListener) : VisTable(true) {
+class FuncsPanel(
+    private val context: Context,
+    private val listener: FuncsWindowListener
+) : VisTable(true) {
     private val appStage: Stage = context.inject()
     private val projectIO: ProjectIO = context.inject()
     private val userPrefs = projectIO.getUserPrefs()
@@ -82,10 +84,12 @@ class FuncsPanel(private val context: Context,
         appStage.addActor(FunctionEditWindow(context, this@FuncsPanel, this@FuncsPanel.listener, def).fadeIn())
     }
 
-    inner class FilteredFunctionAdapter(private val filteredList: ArrayList<ShlFunctionDef>
-                                        = funcsList.toCollection(arrayListOf())) : BaseMutableListAdapter<ShlFunctionDef>(filteredList) {
+    inner class FilteredFunctionAdapter(
+        private val filteredList: ArrayList<ShlFunctionDef>
+        = funcsList.toCollection(arrayListOf())
+    ) : BaseMutableListAdapter<ShlFunctionDef>(filteredList) {
         private val reversedBg = (VisUI.getSkin().getDrawable("white") as TextureRegionDrawable)
-                .tint(Color(27f / 255f, 161f / 255f, 226 / 255f, 0.20f))
+            .tint(Color(27f / 255f, 161f / 255f, 226 / 255f, 0.20f))
         private val menu: PopupMenu
 
         init {

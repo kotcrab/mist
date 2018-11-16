@@ -16,12 +16,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package mist.asm
+package mist.asm.mips
 
 import kmips.Assembler
 import kmips.Label
 import kmips.Reg.*
 import kmips.assembleAsByteArray
+import mist.asm.FunctionDef
+import mist.asm.Reg
+import mist.asm.isReg
+import mist.asm.mips.allegrex.AllegrexDisassembler
 import mist.test.util.MemBinLoader
 import mist.util.DecompLog
 import org.assertj.core.api.Assertions.assertThat
@@ -190,8 +194,8 @@ class GraphTest {
     private fun graphFromAsm(size: Int = -1, assemble: Assembler.() -> Unit): Graph {
         val bytes = assembleAsByteArray { assemble() }
         val loader = MemBinLoader(bytes)
-        val test = Disassembler(loader, FunctionDef("", 0, if (size == -1) bytes.size else size)).disassembly
-        val graph = Graph(loader, test.instr, DecompLog())
+        val test = AllegrexDisassembler(loader, FunctionDef("", 0, if (size == -1) bytes.size else size)).disassembly
+        val graph = Graph(loader, test.instr as List<MipsInstr>, DecompLog())
         graph.generateGraph()
         return graph
     }
@@ -210,10 +214,10 @@ class GraphTest {
                     .single { it.first.addr == basicJumpLoc }
             val (jumpDest, jumpSources) = basicJumpGraph.jumpingToFrom.toList()
                     .single { it.first.addr == basicJumpTargetLoc }
-            assertThat(jumpSrc.opcode).isEqualTo(Opcode.J)
+            assertThat(jumpSrc.opcode).isEqualTo(J)
             assertThat(jumpTargets.size).isEqualTo(1)
             assertThat(jumpTargets.first()).isEqualTo(jumpDest)
-            assertThat(jumpDest.opcode).isEqualTo(Opcode.Add)
+            assertThat(jumpDest.opcode).isEqualTo(Add)
             assertThat(jumpSources.size).isEqualTo(1)
             assertThat(jumpSources.first()).isEqualTo(jumpSrc)
         }
@@ -224,10 +228,10 @@ class GraphTest {
                     .single { it.first.addr == basicBranchLoc }
             val (branchDest, branchSources) = basicBranchGraph.jumpingToFrom.toList()
                     .single { it.first.addr == basicBranchTargetLoc }
-            assertThat(branchSrc.opcode).isEqualTo(Opcode.Beq)
+            assertThat(branchSrc.opcode).isEqualTo(Beq)
             assertThat(branchTargets.size).isEqualTo(1)
             assertThat(branchTargets.first()).isEqualTo(branchDest)
-            assertThat(branchDest.opcode).isEqualTo(Opcode.Add)
+            assertThat(branchDest.opcode).isEqualTo(Add)
             assertThat(branchSources.size).isEqualTo(1)
             assertThat(branchSources.first()).isEqualTo(branchSrc)
         }
@@ -238,27 +242,27 @@ class GraphTest {
                     .single { it.first.addr == basicCondBranchLoc }
             val (branchDest, branchSources) = basicCondBranchGraph.jumpingToFrom.toList()
                     .single { it.first.addr == basicCondBranchTargetLoc }
-            assertThat(branchSrc.opcode).isEqualTo(Opcode.Beq)
+            assertThat(branchSrc.opcode).isEqualTo(Beq)
             assertThat(branchTargets.size).isEqualTo(1)
             assertThat(branchTargets.first()).isEqualTo(branchDest)
-            assertThat(branchDest.opcode).isEqualTo(Opcode.Add)
+            assertThat(branchDest.opcode).isEqualTo(Add)
             assertThat(branchSources.size).isEqualTo(1)
             assertThat(branchSources.first()).isEqualTo(branchSrc)
         }
 
         @Test
         fun `fill branch ctx using switch a0 idiom`() {
-            testBranchInSwitchGraph(basicSwitchA0Graph, Reg.a0)
+            testBranchInSwitchGraph(basicSwitchA0Graph, GprReg.A0)
         }
 
         @Test
         fun `fill branch ctx using switch at idiom`() {
-            testBranchInSwitchGraph(basicSwitchAtGraph, Reg.at)
+            testBranchInSwitchGraph(basicSwitchAtGraph, GprReg.At)
         }
 
         private fun testBranchInSwitchGraph(graph: Graph, swtichReg: Reg) {
             val (branchSrc, branchTargets) = graph.jumpingTo.toList()
-                    .single { it.first.matchesExact(Opcode.Jr, isReg(swtichReg)) }
+                    .single { it.first.matchesExact(Jr, isReg(swtichReg)) }
             assertThat(branchTargets.size).isEqualTo(3) // 3 unique cases
             assertThat(graph.switchSrcInstrs).hasSize(1)
             assertThat(graph.switchSrcInstrs).containsKey(branchSrc.addr)
@@ -449,8 +453,8 @@ class GraphTest {
                 nop()
             }
             val instrs = graph.nodes.first().instrs
-            assertThat(instrs[0].matches(Opcode.Add)).isTrue()
-            assertThat(instrs[1].matches(Opcode.J)).isTrue()
+            assertThat(instrs[0].matches(Add)).isTrue()
+            assertThat(instrs[1].matches(J)).isTrue()
         }
 
         @Test
@@ -461,8 +465,8 @@ class GraphTest {
                 nop()
             }
             val instrs = graph.nodes.first().instrs
-            assertThat(instrs[0].matches(Opcode.Add)).isTrue()
-            assertThat(instrs[1].matches(Opcode.Jal)).isTrue()
+            assertThat(instrs[0].matches(Add)).isTrue()
+            assertThat(instrs[1].matches(Jal)).isTrue()
         }
 
         @Test
@@ -473,8 +477,8 @@ class GraphTest {
                 nop()
             }
             val instrs = graph.nodes.first().instrs
-            assertThat(instrs[0].matches(Opcode.Add)).isTrue()
-            assertThat(instrs[1].matches(Opcode.Jr)).isTrue()
+            assertThat(instrs[0].matches(Add)).isTrue()
+            assertThat(instrs[1].matches(Jr)).isTrue()
         }
 
         @Test
@@ -485,8 +489,8 @@ class GraphTest {
                 nop()
             }
             val instrs = graph.nodes.first().instrs
-            assertThat(instrs[0].matches(Opcode.Add)).isTrue()
-            assertThat(instrs[1].matches(Opcode.Jalr)).isTrue()
+            assertThat(instrs[0].matches(Add)).isTrue()
+            assertThat(instrs[1].matches(Jalr)).isTrue()
         }
 
         @Test
@@ -523,8 +527,8 @@ class GraphTest {
                 nop()
             }
             val instrs = graph.nodes.first().instrs
-            assertThat(instrs[0].matches(Opcode.Add)).isTrue()
-            assertThat(instrs[1].matches(Opcode.Beq)).isTrue()
+            assertThat(instrs[0].matches(Add)).isTrue()
+            assertThat(instrs[1].matches(Beq)).isTrue()
         }
 
         @Test
@@ -548,13 +552,13 @@ class GraphTest {
             }
             val entry = graph.nodes.first()
             assertThat(entry.instrs.size).isEqualTo(1)
-            assertThat(entry.instrs[0].matches(Opcode.Beq)).isTrue()
+            assertThat(entry.instrs[0].matches(Beq)).isTrue()
             val jumpTaken = graph.nodes.first().outEdges.single { it.type == EdgeType.JumpTaken }.node
             val fallthrough = graph.nodes.first().outEdges.single { it.type == EdgeType.Fallthrough }.node
             assertThat(jumpTaken.instrs.size).isNotEqualTo(1)
-            assertThat(jumpTaken.instrs[0].matches(Opcode.Add)).isTrue()
+            assertThat(jumpTaken.instrs[0].matches(Add)).isTrue()
             assertThat(fallthrough.instrs.size).isNotEqualTo(1)
-            assertThat(fallthrough.instrs[0].matches(Opcode.Add)).isTrue()
+            assertThat(fallthrough.instrs[0].matches(Add)).isTrue()
         }
 
         @Test
@@ -569,14 +573,14 @@ class GraphTest {
             }
             val entry = graph.nodes.first()
             assertThat(entry.instrs.size).isEqualTo(1)
-            assertThat(entry.instrs[0].matches(Opcode.Beq)).isTrue()
+            assertThat(entry.instrs[0].matches(Beq)).isTrue()
             val jumpTaken = graph.nodes.first().outEdges.single { it.type == EdgeType.JumpTaken }.node
             val fallthrough = graph.nodes.first().outEdges.single { it.type == EdgeType.Fallthrough }.node
             assertThat(jumpTaken.instrs.size).isEqualTo(1)
-            assertThat(jumpTaken.instrs[0].matches(Opcode.Add)).isTrue()
+            assertThat(jumpTaken.instrs[0].matches(Add)).isTrue()
             assertThat(jumpTaken.outEdges.size).isEqualTo(1)
             assertThat(fallthrough.instrs.size).isNotEqualTo(1)
-            assertThat(fallthrough.instrs[0].matches(Opcode.Add)).isTrue()
+            assertThat(fallthrough.instrs[0].matches(Add)).isTrue()
             assertThat(fallthrough.outEdges.size).isEqualTo(1)
             assertThat(jumpTaken.outEdges[0].node).isEqualTo(fallthrough.outEdges[0].node)
         }
@@ -602,13 +606,13 @@ class GraphTest {
             }
             val entry = graph.nodes.first()
             assertThat(entry.instrs.size).isEqualTo(1)
-            assertThat(entry.instrs[0].matches(Opcode.Beql)).isTrue()
+            assertThat(entry.instrs[0].matches(Beql)).isTrue()
             val jumpTaken = graph.nodes.first().outEdges.single { it.type == EdgeType.JumpTaken }.node
             val fallthrough = graph.nodes.first().outEdges.single { it.type == EdgeType.Fallthrough }.node
             assertThat(jumpTaken.instrs.size).isNotEqualTo(1)
-            assertThat(jumpTaken.instrs[0].matches(Opcode.Add)).isTrue()
+            assertThat(jumpTaken.instrs[0].matches(Add)).isTrue()
             assertThat(fallthrough.instrs.size).isNotEqualTo(1)
-            assertThat(fallthrough.instrs[0].matches(Opcode.Add)).isFalse()
+            assertThat(fallthrough.instrs[0].matches(Add)).isFalse()
         }
 
         @Test
@@ -623,14 +627,14 @@ class GraphTest {
             }
             val entry = graph.nodes.first()
             assertThat(entry.instrs.size).isEqualTo(1)
-            assertThat(entry.instrs[0].matches(Opcode.Beql)).isTrue()
+            assertThat(entry.instrs[0].matches(Beql)).isTrue()
             val jumpTaken = graph.nodes.first().outEdges.single { it.type == EdgeType.JumpTaken }.node
             val fallthrough = graph.nodes.first().outEdges.single { it.type == EdgeType.Fallthrough }.node
             assertThat(jumpTaken.instrs.size).isEqualTo(1)
-            assertThat(jumpTaken.instrs[0].matches(Opcode.Add)).isTrue()
+            assertThat(jumpTaken.instrs[0].matches(Add)).isTrue()
             assertThat(jumpTaken.outEdges.size).isEqualTo(1)
             assertThat(fallthrough.instrs.size).isEqualTo(1)
-            assertThat(fallthrough.instrs[0].matches(Opcode.Add)).isFalse()
+            assertThat(fallthrough.instrs[0].matches(Add)).isFalse()
             assertThat(fallthrough.outEdges.size).isEqualTo(1)
             assertThat(jumpTaken.outEdges[0].node).isEqualTo(fallthrough.outEdges[0].node)
         }
@@ -713,7 +717,7 @@ class GraphTest {
                 add(a0, a1, a2)
             }
             assertThat(graph.unreachableInstrs.size).isEqualTo(1)
-            assertThat(graph.unreachableInstrs.values.first().matches(Opcode.Add)).isTrue()
+            assertThat(graph.unreachableInstrs.values.first().matches(Add)).isTrue()
         }
     }
 

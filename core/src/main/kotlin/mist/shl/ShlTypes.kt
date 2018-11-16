@@ -88,7 +88,7 @@ class ShlTypes {
 
     fun getPointerSize(): Int {
         val type = getType(0) as? ShlPrimitive
-                ?: error("tid 0 must be primitive and must represent size of pointer")
+            ?: error("tid 0 must be primitive and must represent size of pointer")
         return type.size
     }
 
@@ -152,7 +152,10 @@ class ShlTypes {
                             val joinedNames = accessStack.joinToString(separator = ".", transform = { it.name })
                             return Pair(field, if (field.arraySize != 1) "$joinedNames[$arrayIdx]" else joinedNames)
                         } else if (size > offset) {
-                            return Pair(null, "__virtualField0 + ${offset.toHex()}") // FIXME should this try to find closest entry?
+                            return Pair(
+                                null,
+                                "__virtualField0 + ${offset.toHex()}"
+                            ) // TODO should this try to find closest entry?
                         }
                         size += sizeOfStructArrayField(field)
                     }
@@ -210,10 +213,13 @@ class ShlTypes {
 
 sealed class ShlType(val tid: Int, var name: String) {
     companion object {
-        fun provideGsonTypeAdapter() = runtimeTypeAdapter(ShlType::class, arrayOf(
+        fun provideGsonTypeAdapter() = runtimeTypeAdapter(
+            ShlType::class, arrayOf(
                 ShlStruct::class,
                 ShlEnum::class,
-                ShlPrimitive::class))
+                ShlPrimitive::class
+            )
+        )
     }
 
     class ShlStruct(tid: Int, name: String) : ShlType(tid, name) {

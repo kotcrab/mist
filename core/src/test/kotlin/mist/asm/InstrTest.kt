@@ -18,57 +18,35 @@
 
 package mist.asm
 
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.verify
-import mist.asm.*
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatIllegalStateException
 import org.junit.jupiter.api.Test
 
 /** @author Kotcrab */
 
 class InstrTest {
+    object TestReg : Reg("test", 0)
+    object TestReg2 : Reg("test2", 1)
+    object TestProcessor : Processor("test")
+    object TestOpcode : Opcode("test", arrayOf(TestProcessor), arrayOf(MemoryRead), modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object TestInstr : Instr(0x0, TestOpcode, arrayOf(RegOperand(TestReg), RegOperand(TestReg2)))
+
     @Test
-    fun `match operands`() {
-        val instr = Instr(0, Opcode.Nop, Operand.Imm(0))
-        assertThat(instr.matches()).isTrue()
-        assertThat(instr.matches(Opcode.Nop)).isTrue()
-        assertThat(instr.matches(Opcode.Nop, op1 = anyReg())).isFalse()
-        assertThat(instr.matchesExact(Opcode.Nop)).isFalse()
+    fun `checks if opcode has flag`() {
+        assertThat(TestInstr.hasFlag(MemoryRead)).isTrue()
     }
 
     @Test
-    fun `match call all operands`() {
-        val matcher = mockk<OperandMatcher>()
-        every { matcher.match(any()) }.returns(true)
-        val instr = Instr(0, Opcode.Nop, Operand.Imm(0))
-        assertThat(instr.matches(Opcode.Nop, matcher, matcher, matcher)).isTrue()
-        verify(exactly = 3) { matcher.match(any()) }
+    fun `checks if opcode has processor`() {
+        assertThat(TestInstr.hasProcessor(TestProcessor)).isTrue()
     }
 
     @Test
-    fun `return last imm`() {
-        assertThat(Instr(0, Opcode.Nop,
-                Operand.Imm(2), Operand.Imm(1), Operand.Imm(0)).getLastImm()).isEqualTo(0)
-        assertThat(Instr(0, Opcode.Nop,
-                Operand.Imm(1), Operand.Imm(0), Operand.Reg(Reg.zero)).getLastImm()).isEqualTo(0)
-        assertThat(Instr(0, Opcode.Nop,
-                Operand.Imm(0), Operand.Reg(Reg.zero), Operand.Reg(Reg.zero)).getLastImm()).isEqualTo(0)
-        assertThatIllegalStateException().isThrownBy {
-            Instr(0, Opcode.Nop, Operand.Reg(Reg.zero), Operand.Reg(Reg.zero), Operand.Reg(Reg.zero)).getLastImm()
-        }
+    fun `gets used registers`() {
+        assertThat(TestInstr.getUsedRegisters()).containsExactly(TestReg2)
     }
 
     @Test
-    fun `convert to string`() {
-        assertThat(Instr(0, Opcode.Nop).toString()).isEqualTo("0x0: nop")
-        assertThat(Instr(0, Opcode.Nop, Operand.Reg(Reg.a0)).toString()).isEqualTo("0x0: nop a0")
-        assertThat(Instr(0, Opcode.Nop, Operand.Reg(Reg.a0), Operand.Imm(1)).toString())
-                .isEqualTo("0x0: nop a0, 0x1")
-        assertThat(Instr(0, Opcode.Nop, Operand.Reg(Reg.a0), Operand.Imm(1), Operand.Imm(5)).toString())
-                .isEqualTo("0x0: nop a0, 0x1, 0x5")
-        assertThat(Instr(0, Opcode.Sw, Operand.Reg(Reg.a0), Operand.Reg(Reg.s0), Operand.Imm(1)).toString())
-                .isEqualTo("0x0: sw a0, 0x1(s0)")
+    fun `gets modified registers`() {
+        assertThat(TestInstr.getModifiedRegisters()).containsExactly(TestReg)
     }
 }

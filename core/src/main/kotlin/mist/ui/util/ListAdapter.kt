@@ -49,8 +49,7 @@ abstract class BaseListAdapter<T>(list: List<T>) : ListAdapter<T, VisTable>(list
     }
 }
 
-abstract class ListAdapter<ItemT, ViewT : Actor>(private val list: List<ItemT>)
-    : AbstractListAdapter<ItemT, ViewT>() {
+abstract class ListAdapter<ItemT, ViewT : Actor>(private val list: List<ItemT>) : AbstractListAdapter<ItemT, ViewT>() {
     private companion object {
         const val immutableError = "not supported by immutable list"
     }
@@ -137,8 +136,9 @@ abstract class BaseMutableListAdapter<T>(list: MutableList<T>) : MutableListAdap
     }
 }
 
-abstract class MutableListAdapter<ItemT, ViewT : Actor>(private val list: MutableList<ItemT>)
-    : AbstractListAdapter<ItemT, ViewT>() {
+abstract class MutableListAdapter<ItemT, ViewT : Actor>(private val list: MutableList<ItemT>) :
+    AbstractListAdapter<ItemT, ViewT>() {
+
     override fun iterable(): Iterable<ItemT> {
         return list
     }

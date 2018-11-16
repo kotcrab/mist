@@ -34,7 +34,14 @@ class ShlGlobals {
         insertGlobal(global)
     }
 
-    fun editGlobal(oldGlobal: ShlGlobal, newAddress: Int, newName: String, newRefTid: Int, newPointer: Boolean, newComment: String) {
+    fun editGlobal(
+        oldGlobal: ShlGlobal,
+        newAddress: Int,
+        newName: String,
+        newRefTid: Int,
+        newPointer: Boolean,
+        newComment: String
+    ) {
         val prevIdx = globals.indexOf(oldGlobal)
         delete(oldGlobal)
         val newGlobal = ShlGlobal(newAddress, newName, newRefTid, newPointer, newComment)

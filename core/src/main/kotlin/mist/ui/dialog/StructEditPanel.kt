@@ -67,8 +67,12 @@ class StructEditPanel(val types: ShlTypes, val struct: ShlType.ShlStruct, val on
 
         fun initElemAddition() {
             clear()
-            initContents(ShlStructField(-1, false, "field_${String.format("%X", types.sizeOf(struct.tid))}",
-                    1, ""), false)
+            initContents(
+                ShlStructField(
+                    -1, false, "field_${String.format("%X", types.sizeOf(struct.tid))}",
+                    1, ""
+                ), false
+            )
         }
 
         fun initElemEdition(field: ShlStructField) {
@@ -82,7 +86,10 @@ class StructEditPanel(val types: ShlTypes, val struct: ShlType.ShlStruct, val on
                     return if (pointerCheck.isChecked) { // pointer can't create circular reference
                         types.getTypeByName(input) != null
                     } else {
-                        types.getTypeByName(input) != null && types.checkStructFieldAdditionValid(struct, input) == false
+                        types.getTypeByName(input) != null && types.checkStructFieldAdditionValid(
+                            struct,
+                            input
+                        ) == false
                     }
                 }
             }
@@ -105,8 +112,10 @@ class StructEditPanel(val types: ShlTypes, val struct: ShlType.ShlStruct, val on
                 row()
                 table(true) {
                     label("Type:")
-                    typeField = validatableTextField(types.getType(field.refTid)?.name
-                            ?: "u32").cell(preferredWidth = 220f)
+                    typeField = validatableTextField(
+                        types.getType(field.refTid)?.name
+                            ?: "u32"
+                    ).cell(preferredWidth = 220f)
                     label("Name:")
                     nameField = validatableTextField(field.name).cell(preferredWidth = 220f)
                     pointerCheck = checkBox("Pointer")
@@ -140,8 +149,12 @@ class StructEditPanel(val types: ShlTypes, val struct: ShlType.ShlStruct, val on
                                 field.arraySize = arraySizeField.text.toInt()
                                 field.comment = commentField.text
                             } else {
-                                struct.fields.add(ShlStructField(refTid, pointerCheck.isChecked, nameField.text,
-                                        arraySizeField.text.toInt(), commentField.text))
+                                struct.fields.add(
+                                    ShlStructField(
+                                        refTid, pointerCheck.isChecked, nameField.text,
+                                        arraySizeField.text.toInt(), commentField.text
+                                    )
+                                )
                             }
                             memberAdapter.itemsChanged()
                             initElemAddition()
@@ -156,7 +169,8 @@ class StructEditPanel(val types: ShlTypes, val struct: ShlType.ShlStruct, val on
         sizeLabel.setText("sizeOf = ${types.sizeOf(struct.tid).toHex()}")
     }
 
-    inner class ShlStructFieldAdapter(private val fields: MutableList<ShlStructField>) : StaticMutableListAdapter<ShlStructField>(fields) {
+    inner class ShlStructFieldAdapter(private val fields: MutableList<ShlStructField>) :
+        StaticMutableListAdapter<ShlStructField>(fields) {
         override fun createView(field: ShlStructField): VisTable {
             return table {
                 touchable = Touchable.enabled

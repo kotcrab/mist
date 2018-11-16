@@ -37,10 +37,12 @@ import mist.ui.util.StaticMutableListAdapter
 
 /** @author Kotcrab */
 
-class FunctionEditWindow(context: Context,
-                         private val funcsPanel: FuncsPanel,
-                         private val listener: FuncsWindowListener,
-                         private val func: ShlFunctionDef) : VisWindow("Function Edit") {
+class FunctionEditWindow(
+    context: Context,
+    private val funcsPanel: FuncsPanel,
+    private val listener: FuncsWindowListener,
+    private val func: ShlFunctionDef
+) : VisWindow("Function Edit") {
     private val projectIO: ProjectIO = context.inject()
     private val appStage: Stage = context.inject()
     private val argAdapter = ArgumentAdapter(appStage, func, func.arguments)
@@ -108,11 +110,16 @@ class FunctionEditWindow(context: Context,
     }
 
     private fun showErrorDialog(msg: String) {
-        val dialog = Dialogs.showOptionDialog(appStage, "Error", msg, Dialogs.OptionDialogType.YES_CANCEL, object : OptionDialogAdapter() {
-            override fun yes() {
-                closeDialog()
-            }
-        })
+        val dialog = Dialogs.showOptionDialog(
+            appStage,
+            "Error",
+            msg,
+            Dialogs.OptionDialogType.YES_CANCEL,
+            object : OptionDialogAdapter() {
+                override fun yes() {
+                    closeDialog()
+                }
+            })
         dialog.setYesButtonText("Discard edits")
         dialog.setCancelButtonText("Continue editing")
     }
@@ -124,8 +131,8 @@ class FunctionEditWindow(context: Context,
     }
 }
 
-private class ArgumentAdapter(appStage: Stage, func: ShlFunctionDef, val list: MutableList<ShlArgumentDef>)
-    : StaticMutableListAdapter<ShlArgumentDef>(list) {
+private class ArgumentAdapter(appStage: Stage, func: ShlFunctionDef, val list: MutableList<ShlArgumentDef>) :
+    StaticMutableListAdapter<ShlArgumentDef>(list) {
 
     private val menu: PopupMenu
 

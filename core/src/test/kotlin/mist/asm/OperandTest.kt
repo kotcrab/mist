@@ -18,8 +18,7 @@
 
 package mist.asm
 
-import mist.asm.FpuReg
-import mist.asm.Reg
+import mist.asm.mips.GprReg
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -28,16 +27,13 @@ import org.junit.jupiter.api.Test
 class OperandTest {
     @Test
     fun `converts reg to string`() {
-        assertThat(Operand.Reg(Reg.s0).toString()).isEqualTo("s0")
+        assertThat(RegOperand(GprReg.S0).toString()).isEqualTo("s0")
     }
 
-    @Test
-    fun `converts fpu reg to string`() {
-        assertThat(Operand.FpuReg(FpuReg.f0).toString()).isEqualTo("f0")
-    }
 
     @Test
     fun `converts int to string`() {
-        assertThat(Operand.Imm(0x42).toString()).isEqualTo("0x42")
+        assertThat(ImmOperand(0x42).toString()).isEqualTo("0x42")
+        assertThat(ImmOperand(-0x42).toString()).isEqualTo("-0x42")
     }
 }

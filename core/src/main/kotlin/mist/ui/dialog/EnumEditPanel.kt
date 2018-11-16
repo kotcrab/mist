@@ -112,7 +112,8 @@ class EnumEditPanel(val enum: ShlEnum, val onCommit: () -> Unit) : VisTable(true
         }
     }
 
-    inner class ShlEnumMemberAdapter(private val members: MutableList<ShlEnumMembers>) : StaticMutableListAdapter<ShlEnumMembers>(members) {
+    inner class ShlEnumMemberAdapter(private val members: MutableList<ShlEnumMembers>) :
+        StaticMutableListAdapter<ShlEnumMembers>(members) {
         override fun createView(members: ShlEnumMembers): VisTable {
             return table {
                 touchable = Touchable.enabled
@@ -153,7 +154,12 @@ class EnumEditPanel(val enum: ShlEnum, val onCommit: () -> Unit) : VisTable(true
                             this@ShlEnumMemberAdapter.members.remove(members)
                             itemsChanged()
                             if (this@ShlEnumMemberAdapter.members.size > 0) {
-                                selectionManager.select(this@ShlEnumMemberAdapter.members[Math.min(this@ShlEnumMemberAdapter.members.lastIndex, index)])
+                                selectionManager.select(
+                                    this@ShlEnumMemberAdapter.members[Math.min(
+                                        this@ShlEnumMemberAdapter.members.lastIndex,
+                                        index
+                                    )]
+                                )
                             }
                         }
                     }

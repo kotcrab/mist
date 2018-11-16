@@ -39,10 +39,10 @@ import ktx.inject.Context
 import ktx.vis.menuItem
 import ktx.vis.popupMenu
 import ktx.vis.subMenu
-import mist.asm.EdgeKind
-import mist.asm.EdgeType
-import mist.asm.Node
 import mist.io.ProjectIO
+import mist.asm.mips.EdgeKind
+import mist.asm.mips.EdgeType
+import mist.asm.mips.Node
 import mist.shl.*
 import mist.shl.ShlExpr.*
 import mist.shl.ShlType.ShlStruct
@@ -51,16 +51,18 @@ import mist.util.DecompLog
 
 /** @author Kotcrab */
 
-class GraphNode(context: Context,
-                nodeStage: Stage,
-                private val exprMutator: ExprMutator,
-                xPos: Float,
-                yPos: Float,
-                val node: Node<ShlInstr>,
-                nodeIndex: Int,
-                private val listener: Listener,
-                titleDef: ShlFunctionDef? = null,
-                val onFuncDoubleClick: (ShlFunctionDef) -> Unit) : VisualNode(context, Color.WHITE, xPos, yPos) {
+class GraphNode(
+    context: Context,
+    nodeStage: Stage,
+    private val exprMutator: ExprMutator,
+    xPos: Float,
+    yPos: Float,
+    val node: Node<ShlInstr>,
+    nodeIndex: Int,
+    private val listener: Listener,
+    titleDef: ShlFunctionDef? = null,
+    val onFuncDoubleClick: (ShlFunctionDef) -> Unit
+) : VisualNode(context, Color.WHITE, xPos, yPos) {
     private val tag = javaClass.simpleName
     private val appStage: Stage = context.inject()
     private val projectIO: ProjectIO = context.inject()
@@ -182,7 +184,12 @@ class GraphNode(context: Context,
             is ShlVar -> target.asmExprLabel(relInstr, expr, blueSyntaxColor)
             is ShlConst -> target.asmExprLabel(relInstr, expr, greenSyntaxColor)
             is ShlFloat -> target.asmExprLabel(relInstr, expr, greenSyntaxColor)
-            is ShlString -> target.asmExprLabel(relInstr, expr, expr.toExprString().replace("\n", "\\n"), yellowSyntaxColor)
+            is ShlString -> target.asmExprLabel(
+                relInstr,
+                expr,
+                expr.toExprString().replace("\n", "\\n"),
+                yellowSyntaxColor
+            )
             is ShlGlobalRef -> renderGlobalRefExpr(target, relInstr, expr)
             is ShlFuncPointer -> renderFuncPointerExpr(target, relInstr, expr)
             is ShlUnaryExpr -> renderUnaryExpr(target, relInstr, expr)
@@ -207,7 +214,7 @@ class GraphNode(context: Context,
 
     private fun renderFuncPointerExpr(target: HorizontalGroup, relInstr: ShlInstr, expr: ShlFuncPointer) {
         val jalDef = projectIO.getFuncDefByOffset(expr.addr)
-                ?: log.panic(tag, "failed to find function definition for ShlFunctionPointer addr: ${expr.addr}")
+            ?: log.panic(tag, "failed to find function definition for ShlFunctionPointer addr: ${expr.addr}")
         target.asmExprLabel(relInstr, expr, jalDef.name, darkBlueSyntaxColor)
     }
 
@@ -341,7 +348,7 @@ class GraphNode(context: Context,
     private fun renderCallExpr(target: HorizontalGroup, relInstr: ShlInstr, expr: ShlCall) {
         val childTarget = HorizontalGroup()
         val jalDef = projectIO.getFuncDefByOffset(expr.dest)
-                ?: log.panic(tag, "failed to find function definition for ShlCallInstr destination ${expr.dest}")
+            ?: log.panic(tag, "failed to find function definition for ShlCallInstr destination ${expr.dest}")
 
         val nameLabel = childTarget.asmLabel(relInstr, jalDef.name)
         nameLabel.addListener(object : ClickListener() {
@@ -357,24 +364,39 @@ class GraphNode(context: Context,
         // fill args to render
         val freeArgs = shlArgRegisters.toMutableList()
         jalDef.arguments.forEach { jalArg ->
-            if (freeArgs.remove(jalArg.register) == false) log.panic(tag, "conflicting func. arg definitions (free arg list exhausted)")
+            if (freeArgs.remove(jalArg.register) == false) log.panic(
+                tag,
+                "conflicting func. arg definitions (free arg list exhausted)"
+            )
             val hasArg = expr.args.contains(jalArg.register)
             if (jalArg.type.endsWith("...")) {
-                argsToRender.add(Triple("${jalArg.name}[0]", expr.args.getOrElse(jalArg.register, { ShlVar(jalArg.register) }),
-                        if (hasArg) Color.WHITE else Color.RED))
+                argsToRender.add(
+                    Triple(
+                        "${jalArg.name}[0]", expr.args.getOrElse(jalArg.register, { ShlVar(jalArg.register) }),
+                        if (hasArg) Color.WHITE else Color.RED
+                    )
+                )
                 remainExprArgs.remove(jalArg.register)
                 freeArgs.forEachIndexed { freeArgIdx, freeArg ->
                     // only display free arg if some unique value is assigned
                     val hasVararg = expr.args.contains(jalArg.register)
                     if (expr.args[freeArg]?.compareExpr(ShlVar(freeArg)) == false) {
-                        argsToRender.add(Triple("${jalArg.name}[${freeArgIdx + 1}]", expr.args.getOrElse(freeArg, { ShlVar(freeArg) }),
-                                if (hasVararg) Color.WHITE else Color.RED))
+                        argsToRender.add(
+                            Triple(
+                                "${jalArg.name}[${freeArgIdx + 1}]", expr.args.getOrElse(freeArg, { ShlVar(freeArg) }),
+                                if (hasVararg) Color.WHITE else Color.RED
+                            )
+                        )
                     }
                     remainExprArgs.remove(freeArg)
                 }
             } else {
-                argsToRender.add(Triple(jalArg.name, expr.args.getOrElse(jalArg.register, { ShlVar(jalArg.register) }),
-                        if (hasArg) Color.WHITE else Color.RED))
+                argsToRender.add(
+                    Triple(
+                        jalArg.name, expr.args.getOrElse(jalArg.register, { ShlVar(jalArg.register) }),
+                        if (hasArg) Color.WHITE else Color.RED
+                    )
+                )
                 remainExprArgs.remove(jalArg.register)
             }
         }
@@ -414,7 +436,12 @@ class GraphNode(context: Context,
         return asmExprLabel(relInstr, expr, expr.toExprString(), color)
     }
 
-    private fun HorizontalGroup.asmExprLabel(relInstr: ShlInstr, expr: ShlExpr, exprText: String, color: Color): CodeLabel {
+    private fun HorizontalGroup.asmExprLabel(
+        relInstr: ShlInstr,
+        expr: ShlExpr,
+        exprText: String,
+        color: Color
+    ): CodeLabel {
         val labelColor = if (relInstr.deadCode) Color.GRAY.cpy() else color
         val label = CodeLabel(relInstr, expr, exprText, true, labelColor, labelStyle)
         addActor(label)
@@ -449,8 +476,10 @@ class GraphNode(context: Context,
         dbgLabels.forEach { it.value.isVisible = false }
     }
 
-    inner class CodeLabel(val relInstr: ShlInstr, val shlExpr: ShlExpr?, text: CharSequence, val canHighlight: Boolean,
-                          val origColor: Color, style: LabelStyle) : VisLabel(text, style) {
+    inner class CodeLabel(
+        val relInstr: ShlInstr, val shlExpr: ShlExpr?, text: CharSequence, val canHighlight: Boolean,
+        val origColor: Color, style: LabelStyle
+    ) : VisLabel(text, style) {
         init {
             color = origColor.cpy()
             touchable = Touchable.enabled
@@ -458,9 +487,9 @@ class GraphNode(context: Context,
                 val dumpCtxs = false
                 override fun touchDown(event: InputEvent?, x: Float, y: Float, pointer: Int, button: Int): Boolean {
                     if (dumpCtxs) {
-                        relInstr.dataFlowCtx.dump()
-                        relInstr.reachFlowCtx.dump()
-                        relInstr.nextLiveFlowCtx.dump()
+                        relInstr.dataFlowCtx.dump(log)
+                        relInstr.reachFlowCtx.dump(log)
+                        relInstr.nextLiveFlowCtx.dump(log)
                     }
                     if (canHighlight) {
                         listener.onHighlight(getText().toString())
@@ -489,19 +518,22 @@ class GraphNode(context: Context,
 
         private fun createContextMenu() = popupMenu {
             createCopyAddrMenuItems()
-            condSubMenu(text = "To struct", entries = types.getStructs(), entryTransform = { it.name }, wantSeparator = true,
-                    condition = { relInstr is ShlMemStoreInstr || (relInstr is ShlAssignInstr && relInstr.src is ShlMemLoad) },
-                    change = { struct ->
-                        exprMutator.mutateToStructAccess(relInstr, struct)
-                        this@GraphNode.listener.init()
-                    })
+            condSubMenu(text = "To struct",
+                entries = types.getStructs(),
+                entryTransform = { it.name },
+                wantSeparator = true,
+                condition = { relInstr is ShlMemStoreInstr || (relInstr is ShlAssignInstr && relInstr.src is ShlMemLoad) },
+                change = { struct ->
+                    exprMutator.mutateToStructAccess(relInstr, struct)
+                    this@GraphNode.listener.init()
+                })
 
             condMenuItem(text = "To memory access", wantSeparator = true,
-                    condition = { relInstr is ShlStructStoreInstr || (relInstr is ShlAssignInstr && relInstr.src is ShlStructLoad) },
-                    change = {
-                        exprMutator.mutateToMemoryAccess(relInstr)
-                        this@GraphNode.listener.init()
-                    })
+                condition = { relInstr is ShlStructStoreInstr || (relInstr is ShlAssignInstr && relInstr.src is ShlStructLoad) },
+                change = {
+                    exprMutator.mutateToMemoryAccess(relInstr)
+                    this@GraphNode.listener.init()
+                })
             if (shlExpr != null) {
                 createShlExprMenuItems()
                 createShlVarMenuItems()
@@ -587,18 +619,20 @@ class GraphNode(context: Context,
         private fun PopupMenu.createShlVarMenuItems() {
             if (shlExpr !is ShlVar) return
             condMenuItem(text = "Rename assigned variable",
-                    condition = {
-                        (relInstr is ShlAssignInstr && relInstr.dest.compareExpr(shlExpr)) ||
-                                (relInstr is ShlCallInstr && relInstr.returnReg != null && relInstr.returnReg!!.compareExpr(shlExpr))
-                    },
-                    change = {
-                        Dialogs.showInputDialog(appStage, "Rename", "New name", true, object : InputDialogAdapter() {
-                            override fun finished(newName: String) {
-                                exprMutator.renameAssignedVariable(relInstr, newName)
-                                this@GraphNode.listener.init()
-                            }
-                        })
+                condition = {
+                    (relInstr is ShlAssignInstr && relInstr.dest.compareExpr(shlExpr)) ||
+                            (relInstr is ShlCallInstr && relInstr.returnReg != null && relInstr.returnReg!!.compareExpr(
+                                shlExpr
+                            ))
+                },
+                change = {
+                    Dialogs.showInputDialog(appStage, "Rename", "New name", true, object : InputDialogAdapter() {
+                        override fun finished(newName: String) {
+                            exprMutator.renameAssignedVariable(relInstr, newName)
+                            this@GraphNode.listener.init()
+                        }
                     })
+                })
             menuItem("Propagate and optimize") {
                 onChange {
                     exprMutator.propagate(relInstr)
@@ -671,8 +705,10 @@ class GraphNode(context: Context,
             }
         }
 
-        private fun PopupMenu.condMenuItem(condition: () -> Boolean, text: String, change: () -> Unit,
-                                           wantSeparator: Boolean = false): Boolean {
+        private fun PopupMenu.condMenuItem(
+            condition: () -> Boolean, text: String, change: () -> Unit,
+            wantSeparator: Boolean = false
+        ): Boolean {
             if (condition() == false) return false
             menuItem(text) {
                 onChange {
@@ -683,8 +719,10 @@ class GraphNode(context: Context,
             return true
         }
 
-        private fun <T> PopupMenu.condSubMenu(condition: () -> Boolean, text: String, entries: List<T>, entryTransform: (T) -> String,
-                                              change: (T) -> Unit, wantSeparator: Boolean = false): Boolean {
+        private fun <T> PopupMenu.condSubMenu(
+            condition: () -> Boolean, text: String, entries: List<T>, entryTransform: (T) -> String,
+            change: (T) -> Unit, wantSeparator: Boolean = false
+        ): Boolean {
             if (condition() == false || entries.isEmpty()) return false
             menuItem(text) {
                 subMenu {
@@ -717,4 +755,9 @@ class GraphNode(context: Context,
     }
 }
 
-class CodeNodeEdge(val node: GraphNode, val edgeType: EdgeType, val edgeKind: EdgeKind, var points: List<Vector2>? = null)
+class CodeNodeEdge(
+    val node: GraphNode,
+    val edgeType: EdgeType,
+    val edgeKind: EdgeKind,
+    var points: List<Vector2>? = null
+)

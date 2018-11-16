@@ -35,8 +35,10 @@ import java.time.format.DateTimeFormatter
 
 /** @author Kotcrab */
 
-class LocalHistoryDialog(private val entryReader: LocalHistory.EntryReader, private val listener: WindowResultListener<LocalHistoryEntry>)
-    : VisWindow("Local History") {
+class LocalHistoryDialog(
+    private val entryReader: LocalHistory.EntryReader,
+    private val listener: WindowResultListener<LocalHistoryEntry>
+) : VisWindow("Local History") {
     init {
         isModal = true
         isResizable = true
@@ -83,7 +85,8 @@ class LocalHistoryDialog(private val entryReader: LocalHistory.EntryReader, priv
         listener.canceled()
     }
 
-    private inner class EntryAdapter(list: MutableList<LocalHistoryEntry>) : StaticMutableListAdapter<LocalHistoryEntry>(list) {
+    private inner class EntryAdapter(list: MutableList<LocalHistoryEntry>) :
+        StaticMutableListAdapter<LocalHistoryEntry>(list) {
         init {
             selectionMode = SelectionMode.SINGLE
             itemsSorter = Comparator { o1, o2 -> o2.epochSecond.compareTo(o1.epochSecond) }
@@ -93,7 +96,8 @@ class LocalHistoryDialog(private val entryReader: LocalHistory.EntryReader, priv
             return table {
                 left()
                 val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-                val localDate = LocalDateTime.ofInstant(Instant.ofEpochSecond(entry.epochSecond), Clock.systemDefaultZone().zone)
+                val localDate =
+                    LocalDateTime.ofInstant(Instant.ofEpochSecond(entry.epochSecond), Clock.systemDefaultZone().zone)
                 label(localDate.format(formatter))
             }
         }

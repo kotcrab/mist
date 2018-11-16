@@ -36,7 +36,7 @@ fun anyOp() = object : OperandMatcher {
 fun anyReg() = object : OperandMatcher {
     override fun match(op: Operand?): Boolean {
         if (op == null) return false
-        if (op !is Operand.Reg) return false
+        if (op !is RegOperand) return false
         return true
     }
 }
@@ -44,7 +44,7 @@ fun anyReg() = object : OperandMatcher {
 fun isReg(reg: Reg) = object : OperandMatcher {
     override fun match(op: Operand?): Boolean {
         if (op == null) return false
-        if (op !is Operand.Reg) return false
+        if (op !is RegOperand) return false
         return op.reg == reg
     }
 }
@@ -53,32 +53,7 @@ fun isReg(reg: Reg) = object : OperandMatcher {
 fun isReg(vararg regs: Reg) = object : OperandMatcher {
     override fun match(op: Operand?): Boolean {
         if (op == null) return false
-        if (op !is Operand.Reg) return false
-        return op.reg in regs
-    }
-}
-
-fun anyFpuReg() = object : OperandMatcher {
-    override fun match(op: Operand?): Boolean {
-        if (op == null) return false
-        if (op !is Operand.FpuReg) return false
-        return true
-    }
-}
-
-fun isFpuReg(reg: FpuReg) = object : OperandMatcher {
-    override fun match(op: Operand?): Boolean {
-        if (op == null) return false
-        if (op !is Operand.FpuReg) return false
-        return op.reg == reg
-    }
-}
-
-
-fun isFpuReg(vararg regs: FpuReg) = object : OperandMatcher {
-    override fun match(op: Operand?): Boolean {
-        if (op == null) return false
-        if (op !is Operand.FpuReg) return false
+        if (op !is RegOperand) return false
         return op.reg in regs
     }
 }
@@ -86,7 +61,7 @@ fun isFpuReg(vararg regs: FpuReg) = object : OperandMatcher {
 fun anyImm() = object : OperandMatcher {
     override fun match(op: Operand?): Boolean {
         if (op == null) return false
-        if (op !is Operand.Imm) return false
+        if (op !is ImmOperand) return false
         return true
     }
 }
@@ -94,7 +69,7 @@ fun anyImm() = object : OperandMatcher {
 fun isImm(value: Int) = object : OperandMatcher {
     override fun match(op: Operand?): Boolean {
         if (op == null) return false
-        if (op !is Operand.Imm) return false
+        if (op !is ImmOperand) return false
         return op.value == value
     }
 }
@@ -102,7 +77,7 @@ fun isImm(value: Int) = object : OperandMatcher {
 fun isImm(vararg values: Int) = object : OperandMatcher {
     override fun match(op: Operand?): Boolean {
         if (op == null) return false
-        if (op !is Operand.Imm) return false
+        if (op !is ImmOperand) return false
         return op.value in values
     }
 }

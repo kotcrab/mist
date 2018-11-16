@@ -18,26 +18,23 @@
 
 package mist.asm
 
-import mist.asm.*
+import mist.asm.mips.GprReg
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 /** @author Kotcrab */
 
 class OperandMatcherTest {
-    private val reg = Operand.Reg(Reg.s0)
-    private val reg2 = Operand.Reg(Reg.s1)
-    private val fpuReg = Operand.FpuReg(FpuReg.f0)
-    private val fpuReg2 = Operand.FpuReg(FpuReg.f1)
-    private val imm = Operand.Imm(0x42)
-    private val imm2 = Operand.Imm(0x43)
+    private val reg = RegOperand(GprReg.S0)
+    private val reg2 = RegOperand(GprReg.S1)
+    private val imm = ImmOperand(0x42)
+    private val imm2 = ImmOperand(0x43)
 
     @Test
     fun `match null op only`() {
         val m = isNull()
         assertThat(m.match(null)).isTrue()
         assertThat(m.match(reg)).isFalse()
-        assertThat(m.match(fpuReg)).isFalse()
         assertThat(m.match(imm)).isFalse()
     }
 
@@ -46,7 +43,6 @@ class OperandMatcherTest {
         val m = anyOp()
         assertThat(m.match(null)).isTrue()
         assertThat(m.match(reg)).isTrue()
-        assertThat(m.match(fpuReg)).isTrue()
         assertThat(m.match(imm)).isTrue()
     }
 
@@ -56,57 +52,24 @@ class OperandMatcherTest {
         assertThat(m.match(null)).isFalse()
         assertThat(m.match(reg)).isTrue()
         assertThat(m.match(reg2)).isTrue()
-        assertThat(m.match(fpuReg)).isFalse()
         assertThat(m.match(imm)).isFalse()
     }
 
     @Test
     fun `match single reg`() {
-        val m = isReg(Reg.s0)
+        val m = isReg(GprReg.S0)
         assertThat(m.match(null)).isFalse()
         assertThat(m.match(reg)).isTrue()
         assertThat(m.match(reg2)).isFalse()
-        assertThat(m.match(fpuReg)).isFalse()
         assertThat(m.match(imm)).isFalse()
     }
 
     @Test
     fun `match multiple reg`() {
-        val m = isReg(Reg.s0, Reg.s1)
+        val m = isReg(GprReg.S0, GprReg.S1)
         assertThat(m.match(null)).isFalse()
         assertThat(m.match(reg)).isTrue()
         assertThat(m.match(reg2)).isTrue()
-        assertThat(m.match(fpuReg)).isFalse()
-        assertThat(m.match(imm)).isFalse()
-    }
-
-    @Test
-    fun `match any fpu reg`() {
-        val m = anyFpuReg()
-        assertThat(m.match(null)).isFalse()
-        assertThat(m.match(reg)).isFalse()
-        assertThat(m.match(fpuReg)).isTrue()
-        assertThat(m.match(fpuReg2)).isTrue()
-        assertThat(m.match(imm)).isFalse()
-    }
-
-    @Test
-    fun `match single fpu reg`() {
-        val m = isFpuReg(FpuReg.f0)
-        assertThat(m.match(null)).isFalse()
-        assertThat(m.match(reg)).isFalse()
-        assertThat(m.match(fpuReg)).isTrue()
-        assertThat(m.match(fpuReg2)).isFalse()
-        assertThat(m.match(imm)).isFalse()
-    }
-
-    @Test
-    fun `match multiple fpu reg`() {
-        val m = isFpuReg(FpuReg.f0, FpuReg.f1)
-        assertThat(m.match(null)).isFalse()
-        assertThat(m.match(reg)).isFalse()
-        assertThat(m.match(fpuReg)).isTrue()
-        assertThat(m.match(fpuReg2)).isTrue()
         assertThat(m.match(imm)).isFalse()
     }
 
@@ -115,7 +78,6 @@ class OperandMatcherTest {
         val m = anyImm()
         assertThat(m.match(null)).isFalse()
         assertThat(m.match(reg)).isFalse()
-        assertThat(m.match(fpuReg)).isFalse()
         assertThat(m.match(imm)).isTrue()
         assertThat(m.match(imm2)).isTrue()
     }
@@ -125,7 +87,6 @@ class OperandMatcherTest {
         val m = isImm(0x42)
         assertThat(m.match(null)).isFalse()
         assertThat(m.match(reg)).isFalse()
-        assertThat(m.match(fpuReg)).isFalse()
         assertThat(m.match(imm)).isTrue()
         assertThat(m.match(imm2)).isFalse()
     }
@@ -135,7 +96,6 @@ class OperandMatcherTest {
         val m = isImm(0x42, 0x43)
         assertThat(m.match(null)).isFalse()
         assertThat(m.match(reg)).isFalse()
-        assertThat(m.match(fpuReg)).isFalse()
         assertThat(m.match(imm)).isTrue()
         assertThat(m.match(imm2)).isTrue()
     }

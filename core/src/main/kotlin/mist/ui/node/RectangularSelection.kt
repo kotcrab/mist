@@ -31,9 +31,11 @@ import mist.ui.util.Pointer
 
 /** @author Kotcrab */
 
-class RectangularSelection<T : VisualNode>(private val nodes: MutableList<T>,
-                                           private val pointer: Pointer,
-                                           private val finishedDrawing: (containedNodes: List<T>) -> Unit) : InputListener() {
+class RectangularSelection<T : VisualNode>(
+    private val nodes: MutableList<T>,
+    private val pointer: Pointer,
+    private val finishedDrawing: (containedNodes: List<T>) -> Unit
+) : InputListener() {
     companion object {
         private const val DRAW_BUTTON = Buttons.RIGHT
     }

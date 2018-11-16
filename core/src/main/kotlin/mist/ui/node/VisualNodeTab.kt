@@ -44,8 +44,8 @@ import mist.util.DecompLog
 
 /** @author Kotcrab */
 
-abstract class VisualNodeTab<T : VisualNode>(protected val context: Context, closeable: Boolean = false)
-    : Tab(true, closeable), MixedRenderingTab {
+abstract class VisualNodeTab<T : VisualNode>(protected val context: Context, closeable: Boolean = false) :
+    Tab(true, closeable), MixedRenderingTab {
     private val assets: Assets = context.inject()
     protected val appStage: Stage = context.inject()
     protected val projectIO: ProjectIO = context.inject()
@@ -121,7 +121,11 @@ abstract class VisualNodeTab<T : VisualNode>(protected val context: Context, clo
         }
 
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line)
-        if (selectedNodes.isNotEmpty()) selectedNodes.forEach { it.renderOutline(shapeRenderer, Color.ORANGE, true, 1f) }
+        if (selectedNodes.isNotEmpty()) {
+            selectedNodes.forEach {
+                it.renderOutline(shapeRenderer, Color.ORANGE, true, 1f)
+            }
+        }
         shapeRenderer.end()
 
         rectangularSelection.render(shapeRenderer)

@@ -70,7 +70,10 @@ class ExternalLayout(private val layoutExe: File, private val log: DecompLog) {
 
     private fun runLayout(gml: String): String {
         val out = ByteArrayOutputStream()
-        execute(layoutExe, streamHandler = PumpStreamHandler(out, ByteStreams.nullOutputStream(), gml.byteInputStream(Charsets.UTF_8)))
+        execute(
+            layoutExe,
+            streamHandler = PumpStreamHandler(out, ByteStreams.nullOutputStream(), gml.byteInputStream(Charsets.UTF_8))
+        )
         return out.toString(Charsets.UTF_8.name())
     }
 

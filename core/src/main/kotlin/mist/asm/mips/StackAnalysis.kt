@@ -16,17 +16,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package mist.asm
+package mist.asm.mips
 
 import kio.util.toSignedHex
 import kio.util.toWHex
-import mist.asm.Reg.*
+import mist.asm.*
 import mist.util.DecompLog
 import mist.util.logTag
 
 /** @author Kotcrab */
 
-// TODO rewrite as SHL module?
+// TODO rewrite as SHL module or write unit tests for this
 class StackAnalysis(private val graph: Graph, private val log: DecompLog) {
     private val tag = logTag()
 
@@ -37,8 +37,8 @@ class StackAnalysis(private val graph: Graph, private val log: DecompLog) {
     var possibleFalsePositives = false
         private set
     private val accessMap = mutableMapOf<Int, StackAccess>()
-    private val functionReturns = mutableMapOf<Int, Instr>()
-    val framePreserve = mutableMapOf<Int, Instr>()
+    private val functionReturns = mutableMapOf<Int, MipsInstr>()
+    val framePreserve = mutableMapOf<Int, MipsInstr>()
 
     fun analyze() {
         countReturnPoints()
@@ -50,7 +50,7 @@ class StackAnalysis(private val graph: Graph, private val log: DecompLog) {
     private fun countReturnPoints() {
         graph.bfs { node ->
             node.instrs.forEach {
-                if (it.matches(Opcode.Jr, isReg(ra))) {
+                if (it.matches(Jr, isReg(GprReg.Ra))) {
                     returnCount++
                     functionReturns[it.addr] = it
                 }
@@ -63,19 +63,21 @@ class StackAnalysis(private val graph: Graph, private val log: DecompLog) {
         graph.bfs { node ->
             val instrs = node.instrs
             instrs.forEach { instr ->
-                if (instr.matchesExact(Opcode.Addiu, isReg(sp), isReg(sp), anyImm())) {
-                    val imm = instr.op3AsImm()
+                if (instr.matchesExact(Addiu, isReg(GprReg.Sp), isReg(GprReg.Sp), anyImm())) {
+                    val imm = instr.op2AsImm()
                     if (imm < 0) {
                         frameSize = Math.abs(imm)
                         framePreserve[instr.addr] = instr
                     } else {
                         if (frameSize != imm) {
-                            log.panic(tag, "stack frame size mismatch, expected ${frameSize.toSignedHex()}, " +
-                                    "got ${imm.toSignedHex()}")
+                            log.panic(
+                                tag, "stack frame size mismatch, expected ${frameSize.toSignedHex()}, " +
+                                        "got ${imm.toSignedHex()}"
+                            )
                         }
                         framePreserve[instr.addr] = instr
                     }
-                } else if (instr.getModifiedRegisters().contains(sp)) {
+                } else if (instr.getModifiedRegisters().contains(GprReg.Sp)) {
                     log.panic(tag, "unusual sp operation on instruction: $instr")
                 }
             }
@@ -87,15 +89,15 @@ class StackAnalysis(private val graph: Graph, private val log: DecompLog) {
         graph.bfs { node ->
             val instrs = node.instrs
             instrs.forEach { instr ->
-                if (instr.matches(op2 = isReg(sp), op3 = anyImm())) {
-                    val imm = instr.op3AsImm()
-                    if (instr.isMemoryRead()) {
+                if (instr.matches(op1 = isReg(GprReg.Sp), op2 = anyImm())) {
+                    val imm = instr.op2AsImm()
+                    if (instr.hasFlag(MemoryRead)) {
                         accessMap.getOrPut(imm, defaultValue = { StackAccess() }).apply {
                             readCount++
                             relatedInstrs.add(instr)
                         }
                     }
-                    if (instr.isMemoryWrite()) {
+                    if (instr.hasFlag(MemoryWrite)) {
                         accessMap.getOrPut(imm, defaultValue = { StackAccess() }).apply {
                             writeCount++
                             relatedInstrs.add(instr)
@@ -108,17 +110,20 @@ class StackAnalysis(private val graph: Graph, private val log: DecompLog) {
     }
 
     private fun markFramePreserveInstructions() {
-        val frameRegs = arrayOf(s0, s1, s2, s3, s4, s5, s6, s7, gp, sp, fp, ra)
-        val alreadyPreserved = frameRegs.associateBy({ it }, { false }).toMutableMap()
+        val frameRegs = arrayOf(
+            GprReg.S0, GprReg.S1, GprReg.S2, GprReg.S3, GprReg.S4, GprReg.S5,
+            GprReg.S6, GprReg.S7, GprReg.Gp, GprReg.Sp, GprReg.Fp, GprReg.Ra
+        )
+        val alreadyPreserved: MutableMap<Reg, Boolean> = frameRegs.associateBy({ it }, { false }).toMutableMap()
 
         accessMap.forEach { addr, access ->
             if (access.writeCount != 1 || access.readCount != returnCount) return@forEach
-            if (access.relatedInstrs.all { it.op1 is Operand.Reg } == false) return@forEach
+            if (access.relatedInstrs.all { it.operands.getOrNull(0) is RegOperand } == false) return@forEach
             // check if all related instructions work on frame register and
             // check if all instructions work on the same register
-            val accessRegisterSet = access.relatedInstrs.map { it.op1AsReg() }.distinctBy { it }
-            if (access.relatedInstrs.all { instr -> instr.matches(op1 = isReg(*frameRegs)) } == false
-                    || accessRegisterSet.size != 1) {
+            val accessRegisterSet = access.relatedInstrs.map { it.op0AsReg() }.distinctBy { it }
+            if (access.relatedInstrs.all { instr -> instr.matches(op0 = isReg(*frameRegs)) } == false
+                || accessRegisterSet.size != 1) {
                 return@forEach
             }
             val accessRegister = accessRegisterSet.first()
@@ -136,20 +141,21 @@ class StackAnalysis(private val graph: Graph, private val log: DecompLog) {
                         // returning from function or frame register was overwritten by some other instruction
                         // in that case frame preserve is very likely
                         if (functionReturns.contains(instr.addr)
-                                || instr.getModifiedRegisters().contains(relInstr.op1AsReg())) {
+                            || instr.getModifiedRegisters().contains(relInstr.op0AsReg())
+                        ) {
                             valid = true
                             return@bfsFromInstr BfsVisitorAction.Stop
                         }
 
                         // case when jal occurs, the current function must have preserved ra
-                        if (accessRegister == ra && instr.matches(Opcode.Jal)) {
+                        if (accessRegister == GprReg.Ra && instr.matches(Jal)) {
                             valid = true
                             return@bfsFromInstr BfsVisitorAction.Stop
                         }
 
                         // when currently checked register was used as source register for some other instruction it's unlikely
                         // to be frame preserve
-                        if (instr.getSourceRegisters().contains(relInstr.op1AsReg())) {
+                        if (instr.getUsedRegisters().contains(relInstr.op0AsReg())) {
                             cause = "register was used as source register by other instruction"
                             return@bfsFromInstr BfsVisitorAction.Stop
                         }
@@ -176,5 +182,7 @@ class StackAnalysis(private val graph: Graph, private val log: DecompLog) {
     }
 }
 
-class StackAccess(var readCount: Int = 0, var writeCount: Int = 0,
-                  val relatedInstrs: MutableList<Instr> = mutableListOf())
+class StackAccess(
+    var readCount: Int = 0, var writeCount: Int = 0,
+    val relatedInstrs: MutableList<MipsInstr> = mutableListOf()
+)

@@ -20,6 +20,8 @@ package mist.shl
 
 import mist.asm.*
 import mist.io.ProjectIO
+import mist.asm.mips.*
+import mist.asm.mips.GprReg
 import mist.shl.ShlExpr.*
 import mist.util.DecompLog
 import mist.util.logTag
@@ -29,128 +31,234 @@ import mist.util.logTag
 class ShlLifter(private val projectIO: ProjectIO, private val log: DecompLog) {
     val tag = logTag()
 
-    fun lift(instr: List<Instr>): List<ShlInstr> {
+    fun lift(instr: List<MipsInstr>): List<ShlInstr> {
         val shl = mutableListOf<ShlInstr>()
         instr.forEach {
-            if (it.isMemoryRead()) {
-                shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1),
-                        ShlMemLoad(mapMemOpcode(it.opcode), ShlAdd(shlAuto(it.op2), shlAuto(it.op3)))))
-            } else if (it.isMemoryWrite()) {
-                shl.add(ShlMemStoreInstr(it.addr, ShlMemStore(mapMemOpcode(it.opcode), ShlAdd(shlAuto(it.op2), shlAuto(it.op3)),
-                        shlAuto(it.op1))))
+            if (it.hasFlag(MemoryRead)) {
+                shl.add(
+                    ShlAssignInstr(
+                        it.addr, shlAuto(it.operands[0]),
+                        ShlMemLoad(mapMemOpcode(it.opcode), ShlAdd(shlAuto(it.operands[1]), shlAuto(it.operands[2])))
+                    )
+                )
+            } else if (it.hasFlag(MemoryWrite)) {
+                shl.add(
+                    ShlMemStoreInstr(
+                        it.addr, ShlMemStore(
+                            mapMemOpcode(it.opcode), ShlAdd(shlAuto(it.operands[1]), shlAuto(it.operands[2])),
+                            shlAuto(it.operands[0])
+                        )
+                    )
+                )
             } else {
                 when (it.opcode) {
-                    Opcode.Addi, Opcode.Addiu -> {
+                    Addi, Addiu -> {
                         when {
-                            it.op2AsReg() == Reg.zero -> shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1), shlAuto(it.op3)))
-                            it.op3AsImm() == 0 -> shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1), shlAuto(it.op2)))
-                            it.op3AsImm() < 0 -> shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1),
-                                    ShlSub(shlAuto(it.op2), ShlConst(Math.abs(it.op3AsImm())))))
-                            else -> shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1),
-                                    ShlAdd(shlAuto(it.op2), shlAuto(it.op3))))
+                            it.op1AsReg() == GprReg.Zero -> shl.add(
+                                ShlAssignInstr(
+                                    it.addr,
+                                    shlAuto(it.operands[0]),
+                                    shlAuto(it.operands[2])
+                                )
+                            )
+                            it.op2AsImm() == 0 -> shl.add(
+                                ShlAssignInstr(
+                                    it.addr,
+                                    shlAuto(it.operands[0]),
+                                    shlAuto(it.operands[1])
+                                )
+                            )
+                            it.op2AsImm() < 0 -> shl.add(
+                                ShlAssignInstr(
+                                    it.addr, shlAuto(it.operands[0]),
+                                    ShlSub(shlAuto(it.operands[1]), ShlConst(Math.abs(it.op2AsImm())))
+                                )
+                            )
+                            else -> shl.add(
+                                ShlAssignInstr(
+                                    it.addr, shlAuto(it.operands[0]),
+                                    ShlAdd(shlAuto(it.operands[1]), shlAuto(it.operands[2]))
+                                )
+                            )
                         }
                     }
-                    Opcode.Add, Opcode.Addu -> {
-                        if (it.op2AsReg() == Reg.zero && it.op3AsReg() == Reg.zero) {
-                            shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1), ShlConst(0)))
-                        } else if (it.op2AsReg() == Reg.zero) {
-                            shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1), shlAuto(it.op3)))
-                        } else if (it.op3AsReg() == Reg.zero) {
-                            shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1), shlAuto(it.op2)))
+                    Add, Addu -> {
+                        if (it.op1AsReg() == GprReg.Zero && it.op2AsReg() == GprReg.Zero) {
+                            shl.add(ShlAssignInstr(it.addr, shlAuto(it.operands[0]), ShlConst(0)))
+                        } else if (it.op1AsReg() == GprReg.Zero) {
+                            shl.add(ShlAssignInstr(it.addr, shlAuto(it.operands[0]), shlAuto(it.operands[2])))
+                        } else if (it.op2AsReg() == GprReg.Zero) {
+                            shl.add(ShlAssignInstr(it.addr, shlAuto(it.operands[0]), shlAuto(it.operands[1])))
                         } else {
-                            shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1),
-                                    ShlAdd(shlAuto(it.op2), shlAuto(it.op3))))
+                            shl.add(
+                                ShlAssignInstr(
+                                    it.addr, shlAuto(it.operands[0]),
+                                    ShlAdd(shlAuto(it.operands[1]), shlAuto(it.operands[2]))
+                                )
+                            )
                         }
                     }
-                    Opcode.Slti, Opcode.Sltiu, Opcode.Slt, Opcode.Sltu -> {
-                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1),
-                                ShlLessThan(shlAuto(it.op2), shlAuto(it.op3))))
+                    Slti, Sltiu, Slt, Sltu -> {
+                        shl.add(
+                            ShlAssignInstr(
+                                it.addr, shlAuto(it.operands[0]),
+                                ShlLessThan(shlAuto(it.operands[1]), shlAuto(it.operands[2]))
+                            )
+                        )
                     }
-                    Opcode.Andi, Opcode.And -> {
-                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1),
-                                ShlAnd(shlAuto(it.op2), shlAuto(it.op3))))
+                    Andi, And -> {
+                        shl.add(
+                            ShlAssignInstr(
+                                it.addr, shlAuto(it.operands[0]),
+                                ShlAnd(shlAuto(it.operands[1]), shlAuto(it.operands[2]))
+                            )
+                        )
                     }
-                    Opcode.Ori, Opcode.Or -> {
+                    Ori, Or -> {
                         when {
-                            it.matches(op3 = isReg(Reg.zero)) -> shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1), shlAuto(it.op2)))
-                            it.matches(op2 = isReg(Reg.zero)) -> shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1), shlAuto(it.op3)))
-                            else -> shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1),
-                                    ShlOr(shlAuto(it.op2), shlAuto(it.op3))))
+                            it.matches(op2 = isReg(GprReg.Zero)) -> shl.add(
+                                ShlAssignInstr(
+                                    it.addr,
+                                    shlAuto(it.operands[0]),
+                                    shlAuto(it.operands[1])
+                                )
+                            )
+                            it.matches(op1 = isReg(GprReg.Zero)) -> shl.add(
+                                ShlAssignInstr(
+                                    it.addr,
+                                    shlAuto(it.operands[0]),
+                                    shlAuto(it.operands[2])
+                                )
+                            )
+                            else -> shl.add(
+                                ShlAssignInstr(
+                                    it.addr, shlAuto(it.operands[0]),
+                                    ShlOr(shlAuto(it.operands[1]), shlAuto(it.operands[2]))
+                                )
+                            )
                         }
                     }
-                    Opcode.Xori, Opcode.Xor -> {
-                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1),
-                                ShlXor(shlAuto(it.op2), shlAuto(it.op3))))
+                    Xori, Xor -> {
+                        shl.add(
+                            ShlAssignInstr(
+                                it.addr, shlAuto(it.operands[0]),
+                                ShlXor(shlAuto(it.operands[1]), shlAuto(it.operands[2]))
+                            )
+                        )
                     }
-                    Opcode.Lui -> {
-                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1), ShlConst(it.op2AsImm() shl 16)))
+                    Lui -> {
+                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.operands[0]), ShlConst(it.op1AsImm() shl 16)))
                     }
-                    Opcode.Sub, Opcode.Subu -> {
-                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1),
-                                ShlSub(shlAuto(it.op2), shlAuto(it.op3))))
+                    Sub, Subu -> {
+                        shl.add(
+                            ShlAssignInstr(
+                                it.addr, shlAuto(it.operands[0]),
+                                ShlSub(shlAuto(it.operands[1]), shlAuto(it.operands[2]))
+                            )
+                        )
                     }
-                    Opcode.Nor -> {
+                    Nor -> {
                         when {
-                            it.op2AsReg() != Reg.zero && it.op3AsReg() == Reg.zero -> shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1), ShlNeg(shlAuto(it.op2))))
-                            it.op2AsReg() == Reg.zero && it.op3AsReg() != Reg.zero -> shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1), ShlNeg(shlAuto(it.op3))))
+                            it.op1AsReg() != GprReg.Zero && it.op2AsReg() == GprReg.Zero -> shl.add(
+                                ShlAssignInstr(
+                                    it.addr,
+                                    shlAuto(it.operands[0]),
+                                    ShlNeg(shlAuto(it.operands[1]))
+                                )
+                            )
+                            it.op1AsReg() == GprReg.Zero && it.op2AsReg() != GprReg.Zero -> shl.add(
+                                ShlAssignInstr(
+                                    it.addr,
+                                    shlAuto(it.operands[0]),
+                                    ShlNeg(shlAuto(it.operands[2]))
+                                )
+                            )
                             else -> log.panic(tag, "nor can be only lifted to negation when one reg is set to reg zero")
                         }
                     }
-                    Opcode.Sll, Opcode.Sllv -> {
-                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1),
-                                ShlSll(shlAuto(it.op2), shlAuto(it.op3))))
+                    Sll, Sllv -> {
+                        shl.add(
+                            ShlAssignInstr(
+                                it.addr, shlAuto(it.operands[0]),
+                                ShlSll(shlAuto(it.operands[1]), shlAuto(it.operands[2]))
+                            )
+                        )
                     }
-                    Opcode.Srl, Opcode.Srlv -> {
-                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1),
-                                ShlSrl(shlAuto(it.op2), shlAuto(it.op3))))
+                    Srl, Srlv -> {
+                        shl.add(
+                            ShlAssignInstr(
+                                it.addr, shlAuto(it.operands[0]),
+                                ShlSrl(shlAuto(it.operands[1]), shlAuto(it.operands[2]))
+                            )
+                        )
                     }
-                    Opcode.Sra, Opcode.Srav -> {
-                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1),
-                                ShlSra(shlAuto(it.op2), shlAuto(it.op3))))
+                    Sra, Srav -> {
+                        shl.add(
+                            ShlAssignInstr(
+                                it.addr, shlAuto(it.operands[0]),
+                                ShlSra(shlAuto(it.operands[1]), shlAuto(it.operands[2]))
+                            )
+                        )
                     }
-                    Opcode.Mult, Opcode.Multu -> {
-                        shl.add(ShlAssignInstr(it.addr, ShlVar(Reg.lo),
+                    Mult, Multu -> {
+                        shl.add(
+                            ShlAssignInstr(
+                                it.addr, ShlVar(GprReg.Lo),
                                 ShlAnd(
-                                        ShlMul(shlAuto(it.op1), shlAuto(it.op2)),
-                                        ShlConst(0xFFFF)
-                                )))
-                        shl.add(ShlAssignInstr(it.addr, ShlVar(Reg.hi),
+                                    ShlMul(shlAuto(it.operands[0]), shlAuto(it.operands[1])),
+                                    ShlConst(0xFFFF)
+                                )
+                            )
+                        )
+                        shl.add(
+                            ShlAssignInstr(
+                                it.addr, ShlVar(GprReg.Hi),
                                 ShlSrl(
-                                        ShlMul(shlAuto(it.op1), shlAuto(it.op2)),
-                                        ShlConst(16)
-                                )))
+                                    ShlMul(shlAuto(it.operands[0]), shlAuto(it.operands[1])),
+                                    ShlConst(16)
+                                )
+                            )
+                        )
                     }
-                    Opcode.Div, Opcode.Divu -> {
-                        shl.add(ShlAssignInstr(it.addr, ShlVar(Reg.lo),
+                    Div, Divu -> {
+                        shl.add(
+                            ShlAssignInstr(
+                                it.addr, ShlVar(GprReg.Lo),
                                 ShlAnd(
-                                        ShlDiv(shlAuto(it.op1), shlAuto(it.op2)),
-                                        ShlConst(0xFFFF)
-                                )))
-                        shl.add(ShlAssignInstr(it.addr, ShlVar(Reg.hi),
+                                    ShlDiv(shlAuto(it.operands[0]), shlAuto(it.operands[1])),
+                                    ShlConst(0xFFFF)
+                                )
+                            )
+                        )
+                        shl.add(
+                            ShlAssignInstr(
+                                it.addr, ShlVar(GprReg.Hi),
                                 ShlSrl(
-                                        ShlDiv(shlAuto(it.op1), shlAuto(it.op2)),
-                                        ShlConst(16)
-                                )))
+                                    ShlDiv(shlAuto(it.operands[0]), shlAuto(it.operands[1])),
+                                    ShlConst(16)
+                                )
+                            )
+                        )
                     }
-                    Opcode.Mfhi -> {
-                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1), ShlVar(Reg.hi)))
+                    Mfhi -> {
+                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.operands[0]), ShlVar(GprReg.Hi)))
                     }
-                    Opcode.Mthi -> {
-                        shl.add(ShlAssignInstr(it.addr, ShlVar(Reg.hi), shlAuto(it.op1)))
+                    Mthi -> {
+                        shl.add(ShlAssignInstr(it.addr, ShlVar(GprReg.Hi), shlAuto(it.operands[0])))
                     }
-                    Opcode.Mflo -> {
-                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1), ShlVar(Reg.lo)))
+                    Mflo -> {
+                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.operands[0]), ShlVar(GprReg.Lo)))
                     }
-                    Opcode.Mtlo -> {
-                        shl.add(ShlAssignInstr(it.addr, ShlVar(Reg.lo), shlAuto(it.op1)))
+                    Mtlo -> {
+                        shl.add(ShlAssignInstr(it.addr, ShlVar(GprReg.Lo), shlAuto(it.operands[0])))
                     }
-                    Opcode.J, Opcode.Jr -> {
-                        shl.add(ShlJumpInstr(it.addr, false, shlAuto(it.op1)))
+                    J, Jr -> {
+                        shl.add(ShlJumpInstr(it.addr, false, shlAuto(it.operands[0])))
                     }
-                    Opcode.Jal -> {
-                        val jalDef = projectIO.getFuncDefByOffset(it.op1AsImm())
+                    Jal -> {
+                        val jalDef = projectIO.getFuncDefByOffset(it.op0AsImm())
                         if (jalDef == null) {
-                            shl.add(ShlJumpInstr(it.addr, true, shlAuto(it.op1)))
+                            shl.add(ShlJumpInstr(it.addr, true, shlAuto(it.operands[0])))
                         } else {
                             var returnReg: ShlVar? = null
                             if (jalDef.returnType !in arrayOf("void")) {
@@ -159,7 +267,10 @@ class ShlLifter(private val projectIO: ProjectIO, private val log: DecompLog) {
                             val args = mutableMapOf<String, ShlExpr>()
                             val freeArgs = shlArgRegisters.toMutableList()
                             jalDef.arguments.forEach { arg ->
-                                if (freeArgs.remove(arg.register) == false) log.panic(tag, "conflicting func. arg definitions (free arg list exhausted)")
+                                if (freeArgs.remove(arg.register) == false) log.panic(
+                                    tag,
+                                    "conflicting func. arg definitions (free arg list exhausted)"
+                                )
                                 if (arg.type.endsWith("...")) { //vararg
                                     args[arg.register] = ShlVar(arg.register)
                                     freeArgs.forEach { freeArg ->
@@ -170,47 +281,79 @@ class ShlLifter(private val projectIO: ProjectIO, private val log: DecompLog) {
                                     args[arg.register] = ShlVar(arg.register)
                                 }
                             }
-                            shl.add(ShlCallInstr(it.addr, returnReg, ShlCall(it.op1AsImm(), args)))
+                            shl.add(ShlCallInstr(it.addr, returnReg, ShlCall(it.op0AsImm(), args)))
                         }
                     }
-                    Opcode.Jalr -> {
-                        if (it.op1AsReg() != Reg.ra) log.panic(tag, "jalr doesn't use ra as return register")
-                        shl.add(ShlJumpInstr(it.addr, true, shlAuto(it.op2)))
+                    Jalr -> {
+                        if (it.op0AsReg() != GprReg.Ra) log.panic(tag, "jalr doesn't use ra as return register")
+                        shl.add(ShlJumpInstr(it.addr, true, shlAuto(it.operands[1])))
                     }
-                    Opcode.Nop -> {
+                    Nop -> {
                         shl.add(ShlNopInstr(it.addr))
                     }
-                    Opcode.Beq, Opcode.Beql -> {
-                        shl.add(ShlBranchInstr(it.addr, it.opcode == Opcode.Beql,
-                                ShlEqual(shlAuto(it.op1), shlAuto(it.op2))))
+                    Beq, Beql -> {
+                        shl.add(
+                            ShlBranchInstr(
+                                it.addr, it.opcode == Beql,
+                                ShlEqual(shlAuto(it.operands[0]), shlAuto(it.operands[1]))
+                            )
+                        )
                     }
-                    Opcode.Bne, Opcode.Bnel -> {
-                        shl.add(ShlBranchInstr(it.addr, it.opcode == Opcode.Bnel,
-                                ShlNotEqual(shlAuto(it.op1), shlAuto(it.op2))))
+                    Bne, Bnel -> {
+                        shl.add(
+                            ShlBranchInstr(
+                                it.addr, it.opcode == Bnel,
+                                ShlNotEqual(shlAuto(it.operands[0]), shlAuto(it.operands[1]))
+                            )
+                        )
                     }
-                    Opcode.Blez, Opcode.Blezl -> {
-                        shl.add(ShlBranchInstr(it.addr, it.opcode == Opcode.Blezl,
-                                ShlLessEqualThan(shlAuto(it.op1), ShlConst(0))))
+                    Blez, Blezl -> {
+                        shl.add(
+                            ShlBranchInstr(
+                                it.addr, it.opcode == Blezl,
+                                ShlLessEqualThan(shlAuto(it.operands[0]), ShlConst(0))
+                            )
+                        )
                     }
-                    Opcode.Bgtz, Opcode.Bgtzl -> {
-                        shl.add(ShlBranchInstr(it.addr, it.opcode == Opcode.Bgtzl,
-                                ShlGreaterThan(shlAuto(it.op1), ShlConst(0))))
+                    Bgtz, Bgtzl -> {
+                        shl.add(
+                            ShlBranchInstr(
+                                it.addr, it.opcode == Bgtzl,
+                                ShlGreaterThan(shlAuto(it.operands[0]), ShlConst(0))
+                            )
+                        )
                     }
-                    Opcode.Bltz, Opcode.Bltzl -> {
-                        shl.add(ShlBranchInstr(it.addr, it.opcode == Opcode.Bltzl,
-                                ShlLessThan(shlAuto(it.op1), ShlConst(0))))
+                    Bltz, Bltzl -> {
+                        shl.add(
+                            ShlBranchInstr(
+                                it.addr, it.opcode == Bltzl,
+                                ShlLessThan(shlAuto(it.operands[0]), ShlConst(0))
+                            )
+                        )
                     }
-                    Opcode.Bgez, Opcode.Bgezl -> {
-                        shl.add(ShlBranchInstr(it.addr, it.opcode == Opcode.Bgezl,
-                                ShlGreaterEqualThan(shlAuto(it.op1), ShlConst(0))))
+                    Bgez, Bgezl -> {
+                        shl.add(
+                            ShlBranchInstr(
+                                it.addr, it.opcode == Bgezl,
+                                ShlGreaterEqualThan(shlAuto(it.operands[0]), ShlConst(0))
+                            )
+                        )
                     }
-                    Opcode.Bltzal, Opcode.Bltzall -> {
-                        shl.add(ShlBranchInstr(it.addr, it.opcode == Opcode.Bltzall,
-                                ShlLessThan(shlAuto(it.op1), ShlConst(0)), true))
+                    Bltzal, Bltzall -> {
+                        shl.add(
+                            ShlBranchInstr(
+                                it.addr, it.opcode == Bltzall,
+                                ShlLessThan(shlAuto(it.operands[0]), ShlConst(0)), true
+                            )
+                        )
                     }
-                    Opcode.Bgezal, Opcode.Bgezall -> {
-                        shl.add(ShlBranchInstr(it.addr, it.opcode == Opcode.Bgezall,
-                                ShlGreaterEqualThan(shlAuto(it.op1), ShlConst(0)), true))
+                    Bgezal, Bgezall -> {
+                        shl.add(
+                            ShlBranchInstr(
+                                it.addr, it.opcode == Bgezall,
+                                ShlGreaterEqualThan(shlAuto(it.operands[0]), ShlConst(0)), true
+                            )
+                        )
                     }
 
 //                    Syscall(Type.Other),
@@ -232,76 +375,122 @@ class ShlLifter(private val projectIO: ProjectIO, private val log: DecompLog) {
 //
 //                    Sync(Type.Other),
 //
-                    Opcode.Mtc1 -> {
-                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.op2), shlAuto(it.op1)))
+                    FpuMtc1 -> {
+                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.operands[1]), shlAuto(it.operands[0])))
                     }
-                    Opcode.Mfc1 -> {
-                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1), shlAuto(it.op2)))
+                    FpuMfc1 -> {
+                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.operands[0]), shlAuto(it.operands[1])))
                     }
 //                    Ctc1(Type.Other),
 //                    Cfc1(Type.Other),
 //
-                    Opcode.FpuAdd -> {
-                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1),
-                                ShlAdd(shlAuto(it.op2), shlAuto(it.op3))))
+                    FpuAddS -> {
+                        shl.add(
+                            ShlAssignInstr(
+                                it.addr, shlAuto(it.operands[0]),
+                                ShlAdd(shlAuto(it.operands[1]), shlAuto(it.operands[2]))
+                            )
+                        )
                     }
-                    Opcode.FpuSub -> {
-                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1),
-                                ShlSub(shlAuto(it.op2), shlAuto(it.op3))))
+                    FpuSubS -> {
+                        shl.add(
+                            ShlAssignInstr(
+                                it.addr, shlAuto(it.operands[0]),
+                                ShlSub(shlAuto(it.operands[1]), shlAuto(it.operands[2]))
+                            )
+                        )
                     }
-                    Opcode.FpuMul -> {
-                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1), ShlMul(shlAuto(it.op2), shlAuto(it.op3))))
+                    FpuMulS -> {
+                        shl.add(
+                            ShlAssignInstr(
+                                it.addr,
+                                shlAuto(it.operands[0]),
+                                ShlMul(shlAuto(it.operands[1]), shlAuto(it.operands[2]))
+                            )
+                        )
                     }
-                    Opcode.FpuDiv -> {
-                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1), ShlDiv(shlAuto(it.op2), shlAuto(it.op3))))
+                    FpuDivS -> {
+                        shl.add(
+                            ShlAssignInstr(
+                                it.addr,
+                                shlAuto(it.operands[0]),
+                                ShlDiv(shlAuto(it.operands[1]), shlAuto(it.operands[2]))
+                            )
+                        )
                     }
-                    Opcode.FpuAbs -> {
-                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1), ShlAbs(shlAuto(it.op2))))
+                    FpuAbsS -> {
+                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.operands[0]), ShlAbs(shlAuto(it.operands[1]))))
                     }
-                    Opcode.FpuNeg -> {
-                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1), ShlNeg(shlAuto(it.op2))))
+                    FpuNegS -> {
+                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.operands[0]), ShlNeg(shlAuto(it.operands[1]))))
                     }
-                    Opcode.FpuSqrt -> {
-                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1), ShlSqrt(shlAuto(it.op2))))
+                    FpuSqrtS -> {
+                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.operands[0]), ShlSqrt(shlAuto(it.operands[1]))))
                     }
-                    Opcode.FpuRoundW -> { //TODO untested
-                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1), ShlRound(shlAuto(it.op2))))
+                    FpuRoundWS -> { //TODO untested
+                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.operands[0]), ShlRound(shlAuto(it.operands[1]))))
                     }
-                    Opcode.FpuTruncW -> {
-                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1), ShlTrunc(shlAuto(it.op2))))
+                    FpuTruncWS -> {
+                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.operands[0]), ShlTrunc(shlAuto(it.operands[1]))))
                     }
-                    Opcode.FpuCeilW -> { //TODO untested
-                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1), ShlCeil(shlAuto(it.op2))))
+                    FpuCeilWS -> { //TODO untested
+                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.operands[0]), ShlCeil(shlAuto(it.operands[1]))))
                     }
-                    Opcode.FpuFloorW -> { //TODO untested
-                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1), ShlFloor(shlAuto(it.op2))))
+                    FpuFloorWS -> { //TODO untested
+                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.operands[0]), ShlFloor(shlAuto(it.operands[1]))))
                     }
-                    Opcode.FpuCEq -> {
-                        shl.add(ShlAssignInstr(it.addr, ShlVar(FpuReg.cc), ShlEqual(shlAuto(it.op1), shlAuto(it.op2))))
+                    FpuCEqS -> {
+                        shl.add(
+                            ShlAssignInstr(
+                                it.addr,
+                                ShlVar(FpuReg.Cc0),
+                                ShlEqual(shlAuto(it.operands[0]), shlAuto(it.operands[1]))
+                            )
+                        )
                     }
-                    Opcode.FpuCLe -> {
-                        shl.add(ShlAssignInstr(it.addr, ShlVar(FpuReg.cc), ShlLessEqualThan(shlAuto(it.op1), shlAuto(it.op2))))
+                    FpuCLeS -> {
+                        shl.add(
+                            ShlAssignInstr(
+                                it.addr,
+                                ShlVar(FpuReg.Cc0),
+                                ShlLessEqualThan(shlAuto(it.operands[0]), shlAuto(it.operands[1]))
+                            )
+                        )
                     }
-                    Opcode.FpuCLt -> {
-                        shl.add(ShlAssignInstr(it.addr, ShlVar(FpuReg.cc), ShlLessThan(shlAuto(it.op1), shlAuto(it.op2))))
+                    FpuCLtS -> {
+                        shl.add(
+                            ShlAssignInstr(
+                                it.addr,
+                                ShlVar(FpuReg.Cc0),
+                                ShlLessThan(shlAuto(it.operands[0]), shlAuto(it.operands[1]))
+                            )
+                        )
                     }
-                    Opcode.FpuCvtSW -> {
-                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1), ShlToFloat(shlAuto(it.op2))))
+                    FpuCvtSW -> {
+                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.operands[0]), ShlToFloat(shlAuto(it.operands[1]))))
                     }
-                    Opcode.FpuCvtWS -> { //TODO untested
-                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1), ShlToInt(shlAuto(it.op2))))
+                    FpuCvtWS -> { //TODO untested
+                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.operands[0]), ShlToInt(shlAuto(it.operands[1]))))
                     }
-                    Opcode.FpuMov -> {
-                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.op1), shlAuto(it.op2)))
+                    FpuMovS -> {
+                        shl.add(ShlAssignInstr(it.addr, shlAuto(it.operands[0]), shlAuto(it.operands[1])))
                     }
 
-                    Opcode.FpuBc1t, Opcode.FpuBc1tl -> {
-                        shl.add(ShlBranchInstr(it.addr, it.opcode == Opcode.FpuBc1tl,
-                                ShlEqual(ShlVar(FpuReg.cc), ShlConst(1)), false))
+                    FpuBc1t, FpuBc1tl -> {
+                        shl.add(
+                            ShlBranchInstr(
+                                it.addr, it.opcode == FpuBc1tl,
+                                ShlEqual(ShlVar(FpuReg.Cc0), ShlConst(1)), false
+                            )
+                        )
                     }
-                    Opcode.FpuBc1f, Opcode.FpuBc1fl -> {
-                        shl.add(ShlBranchInstr(it.addr, it.opcode == Opcode.FpuBc1fl,
-                                ShlEqual(ShlVar(FpuReg.cc), ShlConst(0)), false))
+                    FpuBc1f, FpuBc1fl -> {
+                        shl.add(
+                            ShlBranchInstr(
+                                it.addr, it.opcode == FpuBc1fl,
+                                ShlEqual(ShlVar(FpuReg.Cc0), ShlConst(0)), false
+                            )
+                        )
                     }
 
                     else -> log.panic(tag, "not implemented ${it.opcode}")
@@ -313,31 +502,30 @@ class ShlLifter(private val projectIO: ProjectIO, private val log: DecompLog) {
 
     private fun mapMemOpcode(opcode: Opcode): ShlMemOpcode {
         return when (opcode) {
-            Opcode.Lb -> ShlMemOpcode.Lb
-            Opcode.Lbu -> ShlMemOpcode.Lbu
-            Opcode.Sb -> ShlMemOpcode.Sb
-            Opcode.Lh -> ShlMemOpcode.Lh
-            Opcode.Lhu -> ShlMemOpcode.Lhu
-            Opcode.Sh -> ShlMemOpcode.Sh
-            Opcode.Lw -> ShlMemOpcode.Lw
-            Opcode.Sw -> ShlMemOpcode.Sw
-            Opcode.Lwl -> ShlMemOpcode.Lwl
-            Opcode.Lwr -> ShlMemOpcode.Lwr
-            Opcode.Swl -> ShlMemOpcode.Swl
-            Opcode.Swr -> ShlMemOpcode.Swr
-            Opcode.Ll -> ShlMemOpcode.Ll
-            Opcode.Sc -> ShlMemOpcode.Sc
-            Opcode.Lwc1 -> ShlMemOpcode.Lw
-            Opcode.Swc1 -> ShlMemOpcode.Sw
+            Lb -> ShlMemOpcode.Lb
+            Lbu -> ShlMemOpcode.Lbu
+            Sb -> ShlMemOpcode.Sb
+            Lh -> ShlMemOpcode.Lh
+            Lhu -> ShlMemOpcode.Lhu
+            Sh -> ShlMemOpcode.Sh
+            Lw -> ShlMemOpcode.Lw
+            Sw -> ShlMemOpcode.Sw
+            Lwl -> ShlMemOpcode.Lwl
+            Lwr -> ShlMemOpcode.Lwr
+            Swl -> ShlMemOpcode.Swl
+            Swr -> ShlMemOpcode.Swr
+            Ll -> ShlMemOpcode.Ll
+            Sc -> ShlMemOpcode.Sc
+            Lwc1 -> ShlMemOpcode.Lw
+            Swc1 -> ShlMemOpcode.Sw
             else -> log.panic(tag, "not an memory opcode: $opcode")
         }
     }
 
     private fun shlAuto(op: Operand?): ShlExpr {
         return when (op) {
-            is Operand.Reg -> if (op.reg == Reg.zero) ShlConst(0) else ShlVar(op.reg)
-            is Operand.FpuReg -> ShlVar(op.reg)
-            is Operand.Imm -> ShlConst(op.value)
+            is RegOperand -> if (op.reg == GprReg.Zero) ShlConst(0) else ShlVar(op.reg)
+            is ImmOperand -> ShlConst(op.value)
             else -> log.panic(tag, "can't convert operand to ShlExpr: $op")
         }
     }

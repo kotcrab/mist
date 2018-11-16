@@ -16,11 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package mist.asm
+package mist.asm.mips
 
 import kmips.Label
 import kmips.Reg.*
 import kmips.assembleAsByteArray
+import mist.asm.FunctionDef
+import mist.asm.IdiomMatcher
+import mist.asm.mips.allegrex.AllegrexDisassembler
 import mist.test.util.MemBinLoader
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
@@ -28,7 +31,7 @@ import org.junit.jupiter.api.Test
 
 /** @author Kotcrab */
 
-class SwitchIdiomTest {
+class MipsSwitchIdiomsTest {
     @Test
     fun `match switch at idiom, beq sltiu variant`() {
         val bytes = assembleAsByteArray {
@@ -44,7 +47,7 @@ class SwitchIdiomTest {
             nop()
             label(dummyLabel)
         }
-        verifySwitchMatch(bytes, SwitchAtRegIdiom(), 0x88FFDDC0.toInt())
+        verifySwitchMatch(bytes, MipsSwitchIdioms().atRegIdiom, 0x88FFDDC0.toInt())
     }
 
     @Test
@@ -62,7 +65,7 @@ class SwitchIdiomTest {
             nop()
             label(dummyLabel)
         }
-        verifySwitchMatch(bytes, SwitchAtRegIdiom(), 0x88FFDDC0.toInt())
+        verifySwitchMatch(bytes, MipsSwitchIdioms().atRegIdiom, 0x88FFDDC0.toInt())
     }
 
     @Test
@@ -80,12 +83,12 @@ class SwitchIdiomTest {
             nop()
             label(dummyLabel)
         }
-        verifySwitchMatch(bytes, SwitchA0RegIdiom(), 0x89002240.toInt())
+        verifySwitchMatch(bytes, MipsSwitchIdioms().a0RegIdiom, 0x89002240.toInt())
     }
 
-    private fun verifySwitchMatch(bytes: ByteArray, idiom: IdiomMatcher<SwitchDescriptor>, expectedJumpTableLoc: Int) {
-        val dasm = Disassembler(MemBinLoader(bytes), FunctionDef("", 0, bytes.size)).disassembly
-        val result = idiom.matches(dasm.instr, dasm.instr.lastIndex)
+    private fun verifySwitchMatch(bytes: ByteArray, idiom: IdiomMatcher<MipsInstr, *, SwitchDescriptor>, expectedJumpTableLoc: Int) {
+        val dasm = AllegrexDisassembler(MemBinLoader(bytes), FunctionDef("", 0, bytes.size)).disassembly
+        val result = idiom.matches(dasm.instr as List<MipsInstr>, dasm.instr.lastIndex)
         Assertions.assertThat(result).isNotNull()
         result!!
         assertThat(result.jumpTableLoc).isEqualTo(expectedJumpTableLoc)

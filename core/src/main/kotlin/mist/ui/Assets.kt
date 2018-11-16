@@ -41,7 +41,8 @@ class Assets {
         fontTexture = Texture("inconsolata.png".toInternalFile(), true)
         fontTexture.setFilter(TextureFilter.MipMapLinearLinear, TextureFilter.Linear)
         consolasFont = BitmapFont("inconsolata.fnt".toInternalFile(), TextureRegion(fontTexture), false)
-        consolasSmallFont = BitmapFont("inconsolata-small.fnt".toInternalFile(), "inconsolata-small.png".toInternalFile(), false)
+        consolasSmallFont =
+                BitmapFont("inconsolata-small.fnt".toInternalFile(), "inconsolata-small.png".toInternalFile(), false)
     }
 
     fun dispose() {

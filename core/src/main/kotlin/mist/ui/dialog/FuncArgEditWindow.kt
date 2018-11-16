@@ -30,8 +30,10 @@ import mist.shl.shlArgRegisters
 
 /** @author Kotcrab */
 
-fun createFuncArgEditWindow(func: ShlFunctionDef, def: ShlArgumentDef, editMode: Boolean,
-                            commit: (ShlArgumentDef) -> Unit) = window("Edit argument") {
+fun createFuncArgEditWindow(
+    func: ShlFunctionDef, def: ShlArgumentDef, editMode: Boolean,
+    commit: (ShlArgumentDef) -> Unit
+) = window("Edit argument") {
     val typeFieldValidator = object : FormInputValidator("Only one field can be vararg") {
         override fun validate(input: String): Boolean {
             if (!input.endsWith("...")) return true

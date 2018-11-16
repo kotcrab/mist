@@ -18,6 +18,8 @@
 
 package mist.util
 
+import kotlin.reflect.KClass
+
 /** @author Kotcrab */
 
 class DecompLog {
@@ -45,4 +47,8 @@ class DecompLog {
 
 fun Any.logTag(): String {
     return this.javaClass.simpleName
+}
+
+fun logTag(clazz: KClass<*>): String {
+    return clazz.java.simpleName
 }

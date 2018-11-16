@@ -26,25 +26,29 @@ import ktx.inject.Context
 
 /** @author Kotcrab */
 
-class FlowNodeDto(val id: Int,
-                  val fileOffset: Int,
-                  val apiName: String,
-                  val color: Int,
-                  val x: Float,
-                  val y: Float,
-                  val outEdges: List<Int>) {
+class FlowNodeDto(
+    val id: Int,
+    val fileOffset: Int,
+    val apiName: String,
+    val color: Int,
+    val x: Float,
+    val y: Float,
+    val outEdges: List<Int>
+) {
     constructor(node: FlowNode) : this(node.id,
-            node.fileOffset,
-            node.apiName,
-            Color.rgba8888(node.color),
-            node.getX(),
-            node.getY(),
-            node.outEdges.map { it.id })
+        node.fileOffset,
+        node.apiName,
+        Color.rgba8888(node.color),
+        node.getX(),
+        node.getY(),
+        node.outEdges.map { it.id })
 }
 
-class FlowNode(context: Context, nodeStage: Stage,
-               val id: Int, nodeFuncName: String, val fileOffset: Int, color: Color,
-               xPos: Float, yPos: Float) : VisualNode(context, color, xPos, yPos) {
+class FlowNode(
+    context: Context, nodeStage: Stage,
+    val id: Int, nodeFuncName: String, val fileOffset: Int, color: Color,
+    xPos: Float, yPos: Float
+) : VisualNode(context, color, xPos, yPos) {
     val inEdges = mutableListOf<FlowNode>()
     val outEdges = mutableListOf<FlowNode>()
     var apiName = ""
@@ -104,7 +108,8 @@ class FlowNode(context: Context, nodeStage: Stage,
         } else {
             ""
         }
-        val externalCalls = outEdges.filter { it.apiName != apiName }.joinToString(separator = "\n", transform = { it.titleLabel.text })
+        val externalCalls =
+            outEdges.filter { it.apiName != apiName }.joinToString(separator = "\n", transform = { it.titleLabel.text })
         if (externalCalls.isNotBlank()) {
             if (extraText.isNotBlank()) extraText += "\n"
             extraText += "Ext. calls from this:\n"
@@ -115,7 +120,12 @@ class FlowNode(context: Context, nodeStage: Stage,
 
     override fun renderExtraOutline(shapeRenderer: ShapeRenderer) {
         // line under title text
-        shapeRenderer.line(bounds.x, (bounds.y + bounds.height - 30), (bounds.x + bounds.width), (bounds.y + bounds.height - 30))
+        shapeRenderer.line(
+            bounds.x,
+            (bounds.y + bounds.height - 30),
+            (bounds.x + bounds.width),
+            (bounds.y + bounds.height - 30)
+        )
     }
 
     fun addNode(otherNode: FlowNode) {

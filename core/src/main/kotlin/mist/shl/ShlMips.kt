@@ -22,8 +22,8 @@ import kio.util.RuntimeTypeAdapterFactory
 import kio.util.runtimeTypeAdapter
 import kio.util.toHex
 import kio.util.toInt
-import mist.asm.FpuReg
 import mist.asm.Reg
+import mist.asm.mips.GprReg
 import mist.shl.ShlExpr.*
 import kotlin.math.*
 
@@ -36,23 +36,26 @@ abstract class ShlInstr constructor(internal var addr: Int) {
 
     companion object {
         fun provideGsonTypeAdapter(): RuntimeTypeAdapterFactory<ShlInstr> {
-            return runtimeTypeAdapter(base = ShlInstr::class,
-                    subTypes = arrayOf(
-                            ShlMemStoreInstr::class,
-                            ShlStructStoreInstr::class,
-                            ShlAssignInstr::class,
-                            ShlJumpInstr::class,
-                            ShlCallInstr::class,
-                            ShlBranchInstr::class,
-                            ShlNopInstr::class),
-                    legacySubTypes = arrayOf(
-                            "SHLMemStoreInstr" to ShlMemStoreInstr::class,
-                            "SHLStructStoreInstr" to ShlStructStoreInstr::class,
-                            "SHLAssignInstr" to ShlAssignInstr::class,
-                            "SHLJumpInstr" to ShlJumpInstr::class,
-                            "SHLCallInstr" to ShlCallInstr::class,
-                            "SHLBranchInstr" to ShlBranchInstr::class,
-                            "SHLNopInstr" to ShlNopInstr::class)
+            return runtimeTypeAdapter(
+                base = ShlInstr::class,
+                subTypes = arrayOf(
+                    ShlMemStoreInstr::class,
+                    ShlStructStoreInstr::class,
+                    ShlAssignInstr::class,
+                    ShlJumpInstr::class,
+                    ShlCallInstr::class,
+                    ShlBranchInstr::class,
+                    ShlNopInstr::class
+                ),
+                legacySubTypes = arrayOf(
+                    "SHLMemStoreInstr" to ShlMemStoreInstr::class,
+                    "SHLStructStoreInstr" to ShlStructStoreInstr::class,
+                    "SHLAssignInstr" to ShlAssignInstr::class,
+                    "SHLJumpInstr" to ShlJumpInstr::class,
+                    "SHLCallInstr" to ShlCallInstr::class,
+                    "SHLBranchInstr" to ShlBranchInstr::class,
+                    "SHLNopInstr" to ShlNopInstr::class
+                )
             )
         }
     }
@@ -169,10 +172,11 @@ class ShlJumpInstr constructor(addr: Int, var link: Boolean, var dest: ShlExpr) 
     override fun getReadExpr() = dest
     override fun getWriteExpr(): ShlExpr? = null
     override fun getNullifiedVars(): Array<String> = if (link) arrayOf(
-            Reg.at, Reg.v0, Reg.v1,
-            Reg.a0, Reg.a1, Reg.a2, Reg.a3,
-            Reg.t0, Reg.t1, Reg.t2, Reg.t3, Reg.t4, Reg.t5, Reg.t6, Reg.t7, Reg.t8, Reg.t9,
-            Reg.hi, Reg.lo).map { it.toString() }.toTypedArray() else emptyArray()
+        GprReg.At, GprReg.V0, GprReg.V1,
+        GprReg.A0, GprReg.A1, GprReg.A2, GprReg.A3,
+        GprReg.T0, GprReg.T1, GprReg.T2, GprReg.T3, GprReg.T4, GprReg.T5, GprReg.T6, GprReg.T7, GprReg.T8, GprReg.T9,
+        GprReg.Hi, GprReg.Lo
+    ).map { it.toString() }.toTypedArray() else emptyArray()
 
     override fun toString(): String {
         return "j${if (link) "al" else ""} $dest"
@@ -193,13 +197,29 @@ class ShlCallInstr constructor(addr: Int, var returnReg: ShlVar?, var callExpr: 
     override fun getWriteExpr(): ShlExpr? = returnReg
     override fun getNullifiedVars(): Array<String> {
         val args = mutableListOf(
-                Reg.at, Reg.v0, Reg.v1,
-                Reg.a0, Reg.a1, Reg.a2, Reg.a3,
-                Reg.t0, Reg.t1, Reg.t2, Reg.t3, Reg.t4, Reg.t5, Reg.t6, Reg.t7, Reg.t8, Reg.t9,
-                Reg.hi, Reg.lo)
+            GprReg.At,
+            GprReg.V0,
+            GprReg.V1,
+            GprReg.A0,
+            GprReg.A1,
+            GprReg.A2,
+            GprReg.A3,
+            GprReg.T0,
+            GprReg.T1,
+            GprReg.T2,
+            GprReg.T3,
+            GprReg.T4,
+            GprReg.T5,
+            GprReg.T6,
+            GprReg.T7,
+            GprReg.T8,
+            GprReg.T9,
+            GprReg.Hi,
+            GprReg.Lo
+        )
         returnReg?.let {
             if (it.varName == "v0" || it.varName == "v1") {
-                args.remove(Reg.valueOf(it.varName))
+                args.remove(GprReg.values().first { reg -> reg.name == it.varName })
             }
         }
         return args.map { it.toString() }.toTypedArray()
@@ -224,7 +244,8 @@ class ShlCallInstr constructor(addr: Int, var returnReg: ShlVar?, var callExpr: 
     }
 }
 
-class ShlBranchInstr constructor(addr: Int, var likely: Boolean, var cond: ShlExpr, var link: Boolean = false) : ShlInstr(addr) {
+class ShlBranchInstr constructor(addr: Int, var likely: Boolean, var cond: ShlExpr, var link: Boolean = false) :
+    ShlInstr(addr) {
     private constructor() : this(0x0, false, ShlCall(0), false) // GSON no-arg constructor
 
     override fun getReadExpr() = cond
@@ -264,89 +285,92 @@ class ShlNopInstr constructor(addr: Int) : ShlInstr(addr) {
 sealed class ShlExpr {
     companion object {
         fun provideGsonTypeAdapter(): RuntimeTypeAdapterFactory<ShlExpr> {
-            return runtimeTypeAdapter(base = ShlExpr::class,
-                    subTypes = arrayOf(
-                            ShlVar::class,
-                            ShlConst::class,
-                            ShlString::class,
-                            ShlGlobalRef::class,
-                            ShlFuncPointer::class,
-                            ShlFloat::class,
-                            ShlMemLoad::class,
-                            ShlMemStore::class,
-                            ShlStructLoad::class,
-                            ShlStructStore::class,
-                            ShlCall::class,
+            return runtimeTypeAdapter(
+                base = ShlExpr::class,
+                subTypes = arrayOf(
+                    ShlVar::class,
+                    ShlConst::class,
+                    ShlString::class,
+                    ShlGlobalRef::class,
+                    ShlFuncPointer::class,
+                    ShlFloat::class,
+                    ShlMemLoad::class,
+                    ShlMemStore::class,
+                    ShlStructLoad::class,
+                    ShlStructStore::class,
+                    ShlCall::class,
 
-                            ShlUnaryExpr::class,
-                            ShlNeg::class,
-                            ShlAbs::class,
-                            ShlSqrt::class,
-                            ShlRound::class,
-                            ShlTrunc::class,
-                            ShlCeil::class,
-                            ShlFloor::class,
-                            ShlToInt::class,
-                            ShlToFloat::class,
+                    ShlUnaryExpr::class,
+                    ShlNeg::class,
+                    ShlAbs::class,
+                    ShlSqrt::class,
+                    ShlRound::class,
+                    ShlTrunc::class,
+                    ShlCeil::class,
+                    ShlFloor::class,
+                    ShlToInt::class,
+                    ShlToFloat::class,
 
-                            ShlBinaryExpr::class,
-                            ShlAdd::class,
-                            ShlSub::class,
-                            ShlMul::class,
-                            ShlDiv::class,
-                            ShlAnd::class,
-                            ShlOr::class,
-                            ShlXor::class,
-                            ShlSll::class,
-                            ShlSrl::class,
-                            ShlSra::class,
-                            ShlLessThan::class,
-                            ShlLessEqualThan::class,
-                            ShlGreaterThan::class,
-                            ShlGreaterEqualThan::class,
-                            ShlEqual::class,
-                            ShlNotEqual::class),
-                    legacySubTypes = arrayOf(
-                            "SHLVar" to ShlVar::class,
-                            "SHLConst" to ShlConst::class,
-                            "SHLString" to ShlString::class,
-                            "SHLGlobalRef" to ShlGlobalRef::class,
-                            "SHLFuncPointer" to ShlFuncPointer::class,
-                            "SHLFloat" to ShlFloat::class,
-                            "SHLMemLoad" to ShlMemLoad::class,
-                            "SHLMemStore" to ShlMemStore::class,
-                            "SHLStructLoad" to ShlStructLoad::class,
-                            "SHLStructStore" to ShlStructStore::class,
-                            "SHLCall" to ShlCall::class,
+                    ShlBinaryExpr::class,
+                    ShlAdd::class,
+                    ShlSub::class,
+                    ShlMul::class,
+                    ShlDiv::class,
+                    ShlAnd::class,
+                    ShlOr::class,
+                    ShlXor::class,
+                    ShlSll::class,
+                    ShlSrl::class,
+                    ShlSra::class,
+                    ShlLessThan::class,
+                    ShlLessEqualThan::class,
+                    ShlGreaterThan::class,
+                    ShlGreaterEqualThan::class,
+                    ShlEqual::class,
+                    ShlNotEqual::class
+                ),
+                legacySubTypes = arrayOf(
+                    "SHLVar" to ShlVar::class,
+                    "SHLConst" to ShlConst::class,
+                    "SHLString" to ShlString::class,
+                    "SHLGlobalRef" to ShlGlobalRef::class,
+                    "SHLFuncPointer" to ShlFuncPointer::class,
+                    "SHLFloat" to ShlFloat::class,
+                    "SHLMemLoad" to ShlMemLoad::class,
+                    "SHLMemStore" to ShlMemStore::class,
+                    "SHLStructLoad" to ShlStructLoad::class,
+                    "SHLStructStore" to ShlStructStore::class,
+                    "SHLCall" to ShlCall::class,
 
-                            "SHLUnaryExpr" to ShlUnaryExpr::class,
-                            "SHLNeg" to ShlNeg::class,
-                            "SHLAbs" to ShlAbs::class,
-                            "SHLSqrt" to ShlSqrt::class,
-                            "SHLRound" to ShlRound::class,
-                            "SHLTrunc" to ShlTrunc::class,
-                            "SHLCeil" to ShlCeil::class,
-                            "SHLFloor" to ShlFloor::class,
-                            "SHLToInt" to ShlToInt::class,
-                            "SHLToFloat" to ShlToFloat::class,
+                    "SHLUnaryExpr" to ShlUnaryExpr::class,
+                    "SHLNeg" to ShlNeg::class,
+                    "SHLAbs" to ShlAbs::class,
+                    "SHLSqrt" to ShlSqrt::class,
+                    "SHLRound" to ShlRound::class,
+                    "SHLTrunc" to ShlTrunc::class,
+                    "SHLCeil" to ShlCeil::class,
+                    "SHLFloor" to ShlFloor::class,
+                    "SHLToInt" to ShlToInt::class,
+                    "SHLToFloat" to ShlToFloat::class,
 
-                            "SHLBinaryExpr" to ShlBinaryExpr::class,
-                            "SHLAdd" to ShlAdd::class,
-                            "SHLSub" to ShlSub::class,
-                            "SHLMul" to ShlMul::class,
-                            "SHLDiv" to ShlDiv::class,
-                            "SHLAnd" to ShlAnd::class,
-                            "SHLOr" to ShlOr::class,
-                            "SHLXor" to ShlXor::class,
-                            "SHLSll" to ShlSll::class,
-                            "SHLSrl" to ShlSrl::class,
-                            "SHLSra" to ShlSra::class,
-                            "SHLLessThan" to ShlLessThan::class,
-                            "SHLLessEqualThan" to ShlLessEqualThan::class,
-                            "SHLGreaterThan" to ShlGreaterThan::class,
-                            "SHLGreaterEqualThan" to ShlGreaterEqualThan::class,
-                            "SHLEqual" to ShlEqual::class,
-                            "SHLNotEqual" to ShlNotEqual::class)
+                    "SHLBinaryExpr" to ShlBinaryExpr::class,
+                    "SHLAdd" to ShlAdd::class,
+                    "SHLSub" to ShlSub::class,
+                    "SHLMul" to ShlMul::class,
+                    "SHLDiv" to ShlDiv::class,
+                    "SHLAnd" to ShlAnd::class,
+                    "SHLOr" to ShlOr::class,
+                    "SHLXor" to ShlXor::class,
+                    "SHLSll" to ShlSll::class,
+                    "SHLSrl" to ShlSrl::class,
+                    "SHLSra" to ShlSra::class,
+                    "SHLLessThan" to ShlLessThan::class,
+                    "SHLLessEqualThan" to ShlLessEqualThan::class,
+                    "SHLGreaterThan" to ShlGreaterThan::class,
+                    "SHLGreaterEqualThan" to ShlGreaterEqualThan::class,
+                    "SHLEqual" to ShlEqual::class,
+                    "SHLNotEqual" to ShlNotEqual::class
+                )
             )
         }
     }
@@ -745,7 +769,6 @@ sealed class ShlExpr {
 
     class ShlVar(val varName: String) : ShlExpr(), ShlSubstitutable {
         constructor(reg: Reg) : this(reg.toString())
-        constructor(reg: FpuReg) : this(reg.toString())
 
         override fun getUsedVars() = arrayOf(varName)
 
@@ -923,7 +946,11 @@ sealed class ShlExpr {
         }
 
         override fun substitute(srcExpr: ShlSubstitutable, exact: Boolean, newExpr: ShlExpr): ShlExpr {
-            return ShlMemStore(op, memExpr.substitute(srcExpr, exact, newExpr), valExpr.substitute(srcExpr, exact, newExpr))
+            return ShlMemStore(
+                op,
+                memExpr.substitute(srcExpr, exact, newExpr),
+                valExpr.substitute(srcExpr, exact, newExpr)
+            )
         }
 
         override fun compareExpr(other: ShlExpr): Boolean {
@@ -965,7 +992,8 @@ sealed class ShlExpr {
         }
     }
 
-    class ShlStructStore(val op: ShlMemOpcode, val refTid: Int, val memExpr: ShlExpr, val valExpr: ShlExpr) : ShlExpr(), ShlCompoundExpr {
+    class ShlStructStore(val op: ShlMemOpcode, val refTid: Int, val memExpr: ShlExpr, val valExpr: ShlExpr) : ShlExpr(),
+        ShlCompoundExpr {
         override fun getUsedVars() = arrayOf(*memExpr.getUsedVars(), *valExpr.getUsedVars())
 
         init {
@@ -981,7 +1009,12 @@ sealed class ShlExpr {
         }
 
         override fun substitute(srcExpr: ShlSubstitutable, exact: Boolean, newExpr: ShlExpr): ShlExpr {
-            return ShlStructStore(op, refTid, memExpr.substitute(srcExpr, exact, newExpr), valExpr.substitute(srcExpr, exact, newExpr))
+            return ShlStructStore(
+                op,
+                refTid,
+                memExpr.substitute(srcExpr, exact, newExpr),
+                valExpr.substitute(srcExpr, exact, newExpr)
+            )
         }
 
         override fun compareExpr(other: ShlExpr): Boolean {
@@ -1005,9 +1038,9 @@ sealed class ShlExpr {
         }
 
         private fun argsToCallString(): String {
-            return args.map { Pair(Reg.valueOf(it.key).id, "${it.key} = ${it.value}") }
-                    .sortedBy { it.first }
-                    .joinToString { it.second }
+            return args.map { Pair(GprReg.values().first { reg -> reg.name == it.key }.id, "${it.key} = ${it.value}") }
+                .sortedBy { it.first }
+                .joinToString { it.second }
         }
 
         override fun getUsedVars(): Array<String> {
@@ -1051,7 +1084,8 @@ sealed class ShlExpr {
         }
     }
 
-    abstract class ShlUnaryExpr(val op: String, val wrapParenthesis: Boolean, val expr: ShlExpr) : ShlExpr(), ShlCompoundExpr {
+    abstract class ShlUnaryExpr(val op: String, val wrapParenthesis: Boolean, val expr: ShlExpr) : ShlExpr(),
+        ShlCompoundExpr {
         override fun getUsedVars() = arrayOf(*expr.getUsedVars())
 
         override fun toString(): String {
@@ -1074,7 +1108,8 @@ sealed class ShlExpr {
         }
     }
 
-    abstract class ShlBinaryExpr(val op: String, val commutative: Boolean, val left: ShlExpr, val right: ShlExpr) : ShlExpr(), ShlCompoundExpr {
+    abstract class ShlBinaryExpr(val op: String, val commutative: Boolean, val left: ShlExpr, val right: ShlExpr) :
+        ShlExpr(), ShlCompoundExpr {
         override fun getUsedVars() = arrayOf(*left.getUsedVars(), *right.getUsedVars())
 
         override fun toString(): String {

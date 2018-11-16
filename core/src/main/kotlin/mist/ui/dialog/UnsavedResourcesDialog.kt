@@ -25,12 +25,13 @@ import ktx.vis.table
 import mist.ui.util.StaticMutableListAdapter
 import mist.ui.util.onChange
 import mist.ui.util.ui
-import kotlin.coroutines.experimental.Continuation
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.resume
 
 /** @author Kotcrab */
 
-class UnsavedTabsDialog(private val tabbedPane: TabbedPane, private val cont: Continuation<Result>)
-    : VisWindow("Unsaved resources") {
+class UnsavedTabsDialog(private val tabbedPane: TabbedPane, private val cont: Continuation<Result>) :
+    VisWindow("Unsaved resources") {
     private val adapter = TabAdapter()
 
     init {
@@ -88,7 +89,8 @@ class UnsavedTabsDialog(private val tabbedPane: TabbedPane, private val cont: Co
         cont.resume(Result.Canceled)
     }
 
-    private inner class TabAdapter(val filteredList: MutableList<Tab> = mutableListOf()) : StaticMutableListAdapter<Tab>(filteredList) {
+    private inner class TabAdapter(val filteredList: MutableList<Tab> = mutableListOf()) :
+        StaticMutableListAdapter<Tab>(filteredList) {
         init {
             selectionMode = SelectionMode.SINGLE
         }

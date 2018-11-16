@@ -22,22 +22,16 @@ import kio.util.toSignedHex
 
 /** @author Kotcrab */
 
-sealed class Operand {
-    class Reg(val reg: mist.asm.Reg) : Operand() {
-        override fun toString(): String {
-            return reg.name
-        }
-    }
+abstract class Operand
 
-    class FpuReg(val reg: mist.asm.FpuReg) : Operand() {
-        override fun toString(): String {
-            return reg.name
-        }
+class RegOperand(val reg: Reg) : Operand() {
+    override fun toString(): String {
+        return reg.name
     }
+}
 
-    class Imm(val value: Int) : Operand() {
-        override fun toString(): String {
-            return value.toSignedHex()
-        }
+class ImmOperand(val value: Int) : Operand() {
+    override fun toString(): String {
+        return value.toSignedHex()
     }
 }

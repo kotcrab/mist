@@ -18,9 +18,9 @@
 
 package mist.shl
 
-import mist.asm.*
 import mist.io.NodeDto
 import mist.io.ProjectIO
+import mist.asm.mips.*
 import mist.util.DecompLog
 import mist.util.logTag
 import java.util.*
@@ -68,7 +68,7 @@ class ShlGraph(private val projectIO: ProjectIO, private val def: ShlFunctionDef
             }
             // apply dead code on other properties from disassembly
             shlNode.instrs.filter { graph.unreachableInstrs.contains(it.addr) || stack.framePreserve.contains(it.addr) }
-                    .forEach { it.deadCode = true }
+                .forEach { it.deadCode = true }
             applySwitchInfo(graph, shlNode)
             // connect nodes
             node.outEdges.forEach { outNode ->
@@ -87,7 +87,13 @@ class ShlGraph(private val projectIO: ProjectIO, private val def: ShlFunctionDef
             if (arg.type.endsWith("...")) { // if arg is vararg
                 instrs.add(ShlAssignInstr(0x0, ShlExpr.ShlVar(arg.register), ShlExpr.ShlVar("${arg.name}[0]")))
                 freeArgs.forEachIndexed { freeArgIdx, freeArg ->
-                    instrs.add(ShlAssignInstr(0x0, ShlExpr.ShlVar(freeArg), ShlExpr.ShlVar("${arg.name}[${freeArgIdx + 1}]")))
+                    instrs.add(
+                        ShlAssignInstr(
+                            0x0,
+                            ShlExpr.ShlVar(freeArg),
+                            ShlExpr.ShlVar("${arg.name}[${freeArgIdx + 1}]")
+                        )
+                    )
                 }
                 freeArgs.clear()
             } else {
@@ -165,8 +171,8 @@ class ShlGraph(private val projectIO: ProjectIO, private val def: ShlFunctionDef
             val prevParents = toOptimize.inEdges.toTypedArray()
             prevParents.forEach { parentEdge ->
                 parentEdge.node.outEdges
-                        .filter { it.node == toOptimize }
-                        .forEach { parentEdge.node.removeNode(it) }
+                    .filter { it.node == toOptimize }
+                    .forEach { parentEdge.node.removeNode(it) }
             }
 
             prevParents.forEach { parentEdge ->
@@ -196,10 +202,10 @@ class ShlGraph(private val projectIO: ProjectIO, private val def: ShlFunctionDef
 
     fun getExitNodes(): List<Node<ShlInstr>> {
         return nodes.filter { it.outEdges.size == 0 }
-                .filter { it ->
-                    val lastInstr = it.instrs.last()
-                    lastInstr is ShlJumpInstr && lastInstr.dest.compareExpr(ShlExpr.ShlVar("ra"))
-                }
+            .filter { it ->
+                val lastInstr = it.instrs.last()
+                lastInstr is ShlJumpInstr && lastInstr.dest.compareExpr(ShlExpr.ShlVar("ra"))
+            }
     }
 
     fun getNodeForInstr(instr: ShlInstr): Node<ShlInstr> {

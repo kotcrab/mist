@@ -18,101 +18,65 @@
 
 package mist.asm
 
-import io.mockk.spyk
-import io.mockk.verify
+import mist.asm.mips.Addiu
+import mist.asm.mips.MipsInstr
+import mist.asm.mips.Nop
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 /** @author Kotcrab */
 
 class IdiomMatcherTest {
-    private val emptyMatcher = object : IdiomMatcher<Int>(0) {
-        override fun reset() {}
-
-        override fun getPhases(): Array<(Instr) -> Boolean> {
-            return emptyArray()
-        }
-
-        override fun matchedResult(relInstrs: List<Instr>): Int {
-            return 0x42
-        }
-    }
-
-    @Test
-    fun `resets before matching`() {
-        val matcher = spyk(emptyMatcher, recordPrivateCalls = true)
-        matcher.matches(emptyList(), 0)
-        verify { matcher["reset"]() }
-    }
-
     @Test
     fun `return provided object when empty matcher matched empty list`() {
+        val emptyMatcher = IdiomMatcher(0, {}, { _, _ -> 0x42 }, emptyArray())
         assertThat(emptyMatcher.matches(emptyList(), 0)).isEqualTo(0x42)
     }
 
     @Test
-    fun `calls match callback`() {
-        var callbackCalled = false
-        val matcher = object : IdiomMatcher<Unit>(1) {
-            override fun reset() {}
-
-            override fun getPhases(): Array<(Instr) -> Boolean> {
-                return arrayOf({ instr -> instr.matches(Opcode.Nop) { callbackCalled = true } })
-            }
-
-            override fun matchedResult(relInstrs: List<Instr>) {}
-        }
-        matcher.matches(listOf(Instr(0x0, Opcode.Nop)), 0)
-        assertThat(callbackCalled).isTrue()
-    }
-
-    @Test
     fun `respects max offset`() {
-        val matcher = object : IdiomMatcher<Int>(2) {
-            override fun reset() {}
-
-            override fun getPhases(): Array<(Instr) -> Boolean> {
-                return arrayOf(
-                        { instr -> instr.matches(Opcode.Nop) },
-                        { instr -> instr.matches(Opcode.Nop) }
-                )
-            }
-
-            override fun matchedResult(relInstrs: List<Instr>): Int {
-                return 0x42
-            }
-        }
-        val result = matcher.matches(listOf(
-                Instr(0x0, Opcode.Nop),
-                Instr(0x0, Opcode.Addiu),
-                Instr(0x0, Opcode.Nop)), 2)
+        val matcher = IdiomMatcher<MipsInstr, Unit, Int>(2, {}, { _, _ -> 0x42 }, arrayOf(
+            { instr, _ -> instr.matches(Nop) },
+            { instr, _ -> instr.matches(Nop) }
+        ))
+        val instr = listOf(
+            MipsInstr(0x0, Nop),
+            MipsInstr(0x0, Addiu),
+            MipsInstr(0x0, Nop)
+        )
+        val result = matcher.matches(instr, 2)
         assertThat(result).isNull()
     }
 
     @Test
-    fun `collects related instructions`() {
+    fun `recreates state for each run`() {
+        var stateCallCount = 0
+        val emptyMatcher = IdiomMatcher(0, { stateCallCount += 1 }, { _, _ -> 0x42 }, emptyArray())
+        emptyMatcher.matches(emptyList(), 0)
+        emptyMatcher.matches(emptyList(), 0)
+        emptyMatcher.matches(emptyList(), 0)
+        assertThat(stateCallCount).isEqualTo(3)
+    }
+
+    @Test
+    fun `collects related instructions and passes state to result transform`() {
         var matchedResultCalled = false
-        val matcher = object : IdiomMatcher<Int>(3) {
-            override fun reset() {}
-
-            override fun getPhases(): Array<(Instr) -> Boolean> {
-                return arrayOf(
-                        { instr -> instr.matches(Opcode.Nop) },
-                        { instr -> instr.matches(Opcode.Nop) }
-                )
-            }
-
-            override fun matchedResult(relInstrs: List<Instr>): Int {
-                matchedResultCalled = true
-                assertThat(relInstrs[0].addr).isEqualTo(8)
-                assertThat(relInstrs[1].addr).isEqualTo(0)
-                return 0x42
-            }
-        }
-        val result = matcher.matches(listOf(
-                Instr(0x0, Opcode.Nop),
-                Instr(0x4, Opcode.Addiu),
-                Instr(0x8, Opcode.Nop)), 2)
+        val matcher = IdiomMatcher<MipsInstr, Int, Int>(3, { 0xFF }, { relInstrs, state ->
+            matchedResultCalled = true
+            assertThat(state).isEqualTo(0xFF)
+            assertThat(relInstrs[0].addr).isEqualTo(8)
+            assertThat(relInstrs[1].addr).isEqualTo(0)
+            0x42
+        }, arrayOf(
+            { instr, _ -> instr.matches(Nop) },
+            { instr, _ -> instr.matches(Nop) }
+        ))
+        val instr = listOf(
+            MipsInstr(0x0, Nop),
+            MipsInstr(0x4, Addiu),
+            MipsInstr(0x8, Nop)
+        )
+        val result = matcher.matches(instr, 2)
         assertThat(result).isEqualTo(0x42)
         assertThat(matchedResultCalled).isTrue()
     }

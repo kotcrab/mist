@@ -29,8 +29,8 @@ import mist.shl.ShlType
 import mist.shl.ShlTypes
 
 /** @author Kotcrab */
-class TypeEditWindow(val types: ShlTypes, val editMode: Boolean, val type: ShlType, val onCommit: () -> Unit)
-    : VisWindow("Edit type") {
+class TypeEditWindow(val types: ShlTypes, val editMode: Boolean, val type: ShlType, val onCommit: () -> Unit) :
+    VisWindow("Edit type") {
     private lateinit var nameField: VisValidatableTextField
     private lateinit var sizeField: VisValidatableTextField
 

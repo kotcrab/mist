@@ -18,7 +18,7 @@
 
 package mist.shl
 
-import mist.asm.Node
+import mist.asm.mips.Node
 import mist.util.DecompLog
 import mist.util.logTag
 import org.apache.commons.collections4.CollectionUtils
@@ -48,8 +48,8 @@ class DataFlowAnalysis(private val graph: ShlGraph, private val log: DecompLog) 
                 node.outEdges.size == 0 -> LiveFlowCtx()
                 else -> {
                     node.outEdges.map { it.node.getInputLiveFlowCtx() }
-                            .mapIndexed { index, ctx -> if (index == 0) ctx.clone() else ctx }
-                            .reduce({ ctx, otherCtx -> ctx.join(otherCtx) })
+                        .mapIndexed { index, ctx -> if (index == 0) ctx.clone() else ctx }
+                        .reduce({ ctx, otherCtx -> ctx.join(otherCtx) })
                 }
             }
             val prevInput = node.getInputLiveFlowCtx().clone()
@@ -71,8 +71,8 @@ class DataFlowAnalysis(private val graph: ShlGraph, private val log: DecompLog) 
 
             if (node.getInputLiveFlowCtx().compare(prevInput) == false) {
                 node.inEdges.map { it.node }
-                        .filterNot { workList.contains(it) }
-                        .forEach { workList.add(it) }
+                    .filterNot { workList.contains(it) }
+                    .forEach { workList.add(it) }
             }
         }
     }
@@ -89,8 +89,8 @@ class DataFlowAnalysis(private val graph: ShlGraph, private val log: DecompLog) 
                 node.inEdges.size == 0 -> ReachFlowCtx()
                 else -> {
                     node.inEdges.map { it.node.getOutputReachFlowCtx() }
-                            .mapIndexed { index, ctx -> if (index == 0) ctx.clone() else ctx }
-                            .reduce({ ctx, otherCtx -> ctx.join(otherCtx) })
+                        .mapIndexed { index, ctx -> if (index == 0) ctx.clone() else ctx }
+                        .reduce({ ctx, otherCtx -> ctx.join(otherCtx) })
                 }
             }
             val prevOutput = node.getOutputReachFlowCtx().clone()
@@ -111,8 +111,8 @@ class DataFlowAnalysis(private val graph: ShlGraph, private val log: DecompLog) 
 
             if (node.getOutputReachFlowCtx().compare(prevOutput) == false) {
                 node.outEdges.map { it.node }
-                        .filterNot { workList.contains(it) }
-                        .forEach { workList.add(it) }
+                    .filterNot { workList.contains(it) }
+                    .forEach { workList.add(it) }
             }
         }
     }
@@ -128,8 +128,8 @@ class DataFlowAnalysis(private val graph: ShlGraph, private val log: DecompLog) 
                 node.inEdges.size == 0 -> DataFlowCtx()
                 else -> {
                     node.inEdges.map { it.node.getOutputDataFlowCtx() }
-                            .mapIndexed { index, ctx -> if (index == 0) ctx.clone() else ctx }
-                            .reduce({ ctx, otherCtx -> ctx.join(otherCtx) })
+                        .mapIndexed { index, ctx -> if (index == 0) ctx.clone() else ctx }
+                        .reduce({ ctx, otherCtx -> ctx.join(otherCtx) })
                 }
             }
             val prevOutput = node.getOutputDataFlowCtx().clone()
@@ -150,8 +150,8 @@ class DataFlowAnalysis(private val graph: ShlGraph, private val log: DecompLog) 
 
             if (node.getOutputDataFlowCtx().compare(prevOutput) == false) {
                 node.outEdges.map { it.node }
-                        .filterNot { workList.contains(it) }
-                        .forEach { workList.add(it) }
+                    .filterNot { workList.contains(it) }
+                    .forEach { workList.add(it) }
             }
         }
     }
@@ -183,6 +183,10 @@ class DataFlowAnalysis(private val graph: ShlGraph, private val log: DecompLog) 
 }
 
 class LiveFlowCtx {
+    companion object {
+        private val tag = logTag(LiveFlowCtx::class)
+    }
+
     private val varStates = mutableMapOf<String, MutableSet<InstrRef>>()
 
     fun processExpr(nodeIdx: Int, instrIdx: Int, writeExpr: ShlExpr?, readExpr: ShlExpr?) {
@@ -219,10 +223,10 @@ class LiveFlowCtx {
         }
     }
 
-    fun dump() {
-        println("--- live flow ctx (where var is still alive) ---")
+    fun dump(log: DecompLog) {
+        log.trace(tag, "--- live flow ctx (where var is still alive) ---")
         varStates.forEach { varName, refs ->
-            println("$varName = ${refs.joinToString()}")
+            log.trace(tag, "$varName = ${refs.joinToString()}")
         }
     }
 
@@ -254,8 +258,11 @@ class LiveFlowCtx {
         allVars.addAll(varStates.keys)
         allVars.addAll(other.varStates.keys)
         allVars.forEach { varName ->
-            if (CollectionUtils.isEqualCollection(varStates.getOrDefault(varName, mutableSetOf()),
-                            other.varStates.getOrDefault(varName, mutableSetOf())) == false) {
+            if (CollectionUtils.isEqualCollection(
+                    varStates.getOrDefault(varName, mutableSetOf()),
+                    other.varStates.getOrDefault(varName, mutableSetOf())
+                ) == false
+            ) {
                 return false
             }
         }
@@ -264,6 +271,10 @@ class LiveFlowCtx {
 }
 
 class ReachFlowCtx {
+    companion object {
+        private val tag = logTag(ReachFlowCtx::class)
+    }
+
     private val varStates = mutableMapOf<String, MutableSet<InstrRef>>()
 
     fun processExpr(nodeIdx: Int, instrIdx: Int, writeExpr: ShlExpr?) {
@@ -299,10 +310,10 @@ class ReachFlowCtx {
         }
     }
 
-    fun dump() {
-        println("--- reach flow ctx (where var is defined)---")
+    fun dump(log: DecompLog) {
+        log.trace(tag, "--- reach flow ctx (where var is defined)---")
         varStates.forEach { varName, refs ->
-            println("$varName = ${refs.joinToString()}")
+            log.trace(tag, "$varName = ${refs.joinToString()}")
         }
     }
 
@@ -334,8 +345,11 @@ class ReachFlowCtx {
         allVars.addAll(varStates.keys)
         allVars.addAll(other.varStates.keys)
         allVars.forEach { varName ->
-            if (CollectionUtils.isEqualCollection(varStates.getOrDefault(varName, mutableSetOf()),
-                            other.varStates.getOrDefault(varName, mutableSetOf())) == false) {
+            if (CollectionUtils.isEqualCollection(
+                    varStates.getOrDefault(varName, mutableSetOf()),
+                    other.varStates.getOrDefault(varName, mutableSetOf())
+                ) == false
+            ) {
                 return false
             }
         }
@@ -344,6 +358,10 @@ class ReachFlowCtx {
 }
 
 class DataFlowCtx {
+    companion object {
+        private val tag = logTag(DataFlowCtx::class)
+    }
+
     private val varStates = mutableMapOf<String, FlowState>()
 
     fun processExpr(writeExpr: ShlExpr?, readExpr: ShlExpr?, propagateKnownValues: Boolean) {
@@ -374,7 +392,11 @@ class DataFlowCtx {
                 if (propagateKnownValues) {
                     readExpr.getUsedVars().forEach { readVar ->
                         if (localStates[readVar] is FlowState.Alive) {
-                            newReadExpr = newReadExpr.substitute(ShlExpr.ShlVar(readVar), false, (localStates[readVar] as FlowState.Alive).expr)
+                            newReadExpr = newReadExpr.substitute(
+                                ShlExpr.ShlVar(readVar),
+                                false,
+                                (localStates[readVar] as FlowState.Alive).expr
+                            )
                         }
                     }
                 }
@@ -420,15 +442,15 @@ class DataFlowCtx {
         allVars.addAll(other.varStates.keys)
         allVars.forEach { varName ->
             varStates[varName] = varStates.getOrDefault(varName, FlowState.BottomElement)
-                    .join(other.varStates.getOrDefault(varName, FlowState.BottomElement))
+                .join(other.varStates.getOrDefault(varName, FlowState.BottomElement))
         }
         return this
     }
 
-    fun dump() {
-        println("--- data flow ctx ---")
+    fun dump(log: DecompLog) {
+        log.trace(tag, "--- data flow ctx ---")
         varStates.forEach { varName, state ->
-            println("$varName = $state")
+            log.trace(tag, "$varName = $state")
         }
     }
 
@@ -446,7 +468,9 @@ class DataFlowCtx {
         allVars.addAll(other.varStates.keys)
         allVars.forEach { varName ->
             if (varStates.getOrDefault(varName, FlowState.BottomElement).compare(
-                            other.varStates.getOrDefault(varName, FlowState.BottomElement)) == false) {
+                    other.varStates.getOrDefault(varName, FlowState.BottomElement)
+                ) == false
+            ) {
                 return false
             }
         }

@@ -28,8 +28,8 @@ import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener
 import com.kotcrab.vis.ui.widget.VisWindow
 import ktx.vis.KVisTable
 import ktx.vis.table
-import kotlin.coroutines.experimental.Continuation
-import kotlin.coroutines.experimental.suspendCoroutine
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.suspendCoroutine
 
 /** @author Kotcrab */
 
@@ -68,17 +68,24 @@ suspend fun <T> Stage.startForResult(window: (Continuation<T>) -> VisWindow): T 
     addActor(window(continuation).fadeIn())
 }
 
-suspend fun <T, Arg0> Stage.startForResult(window: (Arg0, Continuation<T>) -> VisWindow,
-                                           arg0: Arg0): T = suspendCoroutine { continuation ->
-    addActor(window(arg0, continuation).fadeIn())
+suspend fun <T, Arg0> Stage.startForResult(window: (Arg0, Continuation<T>) -> VisWindow, arg0: Arg0): T {
+    return suspendCoroutine { continuation ->
+        addActor(window(arg0, continuation).fadeIn())
+    }
 }
 
-suspend fun <T, Arg0, Arg1> Stage.startForResult(window: (Arg0, Arg1, Continuation<T>) -> VisWindow,
-                                                 arg0: Arg0, arg1: Arg1): T = suspendCoroutine { continuation ->
-    addActor(window(arg0, arg1, continuation).fadeIn())
+suspend fun <T, Arg0, Arg1> Stage.startForResult(
+    window: (Arg0, Arg1, Continuation<T>) -> VisWindow, arg0: Arg0, arg1: Arg1
+): T {
+    return suspendCoroutine { continuation ->
+        addActor(window(arg0, arg1, continuation).fadeIn())
+    }
 }
 
-suspend fun <T, Arg0, Arg1, Arg2> Stage.startForResult(window: (Arg0, Arg1, Arg2, Continuation<T>) -> VisWindow,
-                                                       arg0: Arg0, arg1: Arg1, arg2: Arg2): T = suspendCoroutine { continuation ->
-    addActor(window(arg0, arg1, arg2, continuation).fadeIn())
+suspend fun <T, Arg0, Arg1, Arg2> Stage.startForResult(
+    window: (Arg0, Arg1, Arg2, Continuation<T>) -> VisWindow, arg0: Arg0, arg1: Arg1, arg2: Arg2
+): T {
+    return suspendCoroutine { continuation ->
+        addActor(window(arg0, arg1, arg2, continuation).fadeIn())
+    }
 }

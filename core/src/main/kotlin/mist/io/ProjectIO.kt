@@ -61,7 +61,11 @@ class ProjectIO(private val projectDir: File, private val log: DecompLog) {
         tmpDir.mkdir()
         funcsDir.mkdir()
         toolsDir.mkdir()
-        if (arrayOf(projectDir, tmpDir, funcsDir, toolsDir, ebootBin, flowGraph, flowApis).any { it.exists() == false }) {
+        if (arrayOf(
+                projectDir, tmpDir, funcsDir, toolsDir,
+                ebootBin, flowGraph, flowApis
+            ).any { it.exists() == false }
+        ) {
             log.panic(tag, "missing required project files")
         }
         shlProject = if (projectJson.exists()) projectJson.readJson() else ShlProject()
@@ -130,8 +134,8 @@ class ProjectIO(private val projectDir: File, private val log: DecompLog) {
             if (it.name.startsWith("sub_")) return@forEach
             val safeName = it.name.replace("+", "_")
             val line = userPrefs.funcNamesDumpFormat
-                    .replace("%addr", it.offset.toHex())
-                    .replace("%name", safeName)
+                .replace("%addr", it.offset.toHex())
+                .replace("%name", safeName)
             sb.append(line)
             sb.append("\r\n")
         }

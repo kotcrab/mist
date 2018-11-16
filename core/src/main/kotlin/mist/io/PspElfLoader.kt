@@ -55,8 +55,10 @@ class PspElfLoader(private val elf: ElfFile, private val log: DecompLog) : BinLo
     private fun loadProgramHeaders(elfBytes: KioInputStream) {
         elf.progHeaders.forEach { prog ->
             if (prog.type == ElfProgHeaderType.LOAD) {
-                log.trace(tag, "load program header at ${prog.vAddr.toHex()}, memSize: ${prog.memSize.toHex()}, " +
-                        "fileSize: ${prog.fileSize.toHex()}")
+                log.trace(
+                    tag, "load program header at ${prog.vAddr.toHex()}, memSize: ${prog.memSize.toHex()}, " +
+                            "fileSize: ${prog.fileSize.toHex()}"
+                )
                 val vRange = IntRange(prog.vAddr, prog.vAddr + prog.memSize)
                 val vBytes = ByteArray(prog.memSize)
                 elfBytes.setPos(prog.offset)
@@ -78,7 +80,10 @@ class PspElfLoader(private val elf: ElfFile, private val log: DecompLog) : BinLo
                 log.panic(tag, "expected relocation entry size to be 0x8")
             }
             val entryCount = sect.size / sect.entSize
-            log.trace(tag, "apply relocations from section at ${sect.offset.toHex()}, entry count: ${entryCount.toHex()}")
+            log.trace(
+                tag,
+                "apply relocations from section at ${sect.offset.toHex()}, entry count: ${entryCount.toHex()}"
+            )
             elfBytes.setPos(sect.offset)
             val relocations = mutableListOf<Relocation>()
             repeat(entryCount) {
@@ -87,7 +92,14 @@ class PspElfLoader(private val elf: ElfFile, private val log: DecompLog) : BinLo
                 val type = relloc and 0xFF
                 val offsetIdx = relloc shr 8 and 0xFF
                 val relocateToIdx = relloc shr 16 and 0xFF
-                relocations.add(Relocation(addr, type, elf.progHeaders[offsetIdx].vAddr, elf.progHeaders[relocateToIdx].vAddr))
+                relocations.add(
+                    Relocation(
+                        addr,
+                        type,
+                        elf.progHeaders[offsetIdx].vAddr,
+                        elf.progHeaders[relocateToIdx].vAddr
+                    )
+                )
             }
             relocations.forEachIndexed { index, relloc ->
                 var addr = relloc.addr

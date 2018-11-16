@@ -16,10 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package mist.asm
+package mist.asm.mips
 
 import kio.util.swap
 import kio.util.toWHex
+import mist.asm.*
 import mist.io.BinLoader
 import mist.util.DecompLog
 import mist.util.logTag
@@ -27,29 +28,30 @@ import java.util.*
 
 /** @author Kotcrab */
 
-class Graph(private val loader: BinLoader,
-            private val instrs: List<Instr>,
-            private val log: DecompLog) {
+class Graph(
+    private val loader: BinLoader,
+    private val instrs: List<MipsInstr>,
+    private val log: DecompLog
+) {
     private val tag = logTag()
 
-    private val switchAtRegIdiom = SwitchAtRegIdiom()
-    private val switchA0RegIdiom = SwitchA0RegIdiom()
+    private val switchIdioms = MipsSwitchIdioms()
 
-    val nodes = mutableListOf<Node<Instr>>()
+    val nodes = mutableListOf<Node<MipsInstr>>()
 
     // maps jump cause to instruction that it is jumping to
-    val jumpingTo = mutableMapOf<Instr, MutableSet<Instr>>()
+    val jumpingTo = mutableMapOf<MipsInstr, MutableSet<MipsInstr>>()
     // maps jump target to instruction that jumps to it
-    val jumpingToFrom = mutableMapOf<Instr, MutableSet<Instr>>()
+    val jumpingToFrom = mutableMapOf<MipsInstr, MutableSet<MipsInstr>>()
 
     // maps unreachable instruction address to instruction at that address
-    val unreachableInstrs = mutableMapOf<Int, Instr>()
+    val unreachableInstrs = mutableMapOf<Int, MipsInstr>()
     // maps `jt at` and `jr a0` instructions to their respective switch metadata
     val switchSrcInstrs = mutableMapOf<Int, SwitchDescriptor>()
     // maps instruction at specified address to descriptor with switch cases list
     val switchCasesInstrs = mutableMapOf<Int, SwitchCaseDescriptor>()
     // list of instructions that are in branch delay slots
-    val branchDelaySlotInstrs = mutableMapOf<Int, Instr>()
+    val branchDelaySlotInstrs = mutableMapOf<Int, MipsInstr>()
 
     fun generateGraph() {
         fillControlFlowCtx()
@@ -64,26 +66,27 @@ class Graph(private val loader: BinLoader,
     private fun fillControlFlowCtx() {
         instrs.forEachIndexed { srcInstrIdx, srcInstr ->
             when {
-                srcInstr.isBranch() -> {
-                    val destAddr = srcInstr.addr + 0x4 + srcInstr.getLastImm() * 0x4
+                srcInstr.hasFlag(Branch) -> {
+                    val imm = srcInstr.operands.last { it is ImmOperand } as ImmOperand
+                    val destAddr = srcInstr.addr + 0x4 + imm.value * 0x4
                     val destInstr = instrs.firstOrNull { it.addr == destAddr }
-                            ?: log.panic(tag, "branch to instruction outside current function")
+                        ?: log.panic(tag, "branch to instruction outside current function")
                     jumpingTo.getOrPut(srcInstr, defaultValue = { mutableSetOf() }).add(destInstr)
                     jumpingToFrom.getOrPut(destInstr, defaultValue = { mutableSetOf() }).add(srcInstr)
                 }
-                srcInstr.matches(Opcode.J) -> {
-                    val destInstr = instrs.firstOrNull { it.addr == srcInstr.op1AsImm() }
+                srcInstr.matches(J) -> {
+                    val destInstr = instrs.firstOrNull { it.addr == srcInstr.op0AsImm() }
                     if (destInstr != null) { // if jump within function
                         jumpingTo.getOrPut(srcInstr, defaultValue = { mutableSetOf() }).add(destInstr)
                         jumpingToFrom.getOrPut(destInstr, defaultValue = { mutableSetOf() }).add(srcInstr)
                     }
                 }
                 // switch case idiom detection
-                srcInstr.matches(Opcode.Jr, op1 = isReg(Reg.at)) -> {
-                    switchAtRegIdiom.matches(instrs, srcInstrIdx)?.let { handleSwitch(it) }
+                srcInstr.matches(Jr, op0 = isReg(GprReg.At)) -> {
+                    switchIdioms.atRegIdiom.matches(instrs, srcInstrIdx)?.let { handleSwitch(it) }
                 }
-                srcInstr.matches(Opcode.Jr, op1 = isReg(Reg.a0)) -> {
-                    switchA0RegIdiom.matches(instrs, srcInstrIdx)?.let { handleSwitch(it) }
+                srcInstr.matches(Jr, op0 = isReg(GprReg.A0)) -> {
+                    switchIdioms.a0RegIdiom.matches(instrs, srcInstrIdx)?.let { handleSwitch(it) }
                 }
             }
         }
@@ -97,13 +100,17 @@ class Graph(private val loader: BinLoader,
             val caseTargetAddr = loader.readInt(result.jumpTableLoc + case * 0x4)
             val destInstr = instrs.firstOrNull { it.addr == caseTargetAddr }
             if (destInstr == null) {
-                log.warn(tag, "switch case $case jumps to instruction outside current function and will be ignored, " +
-                        "jump target: ${caseTargetAddr.toWHex()}")
+                log.warn(
+                    tag, "switch case $case jumps to instruction outside current function and will be ignored, " +
+                            "jump target: ${caseTargetAddr.toWHex()}"
+                )
                 return@repeat
             }
             jumpingTo.getOrPut(srcInstr, defaultValue = { mutableSetOf() }).add(destInstr)
             jumpingToFrom.getOrPut(destInstr, defaultValue = { mutableSetOf() }).add(srcInstr)
-            switchCasesInstrs.getOrPut(destInstr.addr, defaultValue = { SwitchCaseDescriptor(destInstr) }).cases.add(case)
+            switchCasesInstrs.getOrPut(destInstr.addr, defaultValue = { SwitchCaseDescriptor(destInstr) }).cases.add(
+                case
+            )
         }
     }
 
@@ -131,8 +138,8 @@ class Graph(private val loader: BinLoader,
             if (node.instrs.size >= 2) {
                 val jumpCause = node.instrs[node.instrs.lastIndex - 1]
                 when {
-                    jumpCause.opcode == Opcode.J -> { // unconditional jump
-                        val jumpTargetInstr = instrs.firstOrNull { it.addr == jumpCause.op1AsImm() }
+                    jumpCause.opcode == J -> { // unconditional jump
+                        val jumpTargetInstr = instrs.firstOrNull { it.addr == jumpCause.op0AsImm() }
                         if (jumpTargetInstr != null) {
                             linkJumpToNode(node, jumpTargetInstr)
                             return@forEach
@@ -142,13 +149,13 @@ class Graph(private val loader: BinLoader,
                             log.warn(tag, "unconditional jump outside of current context will be ignored")
                         }
                     }
-                    jumpCause.opcode == Opcode.Jal -> { // most likely call to other function
-                        val jumpingToInstr = instrs.firstOrNull { it.addr == jumpCause.op1AsImm() }
+                    jumpCause.opcode == Jal -> { // most likely call to other function
+                        val jumpingToInstr = instrs.firstOrNull { it.addr == jumpCause.op0AsImm() }
                         if (jumpingToInstr != null) {
                             log.panic(tag, "jal (jump and link) to instruction inside current function")
                         }
                     }
-                    jumpCause.matches(Opcode.Jr, isReg(Reg.ra)) -> { // function exit
+                    jumpCause.matches(Jr, op0 = isReg(GprReg.Ra)) -> { // function exit
                         return@forEach
                     }
                     switchSrcInstrs.contains(jumpCause.addr) -> {
@@ -157,18 +164,18 @@ class Graph(private val loader: BinLoader,
                         }
                         return@forEach
                     }
-                    jumpCause.opcode == Opcode.Jalr -> {
+                    jumpCause.opcode == Jalr -> {
                         log.warn(tag, "function uses jalr (if jumping within current function graph will be invalid)")
                     }
-                    jumpCause.isJump() -> log.panic(tag, "unhandled jump type instruction: $jumpCause")
+                    jumpCause.hasFlag(Jump) -> log.panic(tag, "unhandled jump type instruction: $jumpCause")
                 }
             }
 
             // this will handle "b label" MIPS instruction alias
             // and in general `beq reg1, reg2 label` where reg1 == reg2
             // it should be enough for compiled code
-            fun Instr.isUnconditionalBranch() = (opcode == Opcode.Beq
-                    && op1 is Operand.Reg && op2 is Operand.Reg && op1.reg == op2.reg)
+            fun MipsInstr.isUnconditionalBranch() = (opcode == Beq
+                    && operands.getOrNull(0) is RegOperand && operands.getOrNull(1) is RegOperand && op0AsReg() == op1AsReg())
 
             val branchCause = node.getBranchCauseInstr()
 
@@ -192,19 +199,23 @@ class Graph(private val loader: BinLoader,
                         node.addNode(otherNode, EdgeType.JumpTaken)
                     }
                 } else {
-                    log.panic(tag, "branch instruction '$branchCause' does not define any branch target, check control flow context " +
-                            "generation for mistakes")
+                    log.panic(
+                        tag, "branch instruction '$branchCause' does not define any branch target, check control" +
+                                " flow context generation for mistakes"
+                    )
                 }
             }
         }
     }
 
-    private fun linkJumpToNode(srcNode: Node<Instr>, jumpTargetInstr: Instr) {
+    private fun linkJumpToNode(srcNode: Node<MipsInstr>, jumpTargetInstr: MipsInstr) {
         val destNode = nodes.first { it.instrs.contains(jumpTargetInstr) }
         val destInNodeIdx = destNode.instrs.indexOf(jumpTargetInstr)
         if (destInNodeIdx != 0) {
-            log.panic(tag, "jump to instruction that is not first in the node, check control flow context " +
-                    "generation for mistakes")
+            log.panic(
+                tag, "jump to instruction that is not first in the node, check control flow context " +
+                        "generation for mistakes"
+            )
         }
         srcNode.addNode(destNode, EdgeType.JumpTaken)
     }
@@ -212,9 +223,11 @@ class Graph(private val loader: BinLoader,
     private fun transformBranchDelaySlot() {
         nodes.toList().forEach { node ->
             node.instrs.toMutableList().forEachIndexed { index, instr ->
-                if (instr.opcode.type != Opcode.Type.ControlFlow) return@forEachIndexed
+                if (!instr.hasFlag(Jump) && !instr.hasFlag(Branch)) {
+                    return@forEachIndexed
+                }
                 when {
-                    instr.opcode in arrayOf(Opcode.J, Opcode.Jal) -> {
+                    instr.opcode in arrayOf(J, Jal) -> {
                         // jal and j should be always safe to swap
                         // they don't use register so there is no risk of
                         // swapped instruction modifying some source register
@@ -222,24 +235,26 @@ class Graph(private val loader: BinLoader,
                         branchDelaySlotInstrs[delaySlotInstr.addr] = delaySlotInstr
                         node.instrs.swap(index, index + 1)
                     }
-                    instr.opcode in arrayOf(Opcode.Jr, Opcode.Jalr) -> {
+                    instr.opcode in arrayOf(Jr, Jalr) -> {
                         val delaySlotInstr = node.instrs[index + 1]
                         branchDelaySlotInstrs[delaySlotInstr.addr] = delaySlotInstr
-                        if (delaySlotInstr.getModifiedRegisters().any { instr.getSourceRegisters().contains(it) }) {
-                            log.panic(tag, "${instr.opcode.toString().toLowerCase()} instruction not safe to swap, " +
-                                    "instruction: $delaySlotInstr")
+                        if (delaySlotInstr.getModifiedRegisters().any { instr.getUsedRegisters().contains(it) }) {
+                            log.panic(
+                                tag, "${instr.opcode.toString().toLowerCase()} instruction not safe to swap, " +
+                                        "instruction: $delaySlotInstr"
+                            )
                         }
                         node.instrs.swap(index, index + 1)
                     }
-                    instr.isBranchLikely() -> {
+                    instr.hasFlag(BranchLikely) -> {
                         val delaySlotInstr = node.instrs[index + 1]
                         branchDelaySlotInstrs[delaySlotInstr.addr] = delaySlotInstr
                         propagateBranchDelaySlot(node, instr, delaySlotInstr)
                     }
-                    instr.isBranch() -> {
+                    instr.hasFlag(Branch) -> {
                         val delaySlotInstr = node.instrs[index + 1]
                         branchDelaySlotInstrs[delaySlotInstr.addr] = delaySlotInstr
-                        if (delaySlotInstr.getModifiedRegisters().any { instr.getSourceRegisters().contains(it) }) {
+                        if (delaySlotInstr.getModifiedRegisters().any { instr.getUsedRegisters().contains(it) }) {
                             // fallback to propagation if swap not safe
                             propagateBranchDelaySlot(node, instr, delaySlotInstr)
                         } else {
@@ -252,42 +267,42 @@ class Graph(private val loader: BinLoader,
         }
     }
 
-    private fun propagateBranchDelaySlot(node: Node<Instr>, branchCause: Instr, delaySlotInstr: Instr) {
+    private fun propagateBranchDelaySlot(node: Node<MipsInstr>, branchCause: MipsInstr, delaySlotInstr: MipsInstr) {
         node.instrs.remove(delaySlotInstr)
         node.outEdges.toList()
-                .filter {
-                    if (branchCause.isBranchLikely()) {
-                        // if branch cause is branch likely type then only propagate to nodes with jump taken edge type
-                        it.type == EdgeType.JumpTaken
-                    } else {
-                        // if this is normal branch then propagate to every child node
-                        true
-                    }
+            .filter {
+                if (branchCause.hasFlag(BranchLikely)) {
+                    // if branch cause is branch likely type then only propagate to nodes with jump taken edge type
+                    it.type == EdgeType.JumpTaken
+                } else {
+                    // if this is normal branch then propagate to every child node
+                    true
                 }
-                .forEach { edge ->
-                    if (edge.node.inEdges.size == 1) {
-                        edge.node.instrs.add(0, delaySlotInstr)
-                    } else {
-                        // case when child node has other input connections than origin of branch cause
-                        // insert new node into graph with instruction
-                        val newNode = Node<Instr>()
-                        newNode.instrs.add(delaySlotInstr)
-                        nodes.add(newNode)
-                        // remove old connections and connect newNode with rest of nodes
-                        node.removeNode(edge)
-                        node.addNode(newNode, edge.type)
-                        newNode.addNode(edge.node, EdgeType.Fallthrough)
-                    }
+            }
+            .forEach { edge ->
+                if (edge.node.inEdges.size == 1) {
+                    edge.node.instrs.add(0, delaySlotInstr)
+                } else {
+                    // case when child node has other input connections than origin of branch cause
+                    // insert new node into graph with instruction
+                    val newNode = Node<MipsInstr>()
+                    newNode.instrs.add(delaySlotInstr)
+                    nodes.add(newNode)
+                    // remove old connections and connect newNode with rest of nodes
+                    node.removeNode(edge)
+                    node.addNode(newNode, edge.type)
+                    newNode.addNode(edge.node, EdgeType.Fallthrough)
                 }
+            }
     }
 
     private fun classifyEdges() {
         var time = 0
-        val parents = mutableMapOf<Node<Instr>, Node<Instr>?>()
-        val startTimes = mutableMapOf<Node<Instr>, Int>()
-        val endTimes = mutableMapOf<Node<Instr>, Int>()
+        val parents = mutableMapOf<Node<MipsInstr>, Node<MipsInstr>?>()
+        val startTimes = mutableMapOf<Node<MipsInstr>, Int>()
+        val endTimes = mutableMapOf<Node<MipsInstr>, Int>()
 
-        fun visit(v: Node<Instr>, parent: Node<Instr>? = null) {
+        fun visit(v: Node<MipsInstr>, parent: Node<MipsInstr>? = null) {
             parents[v] = parent
             time++
             startTimes[v] = time
@@ -328,7 +343,7 @@ class Graph(private val loader: BinLoader,
 
     private fun markUnreachableCodeAfterReturn() {
         nodes.forEach nodeLoop@{ node ->
-            val returnPoint = node.instrs.indexOfFirst { it.matches(Opcode.Jr, isReg(Reg.ra)) }
+            val returnPoint = node.instrs.indexOfFirst { it.matches(Jr, op0 = isReg(GprReg.Ra)) }
             if (returnPoint == -1) return@nodeLoop
             for (i in returnPoint + 1 until node.instrs.size) {
                 val instr = node.instrs[i]
@@ -343,7 +358,7 @@ class Graph(private val loader: BinLoader,
         }
     }
 
-    fun bfsFromInstr(instr: Instr, visitor: (List<Instr>) -> BfsVisitorAction) {
+    fun bfsFromInstr(instr: MipsInstr, visitor: (List<MipsInstr>) -> BfsVisitorAction) {
         val startIdx = getNodeIdxForInstr(instr)
         var idx = startIdx
         val visited = BooleanArray(nodes.count())
@@ -371,7 +386,7 @@ class Graph(private val loader: BinLoader,
         }
     }
 
-    fun bfs(startIdx: Int = 0, visitor: (Node<Instr>) -> BfsVisitorAction) {
+    fun bfs(startIdx: Int = 0, visitor: (Node<MipsInstr>) -> BfsVisitorAction) {
         var idx = startIdx
         val visited = BooleanArray(nodes.count())
         val queue = LinkedList<Int>()
@@ -391,20 +406,20 @@ class Graph(private val loader: BinLoader,
         }
     }
 
-    fun getEntryNode(): Node<Instr> {
+    fun getEntryNode(): Node<MipsInstr> {
         return nodes.first()
     }
 
-    private fun getNodeForInstr(instr: Instr): Node<Instr> {
+    private fun getNodeForInstr(instr: MipsInstr): Node<MipsInstr> {
         return nodes.first { it.instrs.contains(instr) }
     }
 
-    private fun getNodeIdxForInstr(instr: Instr): Int {
+    private fun getNodeIdxForInstr(instr: MipsInstr): Int {
         return nodes.indexOfFirst { it.instrs.contains(instr) }
     }
 
-    private fun Node<Instr>.getBranchCauseInstr(): Instr? {
-        return instrs.lastOrNull { it.isBranch() }
+    private fun Node<MipsInstr>.getBranchCauseInstr(): MipsInstr? {
+        return instrs.lastOrNull { it.hasFlag(Branch) }
     }
 }
 

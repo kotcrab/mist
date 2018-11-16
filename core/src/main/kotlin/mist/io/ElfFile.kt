@@ -43,32 +43,33 @@ class ElfFile(val bytes: ByteArray) {
         with(KioInputStream(bytes)) {
             if (readByte().toUnsignedInt() != 0x7F || readString(3) != "ELF") error("not an ELF file")
             ident = ElfIdent(
-                    clazz = readByte(at = 0x04).toUnsignedInt(),
-                    data = readByte(at = 0x05).toUnsignedInt(),
-                    version = readByte(at = 0x06).toUnsignedInt(),
-                    abi = readByte(at = 0x07).toUnsignedInt(),
-                    abiVersion = readByte(at = 0x08).toUnsignedInt()
+                clazz = readByte(at = 0x04).toUnsignedInt(),
+                data = readByte(at = 0x05).toUnsignedInt(),
+                version = readByte(at = 0x06).toUnsignedInt(),
+                abi = readByte(at = 0x07).toUnsignedInt(),
+                abiVersion = readByte(at = 0x08).toUnsignedInt()
             )
             header = ElfHeader(
-                    type = readShort(at = 0x10).toUnsignedInt(),
-                    machine = readShort(at = 0x12).toUnsignedInt(),
-                    version = readByte(at = 0x14).toUnsignedInt(),
-                    entry = readInt(at = 0x18),
-                    progHeaderOffset = readInt(at = 0x1C),
-                    sectHeaderOffset = readInt(at = 0x20),
-                    flags = readInt(at = 0x24),
-                    headerSize = readShort(at = 0x28).toUnsignedInt(),
-                    progHeaderSize = readShort(at = 0x2A).toUnsignedInt(),
-                    progHeaderCount = readShort(at = 0x2C).toUnsignedInt(),
-                    sectHeaderSize = readShort(at = 0x2E).toUnsignedInt(),
-                    sectHeaderCount = readShort(at = 0x30).toUnsignedInt(),
-                    sectHeaderStrIdx = readShort(at = 0x32).toUnsignedInt()
+                type = readShort(at = 0x10).toUnsignedInt(),
+                machine = readShort(at = 0x12).toUnsignedInt(),
+                version = readByte(at = 0x14).toUnsignedInt(),
+                entry = readInt(at = 0x18),
+                progHeaderOffset = readInt(at = 0x1C),
+                sectHeaderOffset = readInt(at = 0x20),
+                flags = readInt(at = 0x24),
+                headerSize = readShort(at = 0x28).toUnsignedInt(),
+                progHeaderSize = readShort(at = 0x2A).toUnsignedInt(),
+                progHeaderCount = readShort(at = 0x2C).toUnsignedInt(),
+                sectHeaderSize = readShort(at = 0x2E).toUnsignedInt(),
+                sectHeaderCount = readShort(at = 0x30).toUnsignedInt(),
+                sectHeaderStrIdx = readShort(at = 0x32).toUnsignedInt()
             )
             setPos(header.progHeaderOffset)
             repeat(header.progHeaderCount) {
                 val progBytes = readBytes(header.progHeaderSize)
                 with(KioInputStream(progBytes)) {
-                    progHeaders.add(ElfProgHeader(
+                    progHeaders.add(
+                        ElfProgHeader(
                             type = readInt(at = 0x00),
                             offset = readInt(at = 0x04),
                             vAddr = readInt(at = 0x08),
@@ -77,14 +78,16 @@ class ElfFile(val bytes: ByteArray) {
                             memSize = readInt(at = 0x14),
                             flags = readInt(at = 0x18),
                             align = readInt(at = 0x1C)
-                    ))
+                        )
+                    )
                 }
             }
             setPos(header.sectHeaderOffset)
             repeat(header.sectHeaderCount) {
                 val sectBytes = readBytes(header.sectHeaderSize)
                 with(KioInputStream(sectBytes)) {
-                    sectHeaders.add(ElfSectHeader(
+                    sectHeaders.add(
+                        ElfSectHeader(
                             name = readInt(at = 0x00),
                             type = readInt(at = 0x04),
                             flags = readInt(at = 0x08),
@@ -95,7 +98,8 @@ class ElfFile(val bytes: ByteArray) {
                             info = readInt(at = 0x1C),
                             align = readInt(at = 0x20),
                             entSize = readInt(at = 0x24)
-                    ))
+                        )
+                    )
                 }
             }
         }
@@ -105,11 +109,12 @@ class ElfFile(val bytes: ByteArray) {
 }
 
 class ElfIdent(
-        val clazz: Int,
-        val data: Int,
-        val version: Int,
-        val abi: Int,
-        val abiVersion: Int) {
+    val clazz: Int,
+    val data: Int,
+    val version: Int,
+    val abi: Int,
+    val abiVersion: Int
+) {
     override fun toString(): String {
         return "ElfIdent(clazz=${clazz.toHex()}, data=${data.toHex()}, version=${version.toHex()}, " +
                 "abi=${abi.toHex()}, abiVersion=${abiVersion.toHex()})"
@@ -117,19 +122,20 @@ class ElfIdent(
 }
 
 class ElfHeader(
-        val type: Int,
-        val machine: Int,
-        val version: Int,
-        val entry: Int,
-        val progHeaderOffset: Int,
-        val sectHeaderOffset: Int,
-        val flags: Int,
-        val headerSize: Int,
-        val progHeaderSize: Int,
-        val progHeaderCount: Int,
-        val sectHeaderSize: Int,
-        val sectHeaderCount: Int,
-        val sectHeaderStrIdx: Int) {
+    val type: Int,
+    val machine: Int,
+    val version: Int,
+    val entry: Int,
+    val progHeaderOffset: Int,
+    val sectHeaderOffset: Int,
+    val flags: Int,
+    val headerSize: Int,
+    val progHeaderSize: Int,
+    val progHeaderCount: Int,
+    val sectHeaderSize: Int,
+    val sectHeaderCount: Int,
+    val sectHeaderStrIdx: Int
+) {
     override fun toString(): String {
         return "ElfHeader(type=${type.toHex()}, machine=${machine.toHex()}, version=${version.toHex()}, " +
                 "entryPoint=${entry.toHex()}, progHeaderOffset=${progHeaderOffset.toHex()}, " +
@@ -141,14 +147,15 @@ class ElfHeader(
 }
 
 class ElfProgHeader(
-        val type: Int,
-        val offset: Int,
-        val vAddr: Int,
-        val pAddr: Int,
-        val fileSize: Int,
-        val memSize: Int,
-        val flags: Int,
-        val align: Int) {
+    val type: Int,
+    val offset: Int,
+    val vAddr: Int,
+    val pAddr: Int,
+    val fileSize: Int,
+    val memSize: Int,
+    val flags: Int,
+    val align: Int
+) {
     override fun toString(): String {
         return "ElfProgHeader(type=${type.toHex()}, offset=${offset.toHex()}, vAddr=${vAddr.toHex()}, pAddr=${pAddr.toHex()}, " +
                 "fileSize=${fileSize.toHex()}, memSize=${memSize.toHex()}, flags=${flags.toHex()}, align=${align.toHex()})"
@@ -156,16 +163,17 @@ class ElfProgHeader(
 }
 
 class ElfSectHeader(
-        val name: Int,
-        val type: Int,
-        val flags: Int,
-        val vAddr: Int,
-        val offset: Int,
-        val size: Int,
-        val link: Int,
-        val info: Int,
-        val align: Int,
-        val entSize: Int) {
+    val name: Int,
+    val type: Int,
+    val flags: Int,
+    val vAddr: Int,
+    val offset: Int,
+    val size: Int,
+    val link: Int,
+    val info: Int,
+    val align: Int,
+    val entSize: Int
+) {
     override fun toString(): String {
         return "ElfSectHeader(name=${name.toHex()}, type=${type.toHex()}, flags=${flags.toHex()}, vAddr=${vAddr.toHex()}, " +
                 "offset=${offset.toHex()}, size=${size.toHex()}, link=${link.toHex()}, info=${info.toHex()}, align=${align.toHex()}, " +

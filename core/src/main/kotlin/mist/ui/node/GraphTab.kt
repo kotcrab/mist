@@ -26,16 +26,15 @@ import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.scenes.scene2d.Touchable
 import com.kotcrab.vis.ui.widget.PopupMenu
 import ktx.actors.onChange
-import ktx.async.ktxAsync
 import ktx.inject.Context
 import ktx.vis.menuItem
 import ktx.vis.table
 import mist.TabProvidesMenu
-import mist.asm.EdgeKind
-import mist.asm.EdgeType
 import mist.io.AsmFunctionIO
 import mist.io.LoadedFunc
 import mist.io.LocalHistoryEntry
+import mist.asm.mips.EdgeKind
+import mist.asm.mips.EdgeType
 import mist.shl.*
 import mist.ui.dialog.LocalHistoryDialog
 import mist.ui.util.*
@@ -43,11 +42,12 @@ import mist.util.logTag
 
 /** @author Kotcrab */
 
-class GraphTab(context: Context,
-               private val asmFunctionIO: AsmFunctionIO,
-               val def: ShlFunctionDef,
-               val onFuncDoubleClick: (ShlFunctionDef) -> Unit)
-    : VisualNodeTab<GraphNode>(context, closeable = true), ShlDefsChanged, TabProvidesMenu {
+class GraphTab(
+    context: Context,
+    private val asmFunctionIO: AsmFunctionIO,
+    val def: ShlFunctionDef,
+    val onFuncDoubleClick: (ShlFunctionDef) -> Unit
+) : VisualNodeTab<GraphNode>(context, closeable = true), ShlDefsChanged, TabProvidesMenu {
     private val tag = logTag()
     private val layout = projectIO.provideLayout()
     private val remoteDebugger: RemoteDebugger = context.inject()
@@ -129,8 +129,12 @@ class GraphTab(context: Context,
         nodeList.clear()
         selectedNodes.clear()
         graph.nodes.forEachIndexed { index, node ->
-            nodeList.add(GraphNode(context, nodeStage, exprMutator, 0f, 0f, node, index, codeNodeListener,
-                    if (index == 0) def else null, onFuncDoubleClick))
+            nodeList.add(
+                GraphNode(
+                    context, nodeStage, exprMutator, 0f, 0f, node, index, codeNodeListener,
+                    if (index == 0) def else null, onFuncDoubleClick
+                )
+            )
         }
         graph.nodes.forEachIndexed { idx, node ->
             node.outEdges.forEach { edge ->
@@ -168,13 +172,17 @@ class GraphTab(context: Context,
     override fun fillMenu(popupMenu: PopupMenu) {
         popupMenu.menuItem("Local History") {
             onChange {
-                appStage.addActor(LocalHistoryDialog(asmFunctionIO.getLocalHistoryEntries(), object : WindowResultListener<LocalHistoryEntry> {
-                    override fun finished(result: LocalHistoryEntry) {
-                        asmFunctionIO.revert(result)
-                        loadFunction()
-                        dirty()
-                    }
-                }).fadeIn())
+                appStage.addActor(
+                    LocalHistoryDialog(
+                        asmFunctionIO.getLocalHistoryEntries(),
+                        object : WindowResultListener<LocalHistoryEntry> {
+                            override fun finished(result: LocalHistoryEntry) {
+                                asmFunctionIO.revert(result)
+                                loadFunction()
+                                dirty()
+                            }
+                        }).fadeIn()
+                )
             }
         }
         popupMenu.menuItem("Discard all changes") {
@@ -186,33 +194,33 @@ class GraphTab(context: Context,
         popupMenu.addSeparator()
         popupMenu.menuItem("Debug this") {
             onChange {
-                val client = remoteDebugger.getClient() ?: return@onChange
-                ktxAsync {
-                    nodeList.forEach { node ->
-                        node.node.instrs.forEach { instr ->
-                            client.addBreakpoint(instr.addr + 0x8804000, false)
-                        }
-                    }
-                }
+                //                val client = remoteDebugger.getClient() ?: return@onChange
+//                ktxAsync {
+//                    nodeList.forEach { node ->
+//                        node.node.instrs.forEach { instr ->
+//                            client.addBreakpoint(instr.addr + 0x8804000, false)
+//                        }
+//                    }
+//                }
             }
         }
         popupMenu.menuItem("Stop debugging this") {
             onChange {
-                val client = remoteDebugger.getClient() ?: return@onChange
-                ktxAsync {
-                    nodeList.forEach { node ->
-                        node.node.instrs.forEach { instr ->
-                            client.removeBreakpoint(instr.addr + 0x8804000)
-                        }
-                    }
-                }
+                //                val client = remoteDebugger.getClient() ?: return@onChange
+//                ktxAsync {
+//                    nodeList.forEach { node ->
+//                        node.node.instrs.forEach { instr ->
+//                            client.removeBreakpoint(instr.addr + 0x8804000)
+//                        }
+//                    }
+//                }
             }
         }
         popupMenu.menuItem("Step") {
             onChange {
-                ktxAsync {
-                    remoteDebugger.getClient()?.setRunning(true)
-                }
+                //                ktxAsync {
+//                    remoteDebugger.getClient()?.setRunning(true)
+//                }
             }
         }
     }
@@ -244,12 +252,12 @@ class GraphTab(context: Context,
             if (node == edge.node && points == null) {
                 val offset = 20
                 points = listOf(
-                        Vector2(0f, 0f),
-                        Vector2(x1, y1 - offset),
-                        Vector2(x1 - node.getWidth() / 2 - offset, y1 - offset),
-                        Vector2(x1 - node.getWidth() / 2 - offset, y2 + offset),
-                        Vector2(x1, y2 + offset),
-                        Vector2(0f, 0f)
+                    Vector2(0f, 0f),
+                    Vector2(x1, y1 - offset),
+                    Vector2(x1 - node.getWidth() / 2 - offset, y1 - offset),
+                    Vector2(x1 - node.getWidth() / 2 - offset, y2 + offset),
+                    Vector2(x1, y2 + offset),
+                    Vector2(0f, 0f)
                 )
             }
 

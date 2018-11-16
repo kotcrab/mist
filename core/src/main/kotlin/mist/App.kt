@@ -115,7 +115,10 @@ class App(val projectDir: File) : ApplicationListener {
     }
 
     private fun createInitialTabs() {
-        val flowTab = FlowTab(context, { disassembleFunc(it) }, { funcsPanel.showEditFuncWindow(projectIO.getFuncDefByName(it)!!) })
+        val flowTab = FlowTab(
+            context,
+            { disassembleFunc(it) },
+            { funcsPanel.showEditFuncWindow(projectIO.getFuncDefByName(it)!!) })
         tabbedPane.add(flowTab)
         tabbedPane.add(TypesTab(context, { notifyTabsShlDefsChanged(ShlDefsChangeType.Types) }))
         val startingFunc = "start"
@@ -193,7 +196,7 @@ class App(val projectDir: File) : ApplicationListener {
     private fun disassembleFunc(funcName: String) {
         try {
             val def = projectIO.getFuncDefByName(funcName)
-                    ?: log.panic(tag, "no such function def for name $funcName")
+                ?: log.panic(tag, "no such function def for name $funcName")
             val existingTab = openGraphTabs[def.offset]
             if (existingTab != null) {
                 tabbedPane.switchTab(existingTab)

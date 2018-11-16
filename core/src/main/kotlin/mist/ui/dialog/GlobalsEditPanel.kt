@@ -37,7 +37,8 @@ import mist.shl.ShlTypes
 import mist.ui.util.StaticListAdapter
 
 /** @author Kotcrab */
-class GlobalsEditPanel(private val types: ShlTypes, private val globals: ShlGlobals, val onCommit: () -> Unit) : VisTable(true) {
+class GlobalsEditPanel(private val types: ShlTypes, private val globals: ShlGlobals, val onCommit: () -> Unit) :
+    VisTable(true) {
     private val memberAdapter = ShlGlobalsAdapter(globals.getGlobals())
     private val globalEditTable = GlobalEditTable()
 
@@ -65,8 +66,12 @@ class GlobalsEditPanel(private val types: ShlTypes, private val globals: ShlGlob
 
         fun initElemAddition() {
             clear()
-            initContents(ShlGlobal(0x0, "global_${globals.getGlobals().size}",
-                    -1, false, ""), false)
+            initContents(
+                ShlGlobal(
+                    0x0, "global_${globals.getGlobals().size}",
+                    -1, false, ""
+                ), false
+            )
         }
 
         fun initElemEdition(global: ShlGlobal) {
@@ -115,8 +120,10 @@ class GlobalsEditPanel(private val types: ShlTypes, private val globals: ShlGlob
                 row()
                 table(true) {
                     label("Type:")
-                    typeField = validatableTextField(types.getType(global.refTid)?.name
-                            ?: "u32").cell(preferredWidth = 220f)
+                    typeField = validatableTextField(
+                        types.getType(global.refTid)?.name
+                            ?: "u32"
+                    ).cell(preferredWidth = 220f)
                     label("Name:")
                     nameField = validatableTextField(global.name).cell(preferredWidth = 220f)
                     label("Address:")
@@ -145,11 +152,15 @@ class GlobalsEditPanel(private val types: ShlTypes, private val globals: ShlGlob
                         onChange {
                             val refTid = types.getTypeByName(typeField.text)!!.tid
                             if (editMode) {
-                                globals.editGlobal(global, Integer.decode(addressField.text), nameField.text, refTid,
-                                        pointerCheck.isChecked, commentField.text)
+                                globals.editGlobal(
+                                    global, Integer.decode(addressField.text), nameField.text, refTid,
+                                    pointerCheck.isChecked, commentField.text
+                                )
                             } else {
-                                globals.addGlobal(Integer.decode(addressField.text), nameField.text, refTid,
-                                        pointerCheck.isChecked, commentField.text)
+                                globals.addGlobal(
+                                    Integer.decode(addressField.text), nameField.text, refTid,
+                                    pointerCheck.isChecked, commentField.text
+                                )
                             }
                             memberAdapter.itemsChanged()
                             initElemAddition()

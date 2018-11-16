@@ -18,9 +18,9 @@
 
 package mist.shl
 
-import mist.asm.EdgeKind
-import mist.asm.EdgeType
-import mist.asm.Node
+import mist.asm.mips.EdgeKind
+import mist.asm.mips.EdgeType
+import mist.asm.mips.Node
 import mist.shl.ShlExpr.*
 import mist.util.DecompLog
 import mist.util.logTag
@@ -48,8 +48,10 @@ class ExprMutator(val graph: ShlGraph, private val log: DecompLog) {
         renameAssignedVariable(instr, oldVar, newVar, mutableSetOf(), mutableSetOf())
     }
 
-    private fun renameAssignedVariable(instr: ShlInstr, oldVar: ShlExpr.ShlVar, newVar: ShlExpr.ShlVar, processedUses: MutableSet<ShlInstr>,
-                                       processedAssigns: MutableSet<ShlInstr>) {
+    private fun renameAssignedVariable(
+        instr: ShlInstr, oldVar: ShlExpr.ShlVar, newVar: ShlExpr.ShlVar, processedUses: MutableSet<ShlInstr>,
+        processedAssigns: MutableSet<ShlInstr>
+    ) {
         val discoveredAssigns = mutableSetOf<ShlInstr>()
         log.trace(tag, "rename in assign '$instr'")
         instr.substituteWriteExpr(oldVar, false, newVar)
@@ -195,7 +197,8 @@ class ExprMutator(val graph: ShlGraph, private val log: DecompLog) {
                 }
                 // flip needed?
                 if (newCond is ShlExpr.ShlEquality && newCond is ShlExpr.ShlBinaryExpr
-                        && newCond.left is ShlExpr.ShlConst && newCond.right is ShlExpr.ShlVar) {
+                    && newCond.left is ShlExpr.ShlConst && newCond.right is ShlExpr.ShlVar
+                ) {
                     newCond = newCond.flip()
                 }
                 instr.cond = newCond
@@ -209,7 +212,8 @@ class ExprMutator(val graph: ShlGraph, private val log: DecompLog) {
                 }
                 // flip needed?
                 if (newCond is ShlExpr.ShlEquality && newCond is ShlExpr.ShlBinaryExpr
-                        && newCond.left is ShlExpr.ShlConst && newCond.right is ShlExpr.ShlVar) {
+                    && newCond.left is ShlExpr.ShlConst && newCond.right is ShlExpr.ShlVar
+                ) {
                     newCond = newCond.flip()
                 }
                 instr.cond = newCond

@@ -64,11 +64,13 @@ fun parseGml(reader: Reader): GmlArray {
                         parentStack.removeAt(parentStack.lastIndex)
                     }
                     else -> {
-                        parentStack.last().atribs.add(when {
-                            localVal.matches(floatRegex) -> GmlFloat(name!!, localVal.toFloat())
-                            localVal.matches(intRegex) -> GmlInt(name!!, localVal.toInt())
-                            else -> GmlString(name!!, localVal)
-                        })
+                        parentStack.last().atribs.add(
+                            when {
+                                localVal.matches(floatRegex) -> GmlFloat(name!!, localVal.toFloat())
+                                localVal.matches(intRegex) -> GmlInt(name!!, localVal.toInt())
+                                else -> GmlString(name!!, localVal)
+                            }
+                        )
                     }
                 }
                 i = end
@@ -82,38 +84,41 @@ fun parseGml(reader: Reader): GmlArray {
 fun getGmlNodes(graph: GmlArray): List<GmlNode> {
     val nodes = mutableListOf<GmlNode>()
     graph["node"]
-            .map { it as GmlArray }
-            .forEach { node ->
-                val graphics = node["graphics", 0]
-                nodes.add(GmlNode(node.getInt("id"),
-                        graphics.getFloat("x"),
-                        graphics.getFloat("y"),
-                        graphics.getFloat("w"),
-                        graphics.getFloat("h")
-                ))
-            }
+        .map { it as GmlArray }
+        .forEach { node ->
+            val graphics = node["graphics", 0]
+            nodes.add(
+                GmlNode(
+                    node.getInt("id"),
+                    graphics.getFloat("x"),
+                    graphics.getFloat("y"),
+                    graphics.getFloat("w"),
+                    graphics.getFloat("h")
+                )
+            )
+        }
     return nodes
 }
 
 fun getGmlEdges(graph: GmlArray): List<GmlEdge> {
     val edges = mutableListOf<GmlEdge>()
     graph["edge"]
-            .map { it as GmlArray }
-            .forEach { edge ->
-                val graphics = edge["graphics", 0]
-                val line = graphics["Line"]
-                val source = edge.getInt("source")
-                val target = edge.getInt("target")
-                if (line.isEmpty()) {
-                    edges.add(GmlEdge(source, target, null))
-                } else {
-                    val points = mutableListOf<GmlPoint>()
-                    line[0]["point"].map { it as GmlArray }.forEach { point ->
-                        points.add(GmlPoint(point.getFloat("x"), point.getFloat("y")))
-                    }
-                    edges.add(GmlEdge(source, target, points))
+        .map { it as GmlArray }
+        .forEach { edge ->
+            val graphics = edge["graphics", 0]
+            val line = graphics["Line"]
+            val source = edge.getInt("source")
+            val target = edge.getInt("target")
+            if (line.isEmpty()) {
+                edges.add(GmlEdge(source, target, null))
+            } else {
+                val points = mutableListOf<GmlPoint>()
+                line[0]["point"].map { it as GmlArray }.forEach { point ->
+                    points.add(GmlPoint(point.getFloat("x"), point.getFloat("y")))
                 }
+                edges.add(GmlEdge(source, target, points))
             }
+        }
     return edges
 }
 
