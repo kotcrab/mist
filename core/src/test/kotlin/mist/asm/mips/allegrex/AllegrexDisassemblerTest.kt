@@ -393,7 +393,7 @@ class AllegrexDisassemblerTest {
 
     private fun testInstr(assemble: Assembler.() -> Unit, checkResult: Instr.() -> Unit) {
         val bytes = assembleAsByteArray { assemble(this) }
-        val result = AllegrexDisassembler(MemBinLoader(bytes), FunctionDef("UnitTest", 0, bytes.size)).disassembly
+        val result = AllegrexDisassembler().disassemble(MemBinLoader(bytes), FunctionDef("UnitTest", 0, bytes.size))
         assertThat(result.instr).isNotEmpty()
         checkResult(result.instr[0])
     }

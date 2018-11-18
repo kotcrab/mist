@@ -19,10 +19,7 @@
 package mist.asm.mips.allegrex
 
 import kio.util.toWHex
-import mist.asm.Disassembly
-import mist.asm.FunctionDef
-import mist.asm.ImmOperand
-import mist.asm.RegOperand
+import mist.asm.*
 import mist.asm.mips.FpuReg
 import mist.asm.mips.GprReg
 import mist.asm.mips.MipsInstr
@@ -33,10 +30,7 @@ import mist.io.BinLoader
 
 //TODO VFPU instructions and other missing instructions
 
-class AllegrexDisassembler(loader: BinLoader, private val funcDef: FunctionDef) {
-    constructor(loader: BinLoader, funcName: String, funcOffset: Int, funcLen: Int)
-            : this(loader, FunctionDef(funcName, funcOffset, funcLen))
-
+class AllegrexDisassembler : Disassembler<MipsInstr> {
     private companion object {
         const val COP1 = 0b010_001
         const val FMT_S = 16
@@ -44,9 +38,7 @@ class AllegrexDisassembler(loader: BinLoader, private val funcDef: FunctionDef) 
         const val FMT_W = 20
     }
 
-    val disassembly: Disassembly
-
-    init {
+    override fun disassemble(loader: BinLoader, funcDef: FunctionDef): Disassembly<MipsInstr> {
         if (funcDef.offset % 4 != 0) error("offset must be multiply of 4")
         if (funcDef.len % 4 != 0) error("length must be multiply of 4")
         val decoded = mutableListOf<MipsInstr>()
@@ -65,7 +57,7 @@ class AllegrexDisassembler(loader: BinLoader, private val funcDef: FunctionDef) 
                 else -> decoded.add(disassembleIAndJInstructions(vAddr, instr, instrCount, opcode))
             }
         }
-        disassembly = Disassembly(funcDef, decoded)
+        return Disassembly(funcDef, decoded)
     }
 
     private fun disassembleRInstruction(vAddr: Int, instr: Int, instrCount: Int): MipsInstr {
@@ -118,7 +110,7 @@ class AllegrexDisassembler(loader: BinLoader, private val funcDef: FunctionDef) 
 
             0b001_111 -> MipsInstr(vAddr, Sync, ImmOperand(shift))
 
-            else -> handleUnknownInstr(instrCount)
+            else -> handleUnknownInstr(vAddr, instrCount)
         }
     }
 
@@ -144,7 +136,7 @@ class AllegrexDisassembler(loader: BinLoader, private val funcDef: FunctionDef) 
                     0b01 -> MipsInstr(vAddr, FpuBc1t, ImmOperand(branchTarget))
                     0b11 -> MipsInstr(vAddr, FpuBc1tl, ImmOperand(branchTarget))
                     0b10 -> MipsInstr(vAddr, FpuBc1fl, ImmOperand(branchTarget))
-                    else -> handleUnknownInstr(instrCount)
+                    else -> handleUnknownInstr(vAddr, instrCount)
                 }
             }
             FMT_S -> {
@@ -166,19 +158,19 @@ class AllegrexDisassembler(loader: BinLoader, private val funcDef: FunctionDef) 
                     0b11_1110 -> MipsInstr(vAddr, FpuCLeS, RegOperand(fs), RegOperand(ft))
                     0b11_1100 -> MipsInstr(vAddr, FpuCLtS, RegOperand(fs), RegOperand(ft))
                     0b000_110 -> MipsInstr(vAddr, FpuMovS, RegOperand(fd), RegOperand(fs))
-                    else -> handleUnknownInstr(instrCount)
+                    else -> handleUnknownInstr(vAddr, instrCount)
                 }
             }
             FMT_W -> {
                 when (funct) {
                     0b100_000 -> MipsInstr(vAddr, FpuCvtSW, RegOperand(fd), RegOperand(fs))
-                    else -> handleUnknownInstr(instrCount)
+                    else -> handleUnknownInstr(vAddr, instrCount)
                 }
             }
             FMT_D -> {
                 error("FMT_D is not supported on Allegrex")
             }
-            else -> handleUnknownInstr(instrCount)
+            else -> handleUnknownInstr(vAddr, instrCount)
         }
     }
 
@@ -255,11 +247,11 @@ class AllegrexDisassembler(loader: BinLoader, private val funcDef: FunctionDef) 
             0b110_001 -> MipsInstr(vAddr, Lwc1, RegOperand(FpuReg.forId(rt.id)), RegOperand(rs), ImmOperand(imm))
             0b111_001 -> MipsInstr(vAddr, Swc1, RegOperand(FpuReg.forId(rt.id)), RegOperand(rs), ImmOperand(imm))
 
-            else -> handleUnknownInstr(instrCount)
+            else -> handleUnknownInstr(vAddr, instrCount)
         }
     }
 
-    private fun handleUnknownInstr(instrCount: Int): Nothing {
-        error("unknown instruction at offset ${(instrCount * 4).toWHex()}, address ${(funcDef.offset + instrCount * 4).toWHex()}")
+    private fun handleUnknownInstr(vAddr: Int, instrCount: Int): Nothing {
+        error("unknown instruction at offset ${(instrCount * 4).toWHex()}, address ${vAddr.toWHex()}")
     }
 }

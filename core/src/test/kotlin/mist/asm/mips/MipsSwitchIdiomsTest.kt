@@ -91,10 +91,10 @@ class MipsSwitchIdiomsTest {
         idiom: IdiomMatcher<MipsInstr, *, SwitchDescriptor>,
         expectedJumpTableLoc: Int
     ) {
-        val dasm = AllegrexDisassembler(MemBinLoader(bytes), FunctionDef("", 0, bytes.size)).disassembly
-        val result = idiom.matches(dasm.instr as List<MipsInstr>, dasm.instr.lastIndex)
+        val dasm = AllegrexDisassembler().disassemble(MemBinLoader(bytes), FunctionDef("", 0, bytes.size))
+        val result = idiom.matches(dasm.instr, dasm.instr.lastIndex)
         Assertions.assertThat(result).isNotNull()
-        result!!
+        result!! // non-null verified above
         assertThat(result.jumpTableLoc).isEqualTo(expectedJumpTableLoc)
         assertThat(result.relInstrs).isNotEmpty()
         assertThat(result.switchCaseCount).isEqualTo(0x13)

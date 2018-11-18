@@ -18,4 +18,10 @@
 
 package mist.asm
 
-class Disassembly<Instruction : Instr>(val def: FunctionDef, val instr: List<Instruction>)
+import mist.io.BinLoader
+
+/** @author Kotcrab */
+
+interface Disassembler<Instruction : Instr> {
+    fun disassemble(loader: BinLoader, funcDef: FunctionDef): Disassembly<Instruction>
+}

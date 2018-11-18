@@ -195,8 +195,8 @@ class GraphTest {
     private fun graphFromAsm(size: Int = -1, assemble: Assembler.() -> Unit): Graph {
         val bytes = assembleAsByteArray { assemble() }
         val loader = MemBinLoader(bytes)
-        val test = AllegrexDisassembler(loader, FunctionDef("", 0, if (size == -1) bytes.size else size)).disassembly
-        val graph = Graph(loader, test.instr as List<MipsInstr>, DecompLog())
+        val test = AllegrexDisassembler().disassemble(loader, FunctionDef("", 0, if (size == -1) bytes.size else size))
+        val graph = Graph(loader, test.instr, DecompLog())
         graph.generateGraph()
         return graph
     }
