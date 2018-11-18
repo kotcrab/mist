@@ -25,6 +25,7 @@ import kmips.assembleAsByteArray
 import mist.asm.FunctionDef
 import mist.asm.Reg
 import mist.asm.isReg
+import mist.asm.mips.MipsOpcode.*
 import mist.asm.mips.allegrex.AllegrexDisassembler
 import mist.test.util.MemBinLoader
 import mist.util.DecompLog
@@ -211,9 +212,9 @@ class GraphTest {
         @Test
         fun `fill branch ctx using jump`() {
             val (jumpSrc, jumpTargets) = basicJumpGraph.jumpingTo.toList()
-                    .single { it.first.addr == basicJumpLoc }
+                .single { it.first.addr == basicJumpLoc }
             val (jumpDest, jumpSources) = basicJumpGraph.jumpingToFrom.toList()
-                    .single { it.first.addr == basicJumpTargetLoc }
+                .single { it.first.addr == basicJumpTargetLoc }
             assertThat(jumpSrc.opcode).isEqualTo(J)
             assertThat(jumpTargets.size).isEqualTo(1)
             assertThat(jumpTargets.first()).isEqualTo(jumpDest)
@@ -225,9 +226,9 @@ class GraphTest {
         @Test
         fun `fill branch ctx using branch`() {
             val (branchSrc, branchTargets) = basicBranchGraph.jumpingTo.toList()
-                    .single { it.first.addr == basicBranchLoc }
+                .single { it.first.addr == basicBranchLoc }
             val (branchDest, branchSources) = basicBranchGraph.jumpingToFrom.toList()
-                    .single { it.first.addr == basicBranchTargetLoc }
+                .single { it.first.addr == basicBranchTargetLoc }
             assertThat(branchSrc.opcode).isEqualTo(Beq)
             assertThat(branchTargets.size).isEqualTo(1)
             assertThat(branchTargets.first()).isEqualTo(branchDest)
@@ -239,9 +240,9 @@ class GraphTest {
         @Test
         fun `fill branch ctx using conditional branch`() {
             val (branchSrc, branchTargets) = basicCondBranchGraph.jumpingTo.toList()
-                    .single { it.first.addr == basicCondBranchLoc }
+                .single { it.first.addr == basicCondBranchLoc }
             val (branchDest, branchSources) = basicCondBranchGraph.jumpingToFrom.toList()
-                    .single { it.first.addr == basicCondBranchTargetLoc }
+                .single { it.first.addr == basicCondBranchTargetLoc }
             assertThat(branchSrc.opcode).isEqualTo(Beq)
             assertThat(branchTargets.size).isEqualTo(1)
             assertThat(branchTargets.first()).isEqualTo(branchDest)
@@ -262,7 +263,7 @@ class GraphTest {
 
         private fun testBranchInSwitchGraph(graph: Graph, swtichReg: Reg) {
             val (branchSrc, branchTargets) = graph.jumpingTo.toList()
-                    .single { it.first.matchesExact(Jr, isReg(swtichReg)) }
+                .single { it.first.matchesExact(Jr, isReg(swtichReg)) }
             assertThat(branchTargets.size).isEqualTo(3) // 3 unique cases
             assertThat(graph.switchSrcInstrs).hasSize(1)
             assertThat(graph.switchSrcInstrs).containsKey(branchSrc.addr)

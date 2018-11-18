@@ -86,7 +86,11 @@ class MipsSwitchIdiomsTest {
         verifySwitchMatch(bytes, MipsSwitchIdioms().a0RegIdiom, 0x89002240.toInt())
     }
 
-    private fun verifySwitchMatch(bytes: ByteArray, idiom: IdiomMatcher<MipsInstr, *, SwitchDescriptor>, expectedJumpTableLoc: Int) {
+    private fun verifySwitchMatch(
+        bytes: ByteArray,
+        idiom: IdiomMatcher<MipsInstr, *, SwitchDescriptor>,
+        expectedJumpTableLoc: Int
+    ) {
         val dasm = AllegrexDisassembler(MemBinLoader(bytes), FunctionDef("", 0, bytes.size)).disassembly
         val result = idiom.matches(dasm.instr as List<MipsInstr>, dasm.instr.lastIndex)
         Assertions.assertThat(result).isNotNull()

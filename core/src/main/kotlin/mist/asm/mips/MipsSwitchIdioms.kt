@@ -20,6 +20,7 @@ package mist.asm.mips
 
 import mist.asm.*
 import mist.asm.mips.GprReg.*
+import mist.asm.mips.MipsOpcode.*
 
 /** @author Kotcrab */
 

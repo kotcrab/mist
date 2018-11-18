@@ -18,9 +18,9 @@
 
 package mist.asm
 
-import mist.asm.mips.Addiu
 import mist.asm.mips.MipsInstr
-import mist.asm.mips.Nop
+import mist.asm.mips.MipsOpcode.Addiu
+import mist.asm.mips.MipsOpcode.Nop
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 

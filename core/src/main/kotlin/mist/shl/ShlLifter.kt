@@ -19,9 +19,11 @@
 package mist.shl
 
 import mist.asm.*
-import mist.io.ProjectIO
-import mist.asm.mips.*
+import mist.asm.mips.FpuReg
 import mist.asm.mips.GprReg
+import mist.asm.mips.MipsInstr
+import mist.asm.mips.MipsOpcode.*
+import mist.io.ProjectIO
 import mist.shl.ShlExpr.*
 import mist.util.DecompLog
 import mist.util.logTag

@@ -23,8 +23,11 @@ import mist.asm.Disassembly
 import mist.asm.FunctionDef
 import mist.asm.ImmOperand
 import mist.asm.RegOperand
+import mist.asm.mips.FpuReg
+import mist.asm.mips.GprReg
+import mist.asm.mips.MipsInstr
+import mist.asm.mips.MipsOpcode.*
 import mist.io.BinLoader
-import mist.asm.mips.*
 
 /** @author Kotcrab */
 

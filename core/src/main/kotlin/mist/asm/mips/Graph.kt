@@ -21,6 +21,7 @@ package mist.asm.mips
 import kio.util.swap
 import kio.util.toWHex
 import mist.asm.*
+import mist.asm.mips.MipsOpcode.*
 import mist.io.BinLoader
 import mist.util.DecompLog
 import mist.util.logTag

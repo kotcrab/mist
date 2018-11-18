@@ -27,7 +27,14 @@ class InstrTest {
     object TestReg : Reg("test", 0)
     object TestReg2 : Reg("test2", 1)
     object TestProcessor : Processor("test")
-    object TestOpcode : Opcode("test", arrayOf(TestProcessor), arrayOf(MemoryRead), modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object TestOpcode : Opcode(
+        "test",
+        arrayOf(TestProcessor),
+        arrayOf(MemoryRead),
+        modify = arrayOf(Operand0Ref),
+        use = arrayOf(Operand1Ref)
+    )
+
     object TestInstr : Instr(0x0, TestOpcode, arrayOf(RegOperand(TestReg), RegOperand(TestReg2)))
 
     @Test

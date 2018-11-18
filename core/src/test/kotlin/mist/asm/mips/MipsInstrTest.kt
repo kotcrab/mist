@@ -25,6 +25,8 @@ import mist.asm.ImmOperand
 import mist.asm.OperandMatcher
 import mist.asm.RegOperand
 import mist.asm.anyReg
+import mist.asm.mips.MipsOpcode.Nop
+import mist.asm.mips.MipsOpcode.Sw
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
