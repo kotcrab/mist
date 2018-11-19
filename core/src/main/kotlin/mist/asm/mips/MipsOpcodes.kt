@@ -16,6 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// TODO should not be necessary after implementing all disassemblers
 @file:Suppress("unused")
 
 package mist.asm.mips
@@ -246,6 +247,14 @@ abstract class MipsOpcode(
         use = arrayOf(Operand1Ref)
     )
 
+    object Ldc3 : MipsOpcode(
+        "ldc3",
+        processors = arrayOf(MipsIProcessor, MipsIIProcessor),
+        flags = arrayOf(MemoryRead),
+        modify = arrayOf(Operand0Ref),
+        use = arrayOf(Operand1Ref)
+    )
+
     object Lh : MipsOpcode(
         "lh",
         flags = arrayOf(MemoryRead),
@@ -413,6 +422,13 @@ abstract class MipsOpcode(
     object Sdc2 : MipsOpcode(
         "sdc2",
         processors = mipsCommon(legacyOrigin = MipsIIProcessor, allegrex = false),
+        flags = arrayOf(MemoryWrite),
+        use = arrayOf(Operand0Ref, Operand1Ref)
+    )
+
+    object Sdc3 : MipsOpcode(
+        "sdc3",
+        processors = arrayOf(MipsIProcessor, MipsIIProcessor),
         flags = arrayOf(MemoryWrite),
         use = arrayOf(Operand0Ref, Operand1Ref)
     )

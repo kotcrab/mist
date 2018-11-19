@@ -16,6 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// TODO should not be necessary after implementing all VFPU disassembly
 @file:Suppress("unused")
 
 package mist.asm.mips.allegrex
