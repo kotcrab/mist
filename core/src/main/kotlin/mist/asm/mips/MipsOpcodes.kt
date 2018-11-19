@@ -16,9 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// TODO should not be necessary after implementing all disassemblers
-@file:Suppress("unused")
-
 package mist.asm.mips
 
 import mist.asm.*
@@ -169,7 +166,7 @@ abstract class MipsOpcode(
 
     object Break : MipsOpcode("break", flags = arrayOf(Trap))
 
-// Cop0-3 instructions should be only used as fallback when no specific coprocessor instruction can be resolved
+    // Cop0-3 instructions should be only used as fallback when no specific coprocessor instruction can be resolved
 
     object Cop0 : MipsOpcode("cop0")
 
@@ -1000,7 +997,7 @@ abstract class MipsOpcode(
         processors = mipsCommon(legacyOrigin = MipsIVProcessor, allegrex = false),
         flags = arrayOf(MemoryRead),
         modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object FpuLwxc1 : MipsOpcode(
@@ -1008,7 +1005,7 @@ abstract class MipsOpcode(
         processors = mipsCommon(legacyOrigin = MipsIVProcessor, allegrex = false),
         flags = arrayOf(MemoryRead),
         modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object FpuMaddS : MipsOpcode(
@@ -1296,7 +1293,7 @@ abstract class MipsOpcode(
         "sdxc1",
         processors = mipsCommon(legacyOrigin = MipsIVProcessor, allegrex = false),
         flags = arrayOf(MemoryWrite, Fpu),
-        use = arrayOf(Operand0Ref, Operand1Ref)
+        use = arrayOf(Operand0Ref, Operand1Ref, Operand2Ref)
     )
 
     object FpuSqrtS : MipsOpcode(
@@ -1334,7 +1331,7 @@ abstract class MipsOpcode(
         "swxc1",
         processors = mipsCommon(legacyOrigin = MipsIVProcessor, allegrex = false),
         flags = arrayOf(MemoryWrite, Fpu),
-        use = arrayOf(Operand0Ref, Operand1Ref)
+        use = arrayOf(Operand0Ref, Operand1Ref, Operand2Ref)
     )
 
     object FpuTruncLS : MipsOpcode(

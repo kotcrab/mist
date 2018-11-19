@@ -66,6 +66,22 @@ class FpuRegTest {
     }
 
     @Test
+    fun `return fpu cc reg for id`() {
+        arrayOf(
+            0 to FpuReg.Cc0,
+            1 to FpuReg.Cc1,
+            2 to FpuReg.Cc2,
+            3 to FpuReg.Cc3,
+            4 to FpuReg.Cc4,
+            5 to FpuReg.Cc5,
+            6 to FpuReg.Cc6,
+            7 to FpuReg.Cc7
+        ).forEach { (id, reg) ->
+            assertThat(FpuReg.ccForId(id)).isEqualTo(reg)
+        }
+    }
+
+    @Test
     fun `values contains special purpose fpu registers`() {
         val values = FpuReg.values()
         assertThat(values.contains(FpuReg.Cc0)).isTrue()

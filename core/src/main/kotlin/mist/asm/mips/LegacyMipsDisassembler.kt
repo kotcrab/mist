@@ -32,10 +32,16 @@ class LegacyMipsDisassembler(val srcProcessor: LegacyMipsProcessor) : Disassembl
         const val COP0 = 0b010_000
         const val COP1 = 0b010_001
         const val COP2 = 0b010_010
-        const val COP3 = 0b010_011
+        const val COP3_COP1X = 0b010_011
         const val FMT_S = 16
         const val FMT_D = 17
         const val FMT_W = 20
+        const val FMT_L = 21
+        const val FMT3_S = 0
+        const val FMT3_D = 1
+        const val FMT3_W = 4
+        const val FMT3_L = 5
+        const val BC = 0b01000
     }
 
     override fun disassemble(loader: BinLoader, funcDef: FunctionDef): Disassembly<MipsInstr> {
@@ -52,8 +58,8 @@ class LegacyMipsDisassembler(val srcProcessor: LegacyMipsProcessor) : Disassembl
                 opcode == SPECIAL -> decoded.add(disasmSpecialInstr(vAddr, instr, instrCount))
                 opcode == REGIMM -> decoded.add(disasmRegimmInstr(vAddr, instr, instrCount))
                 opcode == COP1 -> decoded.add(disasmCop1Instr(vAddr, instr, instrCount))
-                opcode == COP2 -> decoded.add(disasmCop2Instr(vAddr, instr, instrCount))
-                opcode == COP3 -> decoded.add(disasmCop3Instr(vAddr, instr, instrCount))
+                opcode == COP2 -> decoded.add(disasmCop2Instr(vAddr, instr))
+                opcode == COP3_COP1X -> decoded.add(disasmCop3Instr(vAddr, instr, instrCount))
                 else -> decoded.add(disasmOpcodeInstr(vAddr, instr, instrCount, opcode))
             }
         }
@@ -115,73 +121,236 @@ class LegacyMipsDisassembler(val srcProcessor: LegacyMipsProcessor) : Disassembl
 
     private fun disasmCop1Instr(vAddr: Int, instr: Int, instrCount: Int): MipsInstr {
         // only for FPU R instruction
-        val rt = GprReg.forId(instr ushr 16 and 0x1F)
+        val rt = RegOperand(GprReg.forId(instr ushr 16 and 0x1F))
         // only for FPU instruction
         val fmt = instr ushr 21 and 0x1F
-        val ft = FpuReg.forId(instr ushr 16 and 0x1F)
-        val fs = FpuReg.forId(instr ushr 11 and 0x1F)
-        val fd = FpuReg.forId(instr ushr 6 and 0x1F)
+        val ft = RegOperand(FpuReg.forId(instr ushr 16 and 0x1F))
+        val fs = RegOperand(FpuReg.forId(instr ushr 11 and 0x1F))
+        val fd = RegOperand(FpuReg.forId(instr ushr 6 and 0x1F))
         val funct = instr and 0x3F
-        // only for branch instruction
-        val branchTarget = (instr and 0xFFFF).toShort().toInt()
-        return when (fmt) {
-//            0b00100 -> MipsInstr(vAddr, FpuMtc1, RegOperand(rt), RegOperand(fs))
-//            0b00000 -> MipsInstr(vAddr, FpuMfc1, RegOperand(rt), RegOperand(fs))
-//            0b00110 -> MipsInstr(vAddr, FpuCtc1, RegOperand(rt), RegOperand(fs))
-//            0b00010 -> MipsInstr(vAddr, FpuCfc1, RegOperand(rt), RegOperand(fs))
-            0b01000 -> {
-                when (rt.id) {
-//                    0b00 -> MipsInstr(vAddr, FpuBc1f, ImmOperand(branchTarget))
-//                    0b01 -> MipsInstr(vAddr, FpuBc1t, ImmOperand(branchTarget))
-//                    0b11 -> MipsInstr(vAddr, FpuBc1tl, ImmOperand(branchTarget))
-//                    0b10 -> MipsInstr(vAddr, FpuBc1fl, ImmOperand(branchTarget))
+        return when {
+            fmt == 0b00010 && fd.reg.id == 0 && funct == 0 -> MipsInstr(vAddr, FpuCfc1, rt, fs)
+            fmt == 0b00110 && fd.reg.id == 0 && funct == 0 -> MipsInstr(vAddr, FpuCtc1, rt, fs)
+            fmt == 0b00000 && fd.reg.id == 0 && funct == 0 -> MipsInstr(vAddr, FpuMfc1, rt, fs)
+            //     fmt ==        0b00100 && fd.reg.id == 0 && funct == 0-> MipsInstr(vAddr, FpuMtc1, rt, fs)
+            fmt == BC -> {
+                val branchTarget = ImmOperand((instr and 0xFFFF).toShort().toInt())
+                val ndtf = instr ushr 16 and 0b11
+                val cc = RegOperand(FpuReg.ccForId(instr ushr 18 and 0b111))
+                if (cc.reg !is FpuReg.Cc0 && srcProcessor !is MipsIVProcessor) {
+                    error("only MIPS IV architecture level can use non 0 condition code (cc)")
+                }
+                when (srcProcessor) {
+                    is MipsIVProcessor -> {
+                        when (ndtf) {
+                            0b00 -> MipsInstr(vAddr, FpuBc1fCcAny, cc, branchTarget)
+                            0b10 -> MipsInstr(vAddr, FpuBc1flCcAny, cc, branchTarget)
+                            0b01 -> MipsInstr(vAddr, FpuBc1tCcAny, cc, branchTarget)
+                            0b11 -> MipsInstr(vAddr, FpuBc1tlCcAny, cc, branchTarget)
+                            else -> handleUnknownInstr(vAddr, instrCount)
+                        }
+                    }
+                    else -> {
+                        when (ndtf) {
+                            0b00 -> MipsInstr(vAddr, FpuBc1f, branchTarget)
+                            0b10 -> MipsInstr(vAddr, FpuBc1fl, branchTarget)
+                            0b01 -> MipsInstr(vAddr, FpuBc1t, branchTarget)
+                            0b11 -> MipsInstr(vAddr, FpuBc1tl, branchTarget)
+                            else -> handleUnknownInstr(vAddr, instrCount)
+                        }
+                    }
+                }
+            }
+            fmt == FMT_S -> {
+                when {
+                    funct == 0b000_101 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuAbsS, fd, fs)
+                    funct == 0b000_000 -> MipsInstr(vAddr, FpuAddS, fd, fs, ft)
+                    funct and 0b110_000 == 0b110_000 -> {
+                        val cc = RegOperand(FpuReg.ccForId(instr ushr 8 and 0b111))
+                        val cond = funct and 0b1111
+                        if (cc.reg !is FpuReg.Cc0 && srcProcessor !is MipsIVProcessor) {
+                            error("only MIPS IV architecture level can use non 0 condition code (cc)")
+                        }
+                        when (srcProcessor) {
+                            is MipsIVProcessor -> {
+                                when (cond) {
+                                    0b0000 -> MipsInstr(vAddr, FpuCFSCcAny, cc, fs, ft)
+                                    0b0001 -> MipsInstr(vAddr, FpuCUnSCcAny, cc, fs, ft)
+                                    0b0010 -> MipsInstr(vAddr, FpuCEqSCcAny, cc, fs, ft)
+                                    0b0011 -> MipsInstr(vAddr, FpuCUeqSCcAny, cc, fs, ft)
+                                    0b0100 -> MipsInstr(vAddr, FpuCOltSCcAny, cc, fs, ft)
+                                    0b0101 -> MipsInstr(vAddr, FpuCUltSCcAny, cc, fs, ft)
+                                    0b0110 -> MipsInstr(vAddr, FpuCOleSCcAny, cc, fs, ft)
+                                    0b0111 -> MipsInstr(vAddr, FpuCUleSCcAny, cc, fs, ft)
+                                    0b1000 -> MipsInstr(vAddr, FpuCSfSCcAny, cc, fs, ft)
+                                    0b1001 -> MipsInstr(vAddr, FpuCNgleSCcAny, cc, fs, ft)
+                                    0b1010 -> MipsInstr(vAddr, FpuCSeqSCcAny, cc, fs, ft)
+                                    0b1011 -> MipsInstr(vAddr, FpuCNglSCcAny, cc, fs, ft)
+                                    0b1100 -> MipsInstr(vAddr, FpuCLtSCcAny, cc, fs, ft)
+                                    0b1101 -> MipsInstr(vAddr, FpuCNgeSCcAny, cc, fs, ft)
+                                    0b1110 -> MipsInstr(vAddr, FpuCLeSCcAny, cc, fs, ft)
+                                    0b1111 -> MipsInstr(vAddr, FpuCNgtSCcAny, cc, fs, ft)
+                                    else -> handleUnknownInstr(vAddr, instrCount)
+                                }
+                            }
+                            else -> {
+                                when (cond) {
+                                    0b0000 -> MipsInstr(vAddr, FpuCFS, fs, ft)
+                                    0b0001 -> MipsInstr(vAddr, FpuCUnS, fs, ft)
+                                    0b0010 -> MipsInstr(vAddr, FpuCEqS, fs, ft)
+                                    0b0011 -> MipsInstr(vAddr, FpuCUeqS, fs, ft)
+                                    0b0100 -> MipsInstr(vAddr, FpuCOltS, fs, ft)
+                                    0b0101 -> MipsInstr(vAddr, FpuCUltS, fs, ft)
+                                    0b0110 -> MipsInstr(vAddr, FpuCOleS, fs, ft)
+                                    0b0111 -> MipsInstr(vAddr, FpuCUleS, fs, ft)
+                                    0b1000 -> MipsInstr(vAddr, FpuCSfS, fs, ft)
+                                    0b1001 -> MipsInstr(vAddr, FpuCNgleS, fs, ft)
+                                    0b1010 -> MipsInstr(vAddr, FpuCSeqS, fs, ft)
+                                    0b1011 -> MipsInstr(vAddr, FpuCNglS, fs, ft)
+                                    0b1100 -> MipsInstr(vAddr, FpuCLtS, fs, ft)
+                                    0b1101 -> MipsInstr(vAddr, FpuCNgeS, fs, ft)
+                                    0b1110 -> MipsInstr(vAddr, FpuCLeS, fs, ft)
+                                    0b1111 -> MipsInstr(vAddr, FpuCNgtS, fs, ft)
+                                    else -> handleUnknownInstr(vAddr, instrCount)
+                                }
+                            }
+                        }
+                    }
+                    funct == 0b001_010 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuCeilLS, fd, fs)
+                    funct == 0b001_110 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuCeilWS, fd, fs)
+                    funct == 0b100_001 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuCvtDS, fd, fs)
+                    funct == 0b100_101 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuCvtLS, fd, fs)
+                    funct == 0b100_100 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuCvtWS, fd, fs)
+                    funct == 0b000_011 -> MipsInstr(vAddr, FpuDivS, fd, fs, ft)
+                    funct == 0b001_011 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuFloorLS, fd, fs)
+                    funct == 0b001_111 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuFloorWS, fd, fs)
+                    //                funct == 0b000_001 -> MipsInstr(vAddr, FpuSubS, fd, fs, ft)
+                    //                funct == 0b000_010 -> MipsInstr(vAddr, FpuMulS, fd, fs, ft)
+                    //                funct == 0b000_111 -> MipsInstr(vAddr, FpuNegS, fd, fs)
+                    //                funct == 0b000_100 -> MipsInstr(vAddr, FpuSqrtS, fd, fs)
+                    //                funct == 0b001_100 -> MipsInstr(vAddr, FpuRoundWS, fd, fs)
+                    //                funct == 0b001_101 -> MipsInstr(vAddr, FpuTruncWS, fd, fs)
+                    //                funct == 0b001_111 -> MipsInstr(vAddr, FpuFloorWS, fd, fs)
+                    //                funct == 0b000_110 -> MipsInstr(vAddr, FpuMovS, fd, fs)
                     else -> handleUnknownInstr(vAddr, instrCount)
                 }
             }
-            FMT_S -> {
-                when (funct) {
-//                    0b000_000 -> MipsInstr(vAddr, FpuAddS, RegOperand(fd), RegOperand(fs), RegOperand(ft))
-//                    0b000_001 -> MipsInstr(vAddr, FpuSubS, RegOperand(fd), RegOperand(fs), RegOperand(ft))
-//                    0b000_010 -> MipsInstr(vAddr, FpuMulS, RegOperand(fd), RegOperand(fs), RegOperand(ft))
-//                    0b000_011 -> MipsInstr(vAddr, FpuDivS, RegOperand(fd), RegOperand(fs), RegOperand(ft))
-//                    0b000_101 -> MipsInstr(vAddr, FpuAbsS, RegOperand(fd), RegOperand(fs))
-//                    0b000_111 -> MipsInstr(vAddr, FpuNegS, RegOperand(fd), RegOperand(fs))
-//                    0b000_100 -> MipsInstr(vAddr, FpuSqrtS, RegOperand(fd), RegOperand(fs))
-//                    0b001_100 -> MipsInstr(vAddr, FpuRoundWS, RegOperand(fd), RegOperand(fs))
-//                    0b001_101 -> MipsInstr(vAddr, FpuTruncWS, RegOperand(fd), RegOperand(fs))
-//                    0b001_110 -> MipsInstr(vAddr, FpuCeilWS, RegOperand(fd), RegOperand(fs))
-//                    0b001_111 -> MipsInstr(vAddr, FpuFloorWS, RegOperand(fd), RegOperand(fs))
-//
-//                    0b100_100 -> MipsInstr(vAddr, FpuCvtWS, RegOperand(fd), RegOperand(fs))
-//                    0b11_0010 -> MipsInstr(vAddr, FpuCEqS, RegOperand(fs), RegOperand(ft))
-//                    0b11_1110 -> MipsInstr(vAddr, FpuCLeS, RegOperand(fs), RegOperand(ft))
-//                    0b11_1100 -> MipsInstr(vAddr, FpuCLtS, RegOperand(fs), RegOperand(ft))
-//                    0b000_110 -> MipsInstr(vAddr, FpuMovS, RegOperand(fd), RegOperand(fs))
+            fmt == FMT_D -> {
+                when {
+                    funct == 0b000_101 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuAbsD, fd, fs)
+                    funct == 0b000_000 -> MipsInstr(vAddr, FpuAddD, fd, fs, ft)
+                    funct and 0b110_000 == 0b110_000 -> {
+                        val cc = RegOperand(FpuReg.ccForId(instr ushr 8 and 0b111))
+                        val cond = funct and 0b1111
+                        if (cc.reg !is FpuReg.Cc0 && srcProcessor !is MipsIVProcessor) {
+                            error("only MIPS IV architecture level can use non 0 condition code (cc)")
+                        }
+                        when (srcProcessor) {
+                            is MipsIVProcessor -> {
+                                when (cond) {
+                                    0b0000 -> MipsInstr(vAddr, FpuCFDCcAny, cc, fs, ft)
+                                    0b0001 -> MipsInstr(vAddr, FpuCUnDCcAny, cc, fs, ft)
+                                    0b0010 -> MipsInstr(vAddr, FpuCEqDCcAny, cc, fs, ft)
+                                    0b0011 -> MipsInstr(vAddr, FpuCUeqDCcAny, cc, fs, ft)
+                                    0b0100 -> MipsInstr(vAddr, FpuCOltDCcAny, cc, fs, ft)
+                                    0b0101 -> MipsInstr(vAddr, FpuCUltDCcAny, cc, fs, ft)
+                                    0b0110 -> MipsInstr(vAddr, FpuCOleDCcAny, cc, fs, ft)
+                                    0b0111 -> MipsInstr(vAddr, FpuCUleDCcAny, cc, fs, ft)
+                                    0b1000 -> MipsInstr(vAddr, FpuCSfDCcAny, cc, fs, ft)
+                                    0b1001 -> MipsInstr(vAddr, FpuCNgleDCcAny, cc, fs, ft)
+                                    0b1010 -> MipsInstr(vAddr, FpuCSeqDCcAny, cc, fs, ft)
+                                    0b1011 -> MipsInstr(vAddr, FpuCNglDCcAny, cc, fs, ft)
+                                    0b1100 -> MipsInstr(vAddr, FpuCLtDCcAny, cc, fs, ft)
+                                    0b1101 -> MipsInstr(vAddr, FpuCNgeDCcAny, cc, fs, ft)
+                                    0b1110 -> MipsInstr(vAddr, FpuCLeDCcAny, cc, fs, ft)
+                                    0b1111 -> MipsInstr(vAddr, FpuCNgtDCcAny, cc, fs, ft)
+                                    else -> handleUnknownInstr(vAddr, instrCount)
+                                }
+                            }
+                            else -> {
+                                when (cond) {
+                                    0b0000 -> MipsInstr(vAddr, FpuCFD, fs, ft)
+                                    0b0001 -> MipsInstr(vAddr, FpuCUnD, fs, ft)
+                                    0b0010 -> MipsInstr(vAddr, FpuCEqD, fs, ft)
+                                    0b0011 -> MipsInstr(vAddr, FpuCUeqD, fs, ft)
+                                    0b0100 -> MipsInstr(vAddr, FpuCOltD, fs, ft)
+                                    0b0101 -> MipsInstr(vAddr, FpuCUltD, fs, ft)
+                                    0b0110 -> MipsInstr(vAddr, FpuCOleD, fs, ft)
+                                    0b0111 -> MipsInstr(vAddr, FpuCUleD, fs, ft)
+                                    0b1000 -> MipsInstr(vAddr, FpuCSfD, fs, ft)
+                                    0b1001 -> MipsInstr(vAddr, FpuCNgleD, fs, ft)
+                                    0b1010 -> MipsInstr(vAddr, FpuCSeqD, fs, ft)
+                                    0b1011 -> MipsInstr(vAddr, FpuCNglD, fs, ft)
+                                    0b1100 -> MipsInstr(vAddr, FpuCLtD, fs, ft)
+                                    0b1101 -> MipsInstr(vAddr, FpuCNgeD, fs, ft)
+                                    0b1110 -> MipsInstr(vAddr, FpuCLeD, fs, ft)
+                                    0b1111 -> MipsInstr(vAddr, FpuCNgtD, fs, ft)
+                                    else -> handleUnknownInstr(vAddr, instrCount)
+                                }
+                            }
+                        }
+                    }
+                    funct == 0b001_010 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuCeilLD, fd, fs)
+                    funct == 0b001_110 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuCeilWD, fd, fs)
+                    funct == 0b100_101 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuCvtLD, fd, fs)
+                    funct == 0b100_000 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuCvtSD, fd, fs)
+                    funct == 0b100_100 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuCvtWD, fd, fs)
+                    funct == 0b000_011 -> MipsInstr(vAddr, FpuDivD, fd, fs, ft)
+                    funct == 0b001_011 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuFloorLD, fd, fs)
+                    funct == 0b001_111 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuFloorWD, fd, fs)
                     else -> handleUnknownInstr(vAddr, instrCount)
                 }
             }
-            FMT_W -> {
-                when (funct) {
-//                    0b100_000 -> MipsInstr(vAddr, FpuCvtSW, RegOperand(fd), RegOperand(fs))
+            fmt == FMT_W -> {
+                when {
+                    funct == 0b100_001 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuCvtDW, fd, fs)
+                    funct == 0b100_000 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuCvtSW, fd, fs)
                     else -> handleUnknownInstr(vAddr, instrCount)
                 }
             }
-            FMT_D -> {
-                handleUnknownInstr(vAddr, instrCount)
+            fmt == FMT_L -> {
+                when {
+                    funct == 0b100_001 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuCvtDL, fd, fs)
+                    funct == 0b100_000 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuCvtSL, fd, fs)
+                    else -> handleUnknownInstr(vAddr, instrCount)
+                }
             }
-            else -> MipsInstr(vAddr, Cop1, ImmOperand(instr and 0x3FFFFFF))
+            else -> handleUnknownInstr(vAddr, instrCount)
         }
     }
 
-    private fun disasmCop2Instr(vAddr: Int, instr: Int, instrCount: Int): MipsInstr {
+    private fun disasmCop2Instr(vAddr: Int, instr: Int): MipsInstr {
         return MipsInstr(vAddr, Cop2, ImmOperand(instr and 0x3FFFFFF))
     }
 
     private fun disasmCop3Instr(vAddr: Int, instr: Int, instrCount: Int): MipsInstr {
-        if (srcProcessor !in arrayOf(MipsIProcessor, MipsIIProcessor)) {
-            error("COP3 is only defined on MIPS I and MIPS II architecture levels")
+        return when (srcProcessor) {
+            is MipsIProcessor, MipsIIProcessor -> MipsInstr(vAddr, Cop3, ImmOperand(instr and 0x3FFFFFF))
+            is MipsIIIProcessor -> error("COP3 is not defined on MIPS III architecture level")
+            is MipsIVProcessor -> {
+                // for arithmetic ops
+                val fr = RegOperand(FpuReg.forId(instr ushr 21 and 0x1F))
+                val ft = RegOperand(FpuReg.forId(instr ushr 16 and 0x1F))
+                val fs = RegOperand(FpuReg.forId(instr ushr 11 and 0x1F))
+                // for memory related ops
+                val base = RegOperand(GprReg.forId(instr ushr 21 and 0x1F))
+                val index = RegOperand(GprReg.forId(instr ushr 16 and 0x1F))
+                val expectedZero = instr ushr 11 and 0x1F
+                // for all instructions
+                val fd = RegOperand(FpuReg.forId(instr ushr 6 and 0x1F))
+                val funct = instr and 0x3F
+                val op4 = funct ushr 3 and 0b111
+                val fmt3 = funct and 0b111
+                when {
+                    funct == 0b000_001 && expectedZero == 0 -> MipsInstr(vAddr, FpuLdxc1, fd, base, index)
+                    funct == 0b000_000 && expectedZero == 0 -> MipsInstr(vAddr, FpuLwxc1, fd, base, index)
+                    fmt3 == FMT3_S && op4 == 0b100 -> MipsInstr(vAddr, FpuMaddS, fd, fr, fs, ft)
+                    fmt3 == FMT3_D && op4 == 0b100 -> MipsInstr(vAddr, FpuMaddD, fd, fr, fs, ft)
+                    else -> handleUnknownInstr(vAddr, instrCount)
+                }
+            }
+            else -> error("missing support for processor ${srcProcessor.name}")
         }
-        return MipsInstr(vAddr, Cop3, ImmOperand(instr and 0x3FFFFFF))
     }
 
     private fun disasmRegimmInstr(vAddr: Int, instr: Int, instrCount: Int): MipsInstr {

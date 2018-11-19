@@ -48,6 +48,20 @@ sealed class FpuReg(name: String, id: Int) : Reg(name, id) {
             error("no such register id: $id")
         }
 
+        fun ccForId(ccId: Int): FpuReg {
+            return when (ccId) {
+                0 -> FpuReg.Cc0
+                1 -> FpuReg.Cc1
+                2 -> FpuReg.Cc2
+                3 -> FpuReg.Cc3
+                4 -> FpuReg.Cc4
+                5 -> FpuReg.Cc5
+                6 -> FpuReg.Cc6
+                7 -> FpuReg.Cc7
+                else -> error("no such cc register id: $ccId")
+            }
+        }
+
         fun values(): Array<FpuReg> {
             return fpuRegs
         }

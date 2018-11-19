@@ -25,8 +25,6 @@ import kmips.Label
 import kmips.Reg.*
 import kmips.assembleAsByteArray
 import mist.asm.*
-import mist.asm.mips.FpuReg
-import mist.asm.mips.GprReg
 import mist.asm.mips.MipsOpcode.*
 import mist.test.util.MemBinLoader
 import org.assertj.core.api.Assertions.assertThat
@@ -330,6 +328,317 @@ class LegacyMipsDisassemblerTest {
     @Test
     fun testNop() = testInstr({ nop() }) { verify(Nop) }
 
+    @Test
+    fun testFpuAbsS() = testInstr({ abs.s(f4, f14) }) { verify(FpuAbsS, FpuReg.F4, FpuReg.F14) }
+
+    @Test
+    fun testFpuAbsD() = testInstr({ abs.d(f4, f14) }) { verify(FpuAbsD, FpuReg.F4, FpuReg.F14) }
+
+    @Test
+    fun testFpuAddS() = testInstr({ add.s(f4, f14, f24) }) { verify(FpuAddS, FpuReg.F4, FpuReg.F14, FpuReg.F24) }
+
+    @Test
+    fun testFpuAddD() = testInstr({ add.d(f4, f14, f24) }) { verify(FpuAddD, FpuReg.F4, FpuReg.F14, FpuReg.F24) }
+
+    @Test
+    fun testFpuFpuBc1f() = testInstr({ bc1f(testLabel()) }, MipsIIIProcessor) { verify(FpuBc1f, labelExpected) }
+
+    @Test
+    fun testFpuFpuBc1fCcAny() =
+        testEncodedInstr(0x450C0000 + labelExpected) { verify(FpuBc1fCcAny, FpuReg.Cc3, labelExpected) }
+
+    @Test
+    fun testFpuFpuBc1fl() = testInstr({ bc1fl(testLabel()) }, MipsIIIProcessor) { verify(FpuBc1fl, labelExpected) }
+
+    @Test
+    fun testFpuFpuBc1flCcAny() =
+        testEncodedInstr(0x450E0000 + labelExpected) { verify(FpuBc1flCcAny, FpuReg.Cc3, labelExpected) }
+
+
+    @Test
+    fun testFpuFpuBc1t() = testInstr({ bc1t(testLabel()) }, MipsIIIProcessor) { verify(FpuBc1t, labelExpected) }
+
+    @Test
+    fun testFpuFpuBc1tCcAny() =
+        testEncodedInstr(0x450D0000 + labelExpected) { verify(FpuBc1tCcAny, FpuReg.Cc3, labelExpected) }
+
+    @Test
+    fun testFpuFpuBc1tl() = testInstr({ bc1tl(testLabel()) }, MipsIIIProcessor) { verify(FpuBc1tl, labelExpected) }
+
+    @Test
+    fun testFpuFpuBc1tlCcAny() =
+        testEncodedInstr(0x450F0000 + labelExpected) { verify(FpuBc1tlCcAny, FpuReg.Cc3, labelExpected) }
+
+    @Test
+    fun testCFSCcAny() = testCond(false, 3, 0b0000, FpuCFSCcAny)
+
+    @Test
+    fun testFpuCUnSCcAny() = testCond(false, 3, 0b0001, FpuCUnSCcAny)
+
+    @Test
+    fun testFpuCEqSCcAny() = testCond(false, 3, 0b0010, FpuCEqSCcAny)
+
+    @Test
+    fun testFpuCUeqSCcAny() = testCond(false, 3, 0b0011, FpuCUeqSCcAny)
+
+    @Test
+    fun testFpuCOltSCcAny() = testCond(false, 3, 0b0100, FpuCOltSCcAny)
+
+    @Test
+    fun testFpuCUltSCcAny() = testCond(false, 3, 0b0101, FpuCUltSCcAny)
+
+    @Test
+    fun testFpuCOleSCcAny() = testCond(false, 3, 0b0110, FpuCOleSCcAny)
+
+    @Test
+    fun testFpuCUleSCcAny() = testCond(false, 3, 0b0111, FpuCUleSCcAny)
+
+    @Test
+    fun testFpuCSfSCcAny() = testCond(false, 3, 0b1000, FpuCSfSCcAny)
+
+    @Test
+    fun testFpuCNgleSCcAny() = testCond(false, 3, 0b1001, FpuCNgleSCcAny)
+
+    @Test
+    fun testFpuCSeqSCcAny() = testCond(false, 3, 0b1010, FpuCSeqSCcAny)
+
+    @Test
+    fun testFpuCNglSCcAny() = testCond(false, 3, 0b1011, FpuCNglSCcAny)
+
+    @Test
+    fun testFpuCLtSCcAny() = testCond(false, 3, 0b1100, FpuCLtSCcAny)
+
+    @Test
+    fun testFpuCNgeSCcAny() = testCond(false, 3, 0b1101, FpuCNgeSCcAny)
+
+    @Test
+    fun testFpuCLeSCcAny() = testCond(false, 3, 0b1110, FpuCLeSCcAny)
+
+    @Test
+    fun testFpuCNgtSCcAny() = testCond(false, 3, 0b1111, FpuCNgtSCcAny)
+
+    @Test
+    fun testCFS() = testCond(false, 0, 0b0000, FpuCFS)
+
+    @Test
+    fun testFpuCUnS() = testCond(false, 0, 0b0001, FpuCUnS)
+
+    @Test
+    fun testFpuCEqS() = testCond(false, 0, 0b0010, FpuCEqS)
+
+    @Test
+    fun testFpuCUeqS() = testCond(false, 0, 0b0011, FpuCUeqS)
+
+    @Test
+    fun testFpuCOltS() = testCond(false, 0, 0b0100, FpuCOltS)
+
+    @Test
+    fun testFpuCUltS() = testCond(false, 0, 0b0101, FpuCUltS)
+
+    @Test
+    fun testFpuCOleS() = testCond(false, 0, 0b0110, FpuCOleS)
+
+    @Test
+    fun testFpuCUleS() = testCond(false, 0, 0b0111, FpuCUleS)
+
+    @Test
+    fun testFpuCSfS() = testCond(false, 0, 0b1000, FpuCSfS)
+
+    @Test
+    fun testFpuCNgleS() = testCond(false, 0, 0b1001, FpuCNgleS)
+
+    @Test
+    fun testFpuCSeqS() = testCond(false, 0, 0b1010, FpuCSeqS)
+
+    @Test
+    fun testFpuCNglS() = testCond(false, 0, 0b1011, FpuCNglS)
+
+    @Test
+    fun testFpuCLtS() = testCond(false, 0, 0b1100, FpuCLtS)
+
+    @Test
+    fun testFpuCNgeS() = testCond(false, 0, 0b1101, FpuCNgeS)
+
+    @Test
+    fun testFpuCLeS() = testCond(false, 0, 0b1110, FpuCLeS)
+
+    @Test
+    fun testFpuCNgtS() = testCond(false, 0, 0b1111, FpuCNgtS)
+
+    @Test
+    fun testCFDCcAny() = testCond(true, 3, 0b0000, FpuCFDCcAny)
+
+    @Test
+    fun testFpuCUnDCcAny() = testCond(true, 3, 0b0001, FpuCUnDCcAny)
+
+    @Test
+    fun testFpuCEqDCcAny() = testCond(true, 3, 0b0010, FpuCEqDCcAny)
+
+    @Test
+    fun testFpuCUeqDCcAny() = testCond(true, 3, 0b0011, FpuCUeqDCcAny)
+
+    @Test
+    fun testFpuCOltDCcAny() = testCond(true, 3, 0b0100, FpuCOltDCcAny)
+
+    @Test
+    fun testFpuCUltDCcAny() = testCond(true, 3, 0b0101, FpuCUltDCcAny)
+
+    @Test
+    fun testFpuCOleDCcAny() = testCond(true, 3, 0b0110, FpuCOleDCcAny)
+
+    @Test
+    fun testFpuCUleDCcAny() = testCond(true, 3, 0b0111, FpuCUleDCcAny)
+
+    @Test
+    fun testFpuCSfDCcAny() = testCond(true, 3, 0b1000, FpuCSfDCcAny)
+
+    @Test
+    fun testFpuCNgleDCcAny() = testCond(true, 3, 0b1001, FpuCNgleDCcAny)
+
+    @Test
+    fun testFpuCSeqDCcAny() = testCond(true, 3, 0b1010, FpuCSeqDCcAny)
+
+    @Test
+    fun testFpuCNglDCcAny() = testCond(true, 3, 0b1011, FpuCNglDCcAny)
+
+    @Test
+    fun testFpuCLtDCcAny() = testCond(true, 3, 0b1100, FpuCLtDCcAny)
+
+    @Test
+    fun testFpuCNgeDCcAny() = testCond(true, 3, 0b1101, FpuCNgeDCcAny)
+
+    @Test
+    fun testFpuCLeDCcAny() = testCond(true, 3, 0b1110, FpuCLeDCcAny)
+
+    @Test
+    fun testFpuCNgtDCcAny() = testCond(true, 3, 0b1111, FpuCNgtDCcAny)
+
+    @Test
+    fun testCFD() = testCond(true, 0, 0b0000, FpuCFD)
+
+    @Test
+    fun testFpuCUnD() = testCond(true, 0, 0b0001, FpuCUnD)
+
+    @Test
+    fun testFpuCEqD() = testCond(true, 0, 0b0010, FpuCEqD)
+
+    @Test
+    fun testFpuCUeqD() = testCond(true, 0, 0b0011, FpuCUeqD)
+
+    @Test
+    fun testFpuCOltD() = testCond(true, 0, 0b0100, FpuCOltD)
+
+    @Test
+    fun testFpuCUltD() = testCond(true, 0, 0b0101, FpuCUltD)
+
+    @Test
+    fun testFpuCOleD() = testCond(true, 0, 0b0110, FpuCOleD)
+
+    @Test
+    fun testFpuCUleD() = testCond(true, 0, 0b0111, FpuCUleD)
+
+    @Test
+    fun testFpuCSfD() = testCond(true, 0, 0b1000, FpuCSfD)
+
+    @Test
+    fun testFpuCNgleD() = testCond(true, 0, 0b1001, FpuCNgleD)
+
+    @Test
+    fun testFpuCSeqD() = testCond(true, 0, 0b1010, FpuCSeqD)
+
+    @Test
+    fun testFpuCNglD() = testCond(true, 0, 0b1011, FpuCNglD)
+
+    @Test
+    fun testFpuCLtD() = testCond(true, 0, 0b1100, FpuCLtD)
+
+    @Test
+    fun testFpuCNgeD() = testCond(true, 0, 0b1101, FpuCNgeD)
+
+    @Test
+    fun testFpuCLeD() = testCond(true, 0, 0b1110, FpuCLeD)
+
+    @Test
+    fun testFpuCNgtD() = testCond(true, 0, 0b1111, FpuCNgtD)
+
+    @Test
+    fun testFpuCeilLS() = testEncodedInstr(0x4600710A) { verify(FpuCeilLS, FpuReg.F4, FpuReg.F14) }
+
+    @Test
+    fun testFpuCeilLD() = testEncodedInstr(0x4620710A) { verify(FpuCeilLD, FpuReg.F4, FpuReg.F14) }
+
+    @Test
+    fun testFpuCeilWS() = testInstr({ ceil.w.s(f4, f14) }) { verify(FpuCeilWS, FpuReg.F4, FpuReg.F14) }
+
+    @Test
+    fun testFpuCeilWD() = testInstr({ ceil.w.d(f4, f14) }) { verify(FpuCeilWD, FpuReg.F4, FpuReg.F14) }
+
+    @Test
+    fun testCfc1() = testInstr({ cfc1(s0, f10) }) { verify(FpuCfc1, GprReg.S0, FpuReg.F10) }
+
+    @Test
+    fun testCtc1() = testInstr({ ctc1(s0, f10) }) { verify(FpuCtc1, GprReg.S0, FpuReg.F10) }
+
+    @Test
+    fun testFpuCvtDS() = testEncodedInstr(0x46007121) { verify(FpuCvtDS, FpuReg.F4, FpuReg.F14) }
+
+    @Test
+    fun testFpuCvtDW() = testEncodedInstr(0x46807121) { verify(FpuCvtDW, FpuReg.F4, FpuReg.F14) }
+
+    @Test
+    fun testFpuCvtDL() = testEncodedInstr(0x46A07121) { verify(FpuCvtDL, FpuReg.F4, FpuReg.F14) }
+
+    @Test
+    fun testFpuCvtLS() = testEncodedInstr(0x46007125) { verify(FpuCvtLS, FpuReg.F4, FpuReg.F14) }
+
+    @Test
+    fun testFpuCvtLD() = testEncodedInstr(0x46207125) { verify(FpuCvtLD, FpuReg.F4, FpuReg.F14) }
+
+    @Test
+    fun testFpuCvtSD() = testEncodedInstr(0x46207120) { verify(FpuCvtSD, FpuReg.F4, FpuReg.F14) }
+
+    @Test
+    fun testFpuCvtSW() = testEncodedInstr(0x46807120) { verify(FpuCvtSW, FpuReg.F4, FpuReg.F14) }
+
+    @Test
+    fun testFpuCvtSL() = testEncodedInstr(0x46A07120) { verify(FpuCvtSL, FpuReg.F4, FpuReg.F14) }
+
+    @Test
+    fun testFpuCvtWS() = testEncodedInstr(0x46007124) { verify(FpuCvtWS, FpuReg.F4, FpuReg.F14) }
+
+    @Test
+    fun testFpuCvtWD() = testEncodedInstr(0x46207124) { verify(FpuCvtWD, FpuReg.F4, FpuReg.F14) }
+
+    @Test
+    fun testFpuDivS() = testInstr({ div.s(f4, f14, f24) }) { verify(FpuDivS, FpuReg.F4, FpuReg.F14, FpuReg.F24) }
+
+    @Test
+    fun testFpuDivD() = testInstr({ div.d(f4, f14, f24) }) { verify(FpuDivD, FpuReg.F4, FpuReg.F14, FpuReg.F24) }
+
+    @Test
+    fun testFpuFloorLS() = testEncodedInstr(0x4600710B) { verify(FpuFloorLS, FpuReg.F4, FpuReg.F14) }
+
+    @Test
+    fun testFpuFloorLD() = testEncodedInstr(0x4620710B) { verify(FpuFloorLD, FpuReg.F4, FpuReg.F14) }
+
+    @Test
+    fun testFpuFloorWS() = testInstr({ floor.w.s(f4, f14) }) { verify(FpuFloorWS, FpuReg.F4, FpuReg.F14) }
+
+    @Test
+    fun testFpuFloorWD() = testInstr({ floor.w.d(f4, f14) }) { verify(FpuFloorWD, FpuReg.F4, FpuReg.F14) }
+
+    @Test
+    fun testLdxc1() = testEncodedInstr(0x4E040101) { verify(FpuLdxc1, FpuReg.F4, GprReg.S0, GprReg.A0) }
+
+    @Test
+    fun testLwxc1() = testEncodedInstr(0x4E040100) { verify(FpuLwxc1, FpuReg.F4, GprReg.S0, GprReg.A0) }
+
+    @Test
+    fun testMaddS() = testEncodedInstr(0x4D106120) { verify(FpuMaddS, FpuReg.F4, FpuReg.F8, FpuReg.F12, FpuReg.F16) }
+
+    @Test
+    fun testMfc1() = testInstr({ mfc1(s0, f10) }) { verify(FpuMfc1, GprReg.S0, FpuReg.F10) }
+
     //    @Test
 //    fun testSwc1() = testInstr({ swc1(f10, 0xCD, s0) }, { verify(Swc1, FpuReg.F10, GprReg.S0, 0xCD) })
 //
@@ -337,28 +646,10 @@ class LegacyMipsDisassemblerTest {
 //    fun testMtc1() = testInstr({ mtc1(s0, f10) }, { verify(FpuMtc1, GprReg.S0, FpuReg.F10) })
 //
 //    @Test
-//    fun testMfc1() = testInstr({ mfc1(s0, f10) }, { verify(FpuMfc1, GprReg.S0, FpuReg.F10) })
-//
-//    @Test
-//    fun testCtc1() = testInstr({ ctc1(s0, f10) }, { verify(FpuCtc1, GprReg.S0, FpuReg.F10) })
-//
-//    @Test
-//    fun testCfc1() = testInstr({ cfc1(s0, f10) }, { verify(FpuCfc1, GprReg.S0, FpuReg.F10) })
-//
-    @Test
-    fun testFpuAddS() = testInstr({ add.s(f4, f14, f24) }) { verify(FpuAddS, FpuReg.F4, FpuReg.F14, FpuReg.F24) }
-//
-//    @Test
 //    fun testFpuSubS() = testInstr({ sub.s(f4, f14, f24) }, { verify(FpuSubS, FpuReg.F4, FpuReg.F14, FpuReg.F24) })
 //
 //    @Test
 //    fun testFpuMulS() = testInstr({ mul.s(f4, f14, f24) }, { verify(FpuMulS, FpuReg.F4, FpuReg.F14, FpuReg.F24) })
-//
-//    @Test
-//    fun testFpuDivS() = testInstr({ div.s(f4, f14, f24) }, { verify(FpuDivS, FpuReg.F4, FpuReg.F14, FpuReg.F24) })
-//
-//    @Test
-//    fun testFpuAbsS() = testInstr({ abs.s(f4, f14) }, { verify(FpuAbsS, FpuReg.F4, FpuReg.F14) })
 //
 //    @Test
 //    fun testFpuNegS() = testInstr({ neg.s(f4, f14) }, { verify(FpuNegS, FpuReg.F4, FpuReg.F14) })
@@ -371,50 +662,16 @@ class LegacyMipsDisassemblerTest {
 //
 //    @Test
 //    fun testFpuTruncS() = testInstr({ trunc.w.s(f4, f14) }, { verify(FpuTruncWS, FpuReg.F4, FpuReg.F14) })
-//
-//    @Test
-//    fun testFpuCeilS() = testInstr({ ceil.w.s(f4, f14) }, { verify(FpuCeilWS, FpuReg.F4, FpuReg.F14) })
-//
-//    @Test
-//    fun testFpuFloorS() = testInstr({ floor.w.s(f4, f14) }, { verify(FpuFloorWS, FpuReg.F4, FpuReg.F14) })
-//
-//    @Test
-//    fun testFpuCondEqS() = testInstr({ c.eq.s(f4, f14) }, { verify(FpuCEqS, FpuReg.F4, FpuReg.F14) })
-//
-//    @Test
-//    fun testFpuCondLeS() = testInstr({ c.le.s(f4, f14) }, { verify(FpuCLeS, FpuReg.F4, FpuReg.F14) })
-//
-//    @Test
-//    fun testFpuCondLtS() = testInstr({ c.lt.s(f4, f14) }, { verify(FpuCLtS, FpuReg.F4, FpuReg.F14) })
-//
-//    @Test
-//    fun testFpuFpuCvtSW() = testInstr({ cvt.s.w(f4, f14) }, { verify(FpuCvtSW, FpuReg.F4, FpuReg.F14) })
-//
-//    @Test
-//    fun testFpuFpuCvtWS() = testInstr({ cvt.w.s(f4, f14) }, { verify(FpuCvtWS, FpuReg.F4, FpuReg.F14) })
-//
 //    @Test
 //    fun testFpuFpuMov() = testInstr({ mov.s(f4, f14) }, { verify(FpuMovS, FpuReg.F4, FpuReg.F14) })
-//
-//    @Test
-//    fun testFpuFpuBc1f() = testInstr({ bc1f(testLabel()) }, { verify(FpuBc1f, labelExpected) })
-//
-//    @Test
-//    fun testFpuFpuBc1t() = testInstr({ bc1t(testLabel()) }, { verify(FpuBc1t, labelExpected) })
-//
-//    @Test
-//    fun testFpuFpuBc1tl() = testInstr({ bc1tl(testLabel()) }, { verify(FpuBc1tl, labelExpected) })
-//
-//    @Test
-//    fun testFpuFpuBc1fl() = testInstr({ bc1fl(testLabel()) }, { verify(FpuBc1fl, labelExpected) })
 
     private fun testLabel() = Label().apply { address = labelTarget }
 
-    private fun Instr.verify(opcode: Opcode, op0: Any? = null, op1: Any? = null, op2: Any? = null) {
+    private fun Instr.verify(opcode: Opcode, op0: Any? = null, op1: Any? = null, op2: Any? = null, op3: Any? = null) {
         assertThat(this.opcode).isEqualTo(opcode)
         assertThat(this.opcode.use.intersect(opcode.modify.asIterable())).isEmpty()
         val combinedRegisters = opcode.use.union(opcode.modify.asIterable()).toMutableList()
-        val ops = arrayOf(op0, op1, op2).mapIndexed { index, op -> Pair(this.operands.getOrNull(index), op) }
+        val ops = arrayOf(op0, op1, op2, op3).mapIndexed { index, op -> Pair(this.operands.getOrNull(index), op) }
         ops.forEachIndexed { index, it ->
             when {
                 it.second == null -> assertThat(it.first).isNull()
@@ -435,13 +692,37 @@ class LegacyMipsDisassemblerTest {
         assertThat(combinedRegisters).isEmpty()
     }
 
+    private fun testCond(useDFmt: Boolean, cc: Int, cond: Int, expected: MipsOpcode) {
+        val fmt = if (useDFmt) 17 else 16
+        val codedInstr = (0b010001 shl 26) or (fmt shl 21) or (FpuReg.F14.id shl 16) or (FpuReg.F4.id shl 11) or
+                (cc and 0b111 shl 8) or (0b0011 shl 4) or (cond and 0b1111)
+        if (expected is FpuCCondFmtCcAny) {
+            testEncodedInstr(codedInstr, MipsIVProcessor) {
+                verify(expected, FpuReg.ccForId(cc), FpuReg.F4, FpuReg.F14)
+            }
+        } else {
+            testEncodedInstr(codedInstr, MipsIIIProcessor) {
+                verify(expected, FpuReg.F4, FpuReg.F14)
+            }
+        }
+    }
+
     private fun testEncodedInstr(
         instr: Long,
         processor: LegacyMipsProcessor = MipsIVProcessor,
         checkResult: Instr.() -> Unit
     ) {
+        if (instr and 0xFFFFFFFFL != instr) error("too big coded instr value")
+        testEncodedInstr(instr.toInt(), processor, checkResult)
+    }
+
+    private fun testEncodedInstr(
+        instr: Int,
+        processor: LegacyMipsProcessor = MipsIVProcessor,
+        checkResult: Instr.() -> Unit
+    ) {
         val result = LegacyMipsDisassembler(processor).disassemble(
-            MemBinLoader(ByteBuffer.allocate(4).putInt(instr.toInt().swapBytes()).array()),
+            MemBinLoader(ByteBuffer.allocate(4).putInt(instr.swapBytes()).array()),
             FunctionDef("UnitTest", 0, 4)
         )
         assertThat(result.instr).isNotEmpty()
