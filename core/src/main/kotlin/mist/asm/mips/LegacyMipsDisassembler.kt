@@ -115,6 +115,12 @@ class LegacyMipsDisassembler(val srcProcessor: LegacyMipsProcessor) : Disassembl
             funct == 0b110_011 -> MipsInstr(vAddr, Tltu, rs, rt, ImmOperand(rd.reg.id shl 5 or shift))
             funct == 0b110_110 -> MipsInstr(vAddr, Tne, rs, rt, ImmOperand(rd.reg.id shl 5 or shift))
             funct == 0b100_110 && shift == 0 -> MipsInstr(vAddr, Xor, rd, rs, rt)
+            funct == 0b000_001 && instr ushr 16 and 0b11 == 0 && shift == 0 -> {
+                MipsInstr(vAddr, FpuMovf, rd, rs, RegOperand(FpuReg.ccForId(instr ushr 18 and 0b111)))
+            }
+            funct == 0b000_001 && instr ushr 16 and 0b11 == 1 && shift == 0 -> {
+                MipsInstr(vAddr, FpuMovt, rd, rs, RegOperand(FpuReg.ccForId(instr ushr 18 and 0b111)))
+            }
             else -> handleUnknownInstr(vAddr, instrCount)
         }
     }
@@ -132,7 +138,7 @@ class LegacyMipsDisassembler(val srcProcessor: LegacyMipsProcessor) : Disassembl
             fmt == 0b00010 && fd.reg.id == 0 && funct == 0 -> MipsInstr(vAddr, FpuCfc1, rt, fs)
             fmt == 0b00110 && fd.reg.id == 0 && funct == 0 -> MipsInstr(vAddr, FpuCtc1, rt, fs)
             fmt == 0b00000 && fd.reg.id == 0 && funct == 0 -> MipsInstr(vAddr, FpuMfc1, rt, fs)
-            //     fmt ==        0b00100 && fd.reg.id == 0 && funct == 0-> MipsInstr(vAddr, FpuMtc1, rt, fs)
+            fmt == 0b00100 && fd.reg.id == 0 && funct == 0 -> MipsInstr(vAddr, FpuMtc1, rt, fs)
             fmt == BC -> {
                 val branchTarget = ImmOperand((instr and 0xFFFF).toShort().toInt())
                 val ndtf = instr ushr 16 and 0b11
@@ -224,14 +230,25 @@ class LegacyMipsDisassembler(val srcProcessor: LegacyMipsProcessor) : Disassembl
                     funct == 0b000_011 -> MipsInstr(vAddr, FpuDivS, fd, fs, ft)
                     funct == 0b001_011 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuFloorLS, fd, fs)
                     funct == 0b001_111 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuFloorWS, fd, fs)
-                    //                funct == 0b000_001 -> MipsInstr(vAddr, FpuSubS, fd, fs, ft)
-                    //                funct == 0b000_010 -> MipsInstr(vAddr, FpuMulS, fd, fs, ft)
-                    //                funct == 0b000_111 -> MipsInstr(vAddr, FpuNegS, fd, fs)
-                    //                funct == 0b000_100 -> MipsInstr(vAddr, FpuSqrtS, fd, fs)
-                    //                funct == 0b001_100 -> MipsInstr(vAddr, FpuRoundWS, fd, fs)
-                    //                funct == 0b001_101 -> MipsInstr(vAddr, FpuTruncWS, fd, fs)
-                    //                funct == 0b001_111 -> MipsInstr(vAddr, FpuFloorWS, fd, fs)
-                    //                funct == 0b000_110 -> MipsInstr(vAddr, FpuMovS, fd, fs)
+                    funct == 0b000_110 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuMovS, fd, fs)
+                    funct == 0b010_001 && ft.reg.id and 0b11 == 0 -> {
+                        MipsInstr(vAddr, FpuMovfS, fd, fs, RegOperand(FpuReg.ccForId(instr ushr 18 and 0b111)))
+                    }
+                    funct == 0b010_011 -> MipsInstr(vAddr, FpuMovnS, fd, fs, rt)
+                    funct == 0b010_001 && ft.reg.id and 0b11 == 1 -> {
+                        MipsInstr(vAddr, FpuMovtS, fd, fs, RegOperand(FpuReg.ccForId(instr ushr 18 and 0b111)))
+                    }
+                    funct == 0b010_010 -> MipsInstr(vAddr, FpuMovzS, fd, fs, rt)
+                    funct == 0b000_010 -> MipsInstr(vAddr, FpuMulS, fd, fs, ft)
+                    funct == 0b000_111 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuNegS, fd, fs)
+                    funct == 0b010_101 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuRecipS, fd, fs)
+                    funct == 0b001_000 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuRoundLS, fd, fs)
+                    funct == 0b001_100 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuRoundWS, fd, fs)
+                    funct == 0b010_110 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuRsqrtS, fd, fs)
+                    funct == 0b000_100 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuSqrtS, fd, fs)
+                    funct == 0b000_001 -> MipsInstr(vAddr, FpuSubS, fd, fs, ft)
+                    funct == 0b001_001 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuTruncLS, fd, fs)
+                    funct == 0b001_101 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuTruncWS, fd, fs)
                     else -> handleUnknownInstr(vAddr, instrCount)
                 }
             }
@@ -298,6 +315,25 @@ class LegacyMipsDisassembler(val srcProcessor: LegacyMipsProcessor) : Disassembl
                     funct == 0b000_011 -> MipsInstr(vAddr, FpuDivD, fd, fs, ft)
                     funct == 0b001_011 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuFloorLD, fd, fs)
                     funct == 0b001_111 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuFloorWD, fd, fs)
+                    funct == 0b000_110 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuMovD, fd, fs)
+                    funct == 0b010_001 && ft.reg.id and 0b11 == 0 -> {
+                        MipsInstr(vAddr, FpuMovfD, fd, fs, RegOperand(FpuReg.ccForId(instr ushr 18 and 0b111)))
+                    }
+                    funct == 0b010_011 -> MipsInstr(vAddr, FpuMovnD, fd, fs, rt)
+                    funct == 0b010_001 && ft.reg.id and 0b11 == 1 -> {
+                        MipsInstr(vAddr, FpuMovtD, fd, fs, RegOperand(FpuReg.ccForId(instr ushr 18 and 0b111)))
+                    }
+                    funct == 0b010_010 -> MipsInstr(vAddr, FpuMovzD, fd, fs, rt)
+                    funct == 0b000_010 -> MipsInstr(vAddr, FpuMulD, fd, fs, ft)
+                    funct == 0b000_111 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuNegD, fd, fs)
+                    funct == 0b010_101 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuRecipD, fd, fs)
+                    funct == 0b001_000 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuRoundLD, fd, fs)
+                    funct == 0b001_100 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuRoundWD, fd, fs)
+                    funct == 0b010_110 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuRsqrtD, fd, fs)
+                    funct == 0b000_100 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuSqrtD, fd, fs)
+                    funct == 0b000_001 -> MipsInstr(vAddr, FpuSubD, fd, fs, ft)
+                    funct == 0b001_001 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuTruncLD, fd, fs)
+                    funct == 0b001_101 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuTruncWD, fd, fs)
                     else -> handleUnknownInstr(vAddr, instrCount)
                 }
             }
@@ -346,6 +382,15 @@ class LegacyMipsDisassembler(val srcProcessor: LegacyMipsProcessor) : Disassembl
                     funct == 0b000_000 && expectedZero == 0 -> MipsInstr(vAddr, FpuLwxc1, fd, base, index)
                     fmt3 == FMT3_S && op4 == 0b100 -> MipsInstr(vAddr, FpuMaddS, fd, fr, fs, ft)
                     fmt3 == FMT3_D && op4 == 0b100 -> MipsInstr(vAddr, FpuMaddD, fd, fr, fs, ft)
+                    fmt3 == FMT3_S && op4 == 0b101 -> MipsInstr(vAddr, FpuMsubS, fd, fr, fs, ft)
+                    fmt3 == FMT3_D && op4 == 0b101 -> MipsInstr(vAddr, FpuMsubD, fd, fr, fs, ft)
+                    fmt3 == FMT3_S && op4 == 0b110 -> MipsInstr(vAddr, FpuNmaddS, fd, fr, fs, ft)
+                    fmt3 == FMT3_D && op4 == 0b110 -> MipsInstr(vAddr, FpuNmaddD, fd, fr, fs, ft)
+                    fmt3 == FMT3_S && op4 == 0b111 -> MipsInstr(vAddr, FpuNmsubS, fd, fr, fs, ft)
+                    fmt3 == FMT3_D && op4 == 0b111 -> MipsInstr(vAddr, FpuNmsubD, fd, fr, fs, ft)
+                    funct == 0b001_111 && expectedZero == 0 -> MipsInstr(vAddr, FpuPrefx, fd, base, index)
+                    funct == 0b001_001 && expectedZero == 0 -> MipsInstr(vAddr, FpuSdxc1, fd, base, index)
+                    funct == 0b001_000 && expectedZero == 0 -> MipsInstr(vAddr, FpuSwxc1, fd, base, index)
                     else -> handleUnknownInstr(vAddr, instrCount)
                 }
             }
