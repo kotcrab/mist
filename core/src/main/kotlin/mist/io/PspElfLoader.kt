@@ -101,7 +101,7 @@ class PspElfLoader(private val elf: ElfFile, private val log: DecompLog) : BinLo
                     )
                 )
             }
-            relocations.forEachIndexed { index, relloc ->
+            relocations.forEach { relloc ->
                 var addr = relloc.addr
                 addr += relloc.offset
                 var data = readInt(addr)

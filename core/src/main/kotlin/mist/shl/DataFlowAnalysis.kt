@@ -388,7 +388,7 @@ class DataFlowCtx {
         // write new state for the variable used in writeExpr
         if (readExpr != null) {
             writeExpr.getUsedVars().forEach { writeVar ->
-                var newReadExpr = readExpr!!
+                var newReadExpr: ShlExpr = readExpr
                 if (propagateKnownValues) {
                     readExpr.getUsedVars().forEach { readVar ->
                         if (localStates[readVar] is FlowState.Alive) {
@@ -400,7 +400,6 @@ class DataFlowCtx {
                         }
                     }
                 }
-
                 varStates[writeVar] = FlowState.Alive(newReadExpr)
             }
         }

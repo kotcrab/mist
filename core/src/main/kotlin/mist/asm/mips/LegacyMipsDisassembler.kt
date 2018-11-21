@@ -394,7 +394,6 @@ class LegacyMipsDisassembler(val srcProcessor: LegacyMipsProcessor) : Disassembl
                     else -> handleUnknownInstr(vAddr, instrCount)
                 }
             }
-            else -> error("missing support for processor ${srcProcessor.name}")
         }
     }
 

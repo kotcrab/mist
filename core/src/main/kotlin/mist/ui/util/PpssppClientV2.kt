@@ -200,7 +200,7 @@ package mist.ui.util
 
 interface PpssppMessage
 class PpssppSocketReady : PpssppMessage
-class PpssppSocketError(e: Exception) : PpssppMessage
+class PpssppSocketError(val e: Exception) : PpssppMessage
 class BreakpointPausedEvent(val addr: Int) : PpssppMessage
 class BreakpointLoggedEvent(val addr: Int) : PpssppMessage
 class RunningSetResponse : PpssppMessage

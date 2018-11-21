@@ -241,8 +241,7 @@ class Graph(
                         branchDelaySlotInstrs[delaySlotInstr.addr] = delaySlotInstr
                         if (delaySlotInstr.getModifiedRegisters().any { instr.getUsedRegisters().contains(it) }) {
                             log.panic(
-                                tag, "${instr.opcode.toString().toLowerCase()} instruction not safe to swap, " +
-                                        "instruction: $delaySlotInstr"
+                                tag, "$instr instruction not safe to swap, delay slot instruction: $delaySlotInstr"
                             )
                         }
                         node.instrs.swap(index, index + 1)
