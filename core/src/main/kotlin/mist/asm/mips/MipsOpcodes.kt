@@ -1282,13 +1282,6 @@ abstract class MipsOpcode(
         use = arrayOf(Operand1Ref)
     )
 
-    object FpuSdc1 : MipsOpcode(
-        "sdc1",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor, allegrex = false),
-        flags = arrayOf(MemoryWrite, Fpu),
-        use = arrayOf(Operand0Ref, Operand1Ref)
-    )
-
     object FpuSdxc1 : MipsOpcode(
         "sdxc1",
         processors = mipsCommon(legacyOrigin = MipsIVProcessor, allegrex = false),
