@@ -1,5 +1,5 @@
 /*
- * mist - interactive mips disassembler and decompiler
+ * mist - interactive disassembler and decompiler
  * Copyright (C) 2018 Pawel Pastuszak
  *
  * This program is free software: you can redistribute it and/or modify
