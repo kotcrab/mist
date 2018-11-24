@@ -39,9 +39,11 @@ class MipsInstr : Instr {
     fun op0AsReg() = (operands[0] as RegOperand).reg
     fun op1AsReg() = (operands[1] as RegOperand).reg
     fun op2AsReg() = (operands[2] as RegOperand).reg
+    fun op3AsReg() = (operands[3] as RegOperand).reg
     fun op0AsImm() = (operands[0] as ImmOperand).value
     fun op1AsImm() = (operands[1] as ImmOperand).value
     fun op2AsImm() = (operands[2] as ImmOperand).value
+    fun op3AsImm() = (operands[3] as ImmOperand).value
 
     fun matchesExact(
         opcode: Opcode, op0: OperandMatcher = isNull(), op1: OperandMatcher = isNull(),
@@ -58,13 +60,12 @@ class MipsInstr : Instr {
     }
 
     override fun toString(): String {
-        if (operands.size == 3 && (hasFlag(MemoryRead) || hasFlag(MemoryWrite))) {
-            return "${addr.toHex()}: ${opcode.mnemonic} ${operands[0]}, ${operands[2]}(${operands[1]})"
+        return when {
+            operands.size == 3 && (hasFlag(MemoryRead) || hasFlag(MemoryWrite)) -> {
+                "${addr.toHex()}: ${opcode.mnemonic} ${operands[0]}, ${operands[2]}(${operands[1]})"
+            }
+            operands.isEmpty() -> "${addr.toHex()}: ${opcode.mnemonic}"
+            else -> "${addr.toHex()}: ${opcode.mnemonic} ${operands.joinToString()}"
         }
-        if (operands.isEmpty()) return "${addr.toHex()}: ${opcode.mnemonic}"
-        if (operands.size == 1) return "${addr.toHex()}: ${opcode.mnemonic} ${operands[0]}"
-        if (operands.size == 2) return "${addr.toHex()}: ${opcode.mnemonic} ${operands[0]}, ${operands[1]}"
-        if (operands.size == 3) return "${addr.toHex()}: ${opcode.mnemonic} ${operands[0]}, ${operands[1]}, ${operands[2]}"
-        return "${addr.toHex()}: ${opcode.mnemonic} ${operands[0]}, ${operands[1]}, ${operands[2]}, ${operands[3]}"
     }
 }

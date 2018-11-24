@@ -28,7 +28,8 @@ import mist.io.BinLoader
 
 /** @author Kotcrab */
 
-//TODO VFPU instructions and other missing instructions
+//TODO VFPU instructions and other missing instructions from MIPS32
+//TODO this should be updated using LegacyMipsDisassembler as a base
 
 class AllegrexDisassembler : Disassembler<MipsInstr> {
     private companion object {

@@ -35,11 +35,7 @@ sealed class Cop3Reg(name: String, id: Int) : Reg(name, id) {
         }
 
         fun forId(id: Int): Cop3Reg {
-            if (id == -1) error("can't return directly inaccessible register")
-            values().forEach {
-                if (id == it.id) return it
-            }
-            error("no such register id: $id")
+            return Reg.forId(values(), id)
         }
 
         fun values(): Array<Cop3Reg> {

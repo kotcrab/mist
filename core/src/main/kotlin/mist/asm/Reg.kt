@@ -21,6 +21,16 @@ package mist.asm
 /** @author Kotcrab */
 
 abstract class Reg(val name: String, val id: Int) {
+    protected companion object {
+        fun <T : Reg> forId(regs: Array<T>, id: Int): T {
+            if (id == -1) error("can't return directly inaccessible register")
+            regs.forEach {
+                if (id == it.id) return it
+            }
+            error("no such register id: $id")
+        }
+    }
+
     override fun toString(): String {
         return name
     }

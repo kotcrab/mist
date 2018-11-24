@@ -40,11 +40,7 @@ sealed class VfpuReg(name: String, id: Int) : Reg(name, id) {
         }
 
         fun forId(id: Int): VfpuReg {
-            if (id == -1) error("can't return directly inaccessible register")
-            values().forEach {
-                if (id == it.id) return it
-            }
-            error("no such register id: $id")
+            return Reg.forId(values(), id)
         }
 
         fun values(): Array<VfpuReg> {

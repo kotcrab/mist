@@ -173,7 +173,7 @@ class Graph(
             }
 
             // this will handle "b label" MIPS instruction alias
-            // and in general `beq reg1, reg2 label` where reg1 == reg2
+            // and in general `beq reg1, reg2, label` where reg1 == reg2
             // it should be enough for compiled code
             fun MipsInstr.isUnconditionalBranch() = (opcode == Beq
                     && operands.getOrNull(0) is RegOperand && operands.getOrNull(1) is RegOperand && op0AsReg() == op1AsReg())

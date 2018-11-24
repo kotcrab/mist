@@ -41,11 +41,7 @@ sealed class FpuReg(name: String, id: Int) : Reg(name, id) {
         }
 
         fun forId(id: Int): FpuReg {
-            if (id == -1) error("can't return directly inaccessible register")
-            values().forEach {
-                if (id == it.id) return it
-            }
-            error("no such register id: $id")
+            return Reg.forId(values(), id)
         }
 
         fun ccForId(ccId: Int): FpuReg {

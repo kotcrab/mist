@@ -49,7 +49,6 @@ fun isReg(reg: Reg) = object : OperandMatcher {
     }
 }
 
-
 fun isReg(vararg regs: Reg) = object : OperandMatcher {
     override fun match(op: Operand?): Boolean {
         if (op == null) return false
