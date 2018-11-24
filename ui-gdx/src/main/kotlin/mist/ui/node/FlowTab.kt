@@ -37,6 +37,8 @@ import ktx.vis.menuItem
 import ktx.vis.popupMenu
 import ktx.vis.subMenu
 import ktx.vis.table
+import mist.io.FlowApiSet
+import mist.io.FlowNodeDto
 import mist.shl.ShlDefsChangeType
 import mist.shl.ShlDefsChanged
 import mist.shl.ShlFunctionDef
@@ -77,7 +79,17 @@ class FlowTab(context: Context, disassembleFuncCallback: (String) -> Unit, editF
         val nodeMap = mutableMapOf<Int, FlowNode>()
         nodeDto.forEach {
             val funcDef = projectIO.getFuncDefByOffset(it.fileOffset)!!
-            val node = FlowNode(context, nodeStage, it.id, funcDef.name, it.fileOffset, Color(it.color), it.x, it.y)
+            val node =
+                FlowNode(
+                    context,
+                    nodeStage,
+                    it.id,
+                    funcDef.name,
+                    it.fileOffset,
+                    Color(it.color),
+                    it.x,
+                    it.y
+                )
             node.apiName = it.apiName
             node.reversed = funcDef.reversed
             nodeList.add(node)
@@ -95,7 +107,7 @@ class FlowTab(context: Context, disassembleFuncCallback: (String) -> Unit, editF
     }
 
     override fun save(): Boolean {
-        projectIO.saveFlowGraph(nodeList.map { FlowNodeDto(it) })
+        projectIO.saveFlowGraph(nodeList.map { it.toDto() })
         isDirty = false
         return true
     }
@@ -350,4 +362,3 @@ class FlowTab(context: Context, disassembleFuncCallback: (String) -> Unit, editF
     }
 }
 
-class FlowApiSet(val categoryName: String, val apis: List<String>)

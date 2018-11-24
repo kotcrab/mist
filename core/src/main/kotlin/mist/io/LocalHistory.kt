@@ -18,7 +18,6 @@
 
 package mist.io
 
-import com.badlogic.gdx.utils.Disposable
 import kio.LERandomAccessFile
 import kio.util.child
 import java.io.File
@@ -28,7 +27,7 @@ import java.util.zip.Inflater
 
 /** @author Kotcrab */
 
-class LocalHistory(storeDir: File) : Disposable {
+class LocalHistory(storeDir: File) {
     private val index = storeDir.child("localHistory.index")
     private val data = storeDir.child("localHistory.data")
     private val indexRaf: LERandomAccessFile
@@ -87,7 +86,7 @@ class LocalHistory(storeDir: File) : Disposable {
         indexRaf.writeInt(entry.decompressedSize)
     }
 
-    override fun dispose() {
+    fun dispose() {
         indexRaf.close()
         dataRaf.close()
     }

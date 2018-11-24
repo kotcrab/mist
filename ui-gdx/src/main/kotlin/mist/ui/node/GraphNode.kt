@@ -39,10 +39,10 @@ import ktx.inject.Context
 import ktx.vis.menuItem
 import ktx.vis.popupMenu
 import ktx.vis.subMenu
-import mist.io.ProjectIO
 import mist.asm.mips.EdgeKind
 import mist.asm.mips.EdgeType
 import mist.asm.mips.Node
+import mist.io.ProjectIO
 import mist.shl.*
 import mist.shl.ShlExpr.*
 import mist.shl.ShlType.ShlStruct
@@ -337,7 +337,7 @@ class GraphNode(
         val memOffset: ShlConst
         if (memExpr is ShlAdd && memExpr.right is ShlConst) {
             memBase = memExpr.left
-            memOffset = memExpr.right
+            memOffset = memExpr.right as ShlConst
         } else {
             memBase = memExpr
             memOffset = ShlConst(0x0)

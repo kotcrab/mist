@@ -43,13 +43,9 @@ allprojects {
 kotlin { experimental { coroutines 'enable' } }
 
 project(':core') {
-    apply plugin: 'application'
-    mainClassName = "mist.AppKt"
-
     dependencies {
         compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
         compile "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion"
-        compile "org.jetbrains.kotlinx:kotlinx-coroutines-core:0.26.1"
         compile "com.kotcrab.kio:kio:1.0-SNAPSHOT"
         compile "org.apache.commons:commons-collections4:4.0"
         testCompile "com.kotcrab.kmips:kmips:1.2"
@@ -58,8 +54,18 @@ project(':core') {
         testRuntime "org.junit.jupiter:junit-jupiter-engine:5.3.1"
         testCompile "org.assertj:assertj-core:3.11.1"
         testCompile "io.mockk:mockk:1.8.7"
+    }
+}
 
-        // ui to extract later
+project(':ui-gdx') {
+    apply plugin: 'application'
+    mainClassName = "mist.AppKt"
+
+    dependencies {
+        compile project(":core")
+        compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+        compile "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion"
+        compile "org.jetbrains.kotlinx:kotlinx-coroutines-core:0.26.1"
         compile "com.badlogicgames.gdx:gdx:$gdxVersion"
         compile "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
         compile "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"

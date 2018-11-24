@@ -31,7 +31,7 @@ import kotlin.math.*
 
 val shlArgRegisters = listOf("a0", "a1", "a2", "a3", "t0", "t1", "t2", "t3")
 
-abstract class ShlInstr constructor(internal var addr: Int) {
+abstract class ShlInstr constructor(var addr: Int) {
     private constructor() : this(0x0) // GSON no-arg constructor
 
     companion object {

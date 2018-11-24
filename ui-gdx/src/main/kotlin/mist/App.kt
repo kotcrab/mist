@@ -54,6 +54,7 @@ import mist.ui.Assets
 import mist.ui.dialog.*
 import mist.ui.node.FlowTab
 import mist.ui.node.GraphTab
+import mist.ui.node.TabProvidesMenu
 import mist.ui.util.MixedRenderingTab
 import mist.ui.util.RemoteDebugger
 import mist.ui.util.startForResult
@@ -295,8 +296,4 @@ class App(val projectDir: File) : ApplicationListener {
 
     override fun pause() {
     }
-}
-
-interface TabProvidesMenu {
-    fun fillMenu(popupMenu: PopupMenu)
 }

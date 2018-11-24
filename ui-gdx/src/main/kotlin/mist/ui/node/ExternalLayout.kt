@@ -88,7 +88,7 @@ class ExternalLayout(private val layoutExe: File, private val log: DecompLog) {
                 if (gEdge.path == null) return@nextEdge
                 val target = nodes[gEdge.target]
                 node.getOutEdges().filter { it.node == target }.forEach { edge ->
-                    edge.points = gEdge.path.map { point -> Vector2(point.x, -point.y) }
+                    edge.points = gEdge.path!!.map { point -> Vector2(point.x, -point.y) }
                 }
             }
         }

@@ -29,15 +29,15 @@ import ktx.actors.onChange
 import ktx.inject.Context
 import ktx.vis.menuItem
 import ktx.vis.table
-import mist.TabProvidesMenu
+import mist.asm.mips.EdgeKind
+import mist.asm.mips.EdgeType
 import mist.io.AsmFunctionIO
 import mist.io.LoadedFunc
 import mist.io.LocalHistoryEntry
-import mist.asm.mips.EdgeKind
-import mist.asm.mips.EdgeType
 import mist.shl.*
 import mist.ui.dialog.LocalHistoryDialog
 import mist.ui.util.*
+import mist.util.Point
 import mist.util.logTag
 
 /** @author Kotcrab */
@@ -47,9 +47,10 @@ class GraphTab(
     private val asmFunctionIO: AsmFunctionIO,
     val def: ShlFunctionDef,
     val onFuncDoubleClick: (ShlFunctionDef) -> Unit
-) : VisualNodeTab<GraphNode>(context, closeable = true), ShlDefsChanged, TabProvidesMenu {
+) : VisualNodeTab<GraphNode>(context, closeable = true), ShlDefsChanged,
+    TabProvidesMenu {
     private val tag = logTag()
-    private val layout = projectIO.provideLayout()
+    private val layout = ExternalLayout(projectIO.getLayoutExe(), log)
     private val remoteDebugger: RemoteDebugger = context.inject()
 
     private lateinit var graph: ShlGraph
@@ -112,7 +113,7 @@ class GraphTab(
     }
 
     override fun save(): Boolean {
-        asmFunctionIO.save(LoadedFunc(graph, nodeList.map { Vector2(it.getX(), it.getY()) }))
+        asmFunctionIO.save(LoadedFunc(graph, nodeList.map { Point(it.getX(), it.getY()) }))
         isDirty = false
         return true
     }
@@ -313,5 +314,9 @@ class GraphTab(
             }
         }
     }
+}
 
+//TODO tmp
+interface TabProvidesMenu {
+    fun fillMenu(popupMenu: PopupMenu)
 }

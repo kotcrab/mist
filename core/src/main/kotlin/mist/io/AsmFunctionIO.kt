@@ -18,8 +18,6 @@
 
 package mist.io
 
-import com.badlogic.gdx.math.Vector2
-import com.badlogic.gdx.utils.Disposable
 import com.google.gson.GsonBuilder
 import kio.util.child
 import kio.util.readJson
@@ -34,12 +32,12 @@ import mist.shl.ShlFunctionDef
 import mist.shl.ShlGraph
 import mist.shl.ShlInstr
 import mist.util.DecompLog
+import mist.util.Point
 import mist.util.logTag
 
 /** @author Kotcrab */
 
-class AsmFunctionIO(private val projectIO: ProjectIO, private val def: ShlFunctionDef, val log: DecompLog) :
-    Disposable {
+class AsmFunctionIO(private val projectIO: ProjectIO, private val def: ShlFunctionDef, val log: DecompLog) {
     private val tag = logTag()
     private val gson = GsonBuilder()
         .setPrettyPrinting()
@@ -70,7 +68,7 @@ class AsmFunctionIO(private val projectIO: ProjectIO, private val def: ShlFuncti
         val funcDto: FuncDto = funcFile.readJson(gson)
         val shlGraph = ShlGraph(projectIO, def, log)
         shlGraph.loadGraph(funcDto.nodes)
-        return LoadedFunc(shlGraph, funcDto.nodes.map { Vector2(it.x, it.y) })
+        return LoadedFunc(shlGraph, funcDto.nodes.map { Point(it.x, it.y) })
     }
 
     fun save(func: LoadedFunc) {
@@ -98,7 +96,7 @@ class AsmFunctionIO(private val projectIO: ProjectIO, private val def: ShlFuncti
         funcFile.delete()
     }
 
-    override fun dispose() {
+    fun dispose() {
         localHistory.dispose()
     }
 
@@ -107,7 +105,7 @@ class AsmFunctionIO(private val projectIO: ProjectIO, private val def: ShlFuncti
     }
 }
 
-class LoadedFunc(val graph: ShlGraph, val layoutData: List<Vector2>?)
+class LoadedFunc(val graph: ShlGraph, val layoutData: List<Point>?)
 
 class FuncDto(val nodes: List<NodeDto>)
 

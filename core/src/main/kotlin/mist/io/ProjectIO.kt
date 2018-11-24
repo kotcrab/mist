@@ -26,9 +26,6 @@ import mist.shl.ShlFunctionDef
 import mist.shl.ShlGlobals
 import mist.shl.ShlProject
 import mist.shl.ShlTypes
-import mist.ui.node.ExternalLayout
-import mist.ui.node.FlowApiSet
-import mist.ui.node.FlowNodeDto
 import mist.util.DecompLog
 import mist.util.logTag
 import java.io.File
@@ -113,7 +110,7 @@ class ProjectIO(private val projectDir: File, private val log: DecompLog) {
 
     fun getElfLoader() = elfLoader
 
-    fun provideLayout() = ExternalLayout(toolsDir.child("layout.exe"), log)
+    fun getLayoutExe() = toolsDir.child("layout.exe")
 
     fun getTypes(): ShlTypes {
         return shlTypes

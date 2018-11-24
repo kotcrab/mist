@@ -23,26 +23,7 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer
 import com.badlogic.gdx.scenes.scene2d.Stage
 import com.kotcrab.vis.ui.widget.VisLabel
 import ktx.inject.Context
-
-/** @author Kotcrab */
-
-class FlowNodeDto(
-    val id: Int,
-    val fileOffset: Int,
-    val apiName: String,
-    val color: Int,
-    val x: Float,
-    val y: Float,
-    val outEdges: List<Int>
-) {
-    constructor(node: FlowNode) : this(node.id,
-        node.fileOffset,
-        node.apiName,
-        Color.rgba8888(node.color),
-        node.getX(),
-        node.getY(),
-        node.outEdges.map { it.id })
-}
+import mist.io.FlowNodeDto
 
 class FlowNode(
     context: Context, nodeStage: Stage,
@@ -131,5 +112,9 @@ class FlowNode(
     fun addNode(otherNode: FlowNode) {
         outEdges.add(otherNode)
         otherNode.inEdges.add(this)
+    }
+
+    fun toDto(): FlowNodeDto {
+        return FlowNodeDto(id, fileOffset, apiName, Color.rgba8888(color), getX(), getY(), outEdges.map { it.id })
     }
 }
