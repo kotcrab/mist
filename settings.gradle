@@ -1,3 +1,2 @@
 include 'core', 'ui-gdx'
 rootProject.name = "mist"
-includeBuild '../kio'
