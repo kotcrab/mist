@@ -45,6 +45,7 @@ abstract class ShlInstr constructor(var addr: Int) {
                     ShlJumpInstr::class,
                     ShlCallInstr::class,
                     ShlBranchInstr::class,
+                    ShlReturnInstr::class,
                     ShlNopInstr::class
                 ),
                 legacySubTypes = arrayOf(
@@ -258,6 +259,31 @@ class ShlBranchInstr constructor(addr: Int, var likely: Boolean, var cond: ShlEx
 
     override fun substituteReadExpr(srcExpr: ShlSubstitutable, exact: Boolean, newExpr: ShlExpr) {
         cond = cond.substitute(srcExpr, exact, newExpr)
+    }
+
+    override fun substituteWriteExpr(srcExpr: ShlSubstitutable, exact: Boolean, newExpr: ShlExpr) {
+    }
+}
+
+class ShlReturnInstr constructor(addr: Int, var retVal: ShlExpr?) : ShlInstr(addr) {
+    private constructor() : this(0x0, ShlConst(0)) // GSON no-arg constructor
+
+    override fun getReadExpr() = retVal
+    override fun getWriteExpr(): ShlExpr? = null
+    override fun getNullifiedVars(): Array<String> = emptyArray()
+
+    override fun toString(): String {
+        return if (retVal != null) {
+            "return $retVal"
+        } else {
+            "return"
+        }
+    }
+
+    override fun substituteReadExpr(srcExpr: ShlSubstitutable, exact: Boolean, newExpr: ShlExpr) {
+        retVal?.let {
+            retVal = it.substitute(srcExpr, exact, newExpr)
+        }
     }
 
     override fun substituteWriteExpr(srcExpr: ShlSubstitutable, exact: Boolean, newExpr: ShlExpr) {

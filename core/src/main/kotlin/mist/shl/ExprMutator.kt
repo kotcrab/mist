@@ -158,6 +158,11 @@ class ExprMutator(val graph: ShlGraph, private val log: DecompLog) {
             is ShlBranchInstr -> {
                 instr.cond = instr.cond.evaluate()
             }
+            is ShlReturnInstr -> {
+                instr.retVal?.let { retVal ->
+                    instr.retVal = retVal.evaluate()
+                }
+            }
             is ShlMemStoreInstr -> {
                 instr.expr = instr.expr.evaluate() as ShlMemStore
             }
@@ -334,5 +339,27 @@ class ExprMutator(val graph: ShlGraph, private val log: DecompLog) {
             log.warn(tag, "can't mutate this instruction to use memory access")
             return
         }
+    }
+
+    fun removeReturnValue(instr: ShlInstr) {
+        if (instr !is ShlReturnInstr) {
+            log.fatal(tag, "can't remove return value on non return instruction")
+            return
+        }
+        instr.retVal = null
+        val node = graph.getNodeForInstr(instr)
+        val instrIdx = node.instrs.indexOf(instr)
+        if (instrIdx == node.instrs.lastIndex && node.outEdges.size == 0) {
+            instr.deadCode = true
+        }
+    }
+
+    fun addReturnValue(instr: ShlInstr, expr: ShlExpr) {
+        if (instr !is ShlReturnInstr) {
+            log.fatal(tag, "can't add return value on non return instruction")
+            return
+        }
+        instr.retVal = expr
+        instr.deadCode = false
     }
 }

@@ -254,8 +254,15 @@ class ShlLifter(private val projectIO: ProjectIO, private val log: DecompLog) {
                     Mtlo -> {
                         shl.add(ShlAssignInstr(it.addr, ShlVar(GprReg.Lo), shlAuto(it.operands[0])))
                     }
-                    J, Jr -> {
+                    J -> {
                         shl.add(ShlJumpInstr(it.addr, false, shlAuto(it.operands[0])))
+                    }
+                    Jr -> {
+                        if (it.op0AsReg() == GprReg.Ra) {
+                            shl.add(ShlReturnInstr(it.addr, ShlVar("retVal")))
+                        } else {
+                            shl.add(ShlJumpInstr(it.addr, false, shlAuto(it.operands[0])))
+                        }
                     }
                     Jal -> {
                         val jalDef = projectIO.getFuncDefByOffset(it.op0AsImm())

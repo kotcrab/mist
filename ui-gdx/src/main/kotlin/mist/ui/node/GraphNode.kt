@@ -128,6 +128,7 @@ class GraphNode(
         when (instr) {
             is ShlAssignInstr -> renderAssignInstr(line, instr)
             is ShlBranchInstr -> renderBranchInstr(line, instr)
+            is ShlReturnInstr -> renderReturnInstr(line, instr)
             is ShlJumpInstr -> renderJumpInstr(line, instr)
             is ShlCallInstr -> renderCallInstr(line, instr)
             is ShlMemStoreInstr -> renderExpr(line, instr, instr.expr)
@@ -152,6 +153,14 @@ class GraphNode(
         line.asmLabel(instr, "b${if (instr.link) "al" else ""}")
         line.asmMiscLabel(instr, " ")
         renderExpr(line, instr, instr.cond)
+    }
+
+    private fun renderReturnInstr(line: HorizontalGroup, instr: ShlReturnInstr) {
+        line.asmLabel(instr, "return")
+        instr.retVal?.let { retVal ->
+            line.asmMiscLabel(instr, " ")
+            renderExpr(line, instr, retVal)
+        }
     }
 
     private fun renderJumpInstr(line: HorizontalGroup, instr: ShlJumpInstr) {
@@ -527,8 +536,8 @@ class GraphNode(
                     exprMutator.mutateToStructAccess(relInstr, struct)
                     this@GraphNode.listener.init()
                 })
-
-            condMenuItem(text = "To memory access", wantSeparator = true,
+            condMenuItem(text = "To memory access",
+                wantSeparator = true,
                 condition = { relInstr is ShlStructStoreInstr || (relInstr is ShlAssignInstr && relInstr.src is ShlStructLoad) },
                 change = {
                     exprMutator.mutateToMemoryAccess(relInstr)
@@ -540,6 +549,9 @@ class GraphNode(
             }
             if (relInstr is ShlBranchInstr) {
                 createBranchInstrMenuItems()
+            }
+            if (relInstr is ShlReturnInstr) {
+                createReturnInstrMenuItems()
             }
             createCommonMenuItems()
         }
@@ -666,6 +678,34 @@ class GraphNode(
                 onChange {
                     exprMutator.eliminateBranch(relInstr)
                     this@GraphNode.listener.init()
+                }
+            }
+            addSeparator()
+        }
+
+        private fun PopupMenu.createReturnInstrMenuItems() {
+            if (relInstr !is ShlReturnInstr) return
+            when {
+                relInstr.retVal != null -> {
+                    menuItem("Remove return value") {
+                        onChange {
+                            exprMutator.removeReturnValue(relInstr)
+                            this@GraphNode.listener.init()
+                        }
+                    }
+                }
+                relInstr.retVal == null -> {
+                    menuItem("Add return value") {
+                        onChange {
+                            Dialogs.showInputDialog(appStage, "Enter variable", "Variable", true,
+                                object : InputDialogAdapter() {
+                                    override fun finished(varName: String) {
+                                        exprMutator.addReturnValue(relInstr, ShlVar(varName))
+                                        this@GraphNode.listener.init()
+                                    }
+                                })
+                        }
+                    }
                 }
             }
             addSeparator()
