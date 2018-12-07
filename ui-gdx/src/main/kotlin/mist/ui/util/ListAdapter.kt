@@ -80,18 +80,22 @@ abstract class ListAdapter<ItemT, ViewT : Actor>(private val list: List<ItemT>) 
 
     // Delegates
 
+    @Suppress("UNUSED_PARAMETER")
     operator fun set(index: Int, element: ItemT): ItemT {
         error(immutableError)
     }
 
+    @Suppress("UNUSED_PARAMETER")
     fun add(index: Int, element: ItemT) {
         error(immutableError)
     }
 
+    @Suppress("UNUSED_PARAMETER")
     fun remove(index: Int): ItemT? {
         error(immutableError)
     }
 
+    @Suppress("UNUSED_PARAMETER")
     fun remove(item: ItemT): Boolean {
         error(immutableError)
     }
@@ -100,14 +104,17 @@ abstract class ListAdapter<ItemT, ViewT : Actor>(private val list: List<ItemT>) 
         error(immutableError)
     }
 
+    @Suppress("UNUSED_PARAMETER")
     fun addAll(c: Collection<ItemT>): Boolean {
         error(immutableError)
     }
 
+    @Suppress("UNUSED_PARAMETER")
     fun addAll(index: Int, c: Collection<ItemT>): Boolean {
         error(immutableError)
     }
 
+    @Suppress("UNUSED_PARAMETER")
     fun removeAll(c: Collection<*>): Boolean {
         error(immutableError)
     }

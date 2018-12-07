@@ -38,6 +38,7 @@ import com.kotcrab.vis.ui.widget.file.FileChooser
 import com.kotcrab.vis.ui.widget.tabbedpane.Tab
 import com.kotcrab.vis.ui.widget.tabbedpane.TabbedPane
 import com.kotcrab.vis.ui.widget.tabbedpane.TabbedPaneAdapter
+import kotlinx.coroutines.GlobalScope
 import ktx.actors.onChange
 import ktx.async.enableKtxCoroutines
 import ktx.async.ktxAsync
@@ -72,7 +73,7 @@ fun main(args: Array<String>) {
     c.setWindowedMode(1280, 720)
     c.setWindowListener(object : Lwjgl3WindowAdapter() {
         override fun closeRequested(): Boolean {
-            ktxAsync { app.requestExit() }
+            GlobalScope.ktxAsync { app.requestExit() }
             return false
         }
     })
