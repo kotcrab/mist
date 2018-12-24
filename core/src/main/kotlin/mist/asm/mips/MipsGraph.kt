@@ -29,7 +29,7 @@ import java.util.*
 
 /** @author Kotcrab */
 
-class Graph(
+class MipsGraph(
     private val loader: BinLoader,
     private val instrs: List<MipsInstr>,
     private val log: DecompLog

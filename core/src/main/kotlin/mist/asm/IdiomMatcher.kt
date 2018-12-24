@@ -18,6 +18,8 @@
 
 package mist.asm
 
+/** @author Kotcrab */
+
 class IdiomMatcher<Instruction : Instr, State, Result>(
     private val maxOffset: Int,
     private val stateProvider: () -> State,

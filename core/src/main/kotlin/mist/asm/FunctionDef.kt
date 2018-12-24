@@ -18,4 +18,6 @@
 
 package mist.asm
 
+/** @author Kotcrab */
+
 class FunctionDef(val name: String, val offset: Int, val len: Int)

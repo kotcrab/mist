@@ -47,9 +47,10 @@ fun mipsLegacy(origin: LegacyMipsProcessor? = MipsIProcessor): Array<MipsProcess
 
 fun mipsModern(origin: ModernMipsProcessor? = Mips32r1Processor): Array<MipsProcessor> {
     return when (origin) {
-        Mips32r1Processor -> arrayOf(Mips32r1Processor, Mips32r2Processor, Mips32r3Processor)
-        Mips32r2Processor -> arrayOf(Mips32r2Processor, Mips32r3Processor)
-        Mips32r3Processor -> arrayOf(Mips32r3Processor)
+        Mips32r1Processor -> arrayOf(Mips32r1Processor, Mips32r2Processor, Mips32r3Processor, Mips32r5Processor)
+        Mips32r2Processor -> arrayOf(Mips32r2Processor, Mips32r3Processor, Mips32r5Processor)
+        Mips32r3Processor -> arrayOf(Mips32r3Processor, Mips32r5Processor)
+        Mips32r5Processor -> arrayOf(Mips32r3Processor)
         null -> emptyArray()
     }
 }
@@ -66,3 +67,4 @@ sealed class ModernMipsProcessor(name: String) : MipsProcessor(name)
 object Mips32r1Processor : ModernMipsProcessor("MIPS32r1")
 object Mips32r2Processor : ModernMipsProcessor("MIPS32r2")
 object Mips32r3Processor : ModernMipsProcessor("MIPS32r3")
+object Mips32r5Processor : ModernMipsProcessor("MIPS32r5")

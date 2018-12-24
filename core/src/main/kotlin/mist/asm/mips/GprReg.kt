@@ -24,7 +24,7 @@ import mist.asm.Reg
 
 sealed class GprReg(name: String, id: Int) : Reg(name, id) {
     companion object {
-        // TODO "by lazy" here is workaround for KT-8970
+        // warning: "by lazy" here is workaround for KT-8970
         private val gprRegs by lazy {
             arrayOf(
                 Zero,

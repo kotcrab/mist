@@ -25,5 +25,3 @@ import mist.asm.OpcodeFlag
 abstract class MipsOpcodeFlag : OpcodeFlag()
 
 object BranchLikely : MipsOpcodeFlag()
-object Fpu : MipsOpcodeFlag()
-object Trap : MipsOpcodeFlag()

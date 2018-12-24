@@ -39,7 +39,7 @@ import org.junit.jupiter.api.TestInstance.Lifecycle
 /** @author Kotcrab */
 
 @TestInstance(Lifecycle.PER_CLASS)
-class GraphTest {
+class MipsGraphTest {
     private val jumpOutsideCurrentFunGraph = graphFromAsm {
         // 0x0
         nop()
@@ -192,11 +192,11 @@ class GraphTest {
         data(0x4000) // ignored case
     }
 
-    private fun graphFromAsm(size: Int = -1, assemble: Assembler.() -> Unit): Graph {
+    private fun graphFromAsm(size: Int = -1, assemble: Assembler.() -> Unit): MipsGraph {
         val bytes = assembleAsByteArray { assemble() }
         val loader = MemBinLoader(bytes)
         val test = AllegrexDisassembler().disassemble(loader, FunctionDef("", 0, if (size == -1) bytes.size else size))
-        val graph = Graph(loader, test.instr, DecompLog())
+        val graph = MipsGraph(loader, test.instr, DecompLog())
         graph.generateGraph()
         return graph
     }
@@ -261,7 +261,7 @@ class GraphTest {
             testBranchInSwitchGraph(basicSwitchAtGraph, GprReg.At)
         }
 
-        private fun testBranchInSwitchGraph(graph: Graph, swtichReg: Reg) {
+        private fun testBranchInSwitchGraph(graph: MipsGraph, swtichReg: Reg) {
             val (branchSrc, branchTargets) = graph.jumpingTo.toList()
                 .single { it.first.matchesExact(Jr, isReg(swtichReg)) }
             assertThat(branchTargets.size).isEqualTo(3) // 3 unique cases
@@ -365,7 +365,7 @@ class GraphTest {
             testUnconditionalJumpGraph(basicBranchGraph)
         }
 
-        private fun testUnconditionalJumpGraph(graph: Graph) {
+        private fun testUnconditionalJumpGraph(graph: MipsGraph) {
             val nodes = graph.nodes
             assertThat(nodes.size).isEqualTo(3)
             assertThat(nodes.first().inEdges.size).isEqualTo(0)
@@ -411,7 +411,7 @@ class GraphTest {
             testConnectionsInSwitchGraph(basicSwitchAtGraph)
         }
 
-        private fun testConnectionsInSwitchGraph(graph: Graph) {
+        private fun testConnectionsInSwitchGraph(graph: MipsGraph) {
             assertThat(graph.nodes.size).isEqualTo(6)
             val switchNode = graph.nodes.first().outEdges.single { it.type == EdgeType.Fallthrough }.node
             val exitNode = graph.nodes.first().outEdges.single { it.type == EdgeType.JumpTaken }.node

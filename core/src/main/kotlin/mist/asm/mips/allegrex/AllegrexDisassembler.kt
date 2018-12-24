@@ -22,6 +22,7 @@ import kio.util.toWHex
 import mist.asm.*
 import mist.asm.mips.FpuReg
 import mist.asm.mips.GprReg
+import mist.asm.mips.MipsDefines
 import mist.asm.mips.MipsInstr
 import mist.asm.mips.MipsOpcode.*
 import mist.io.BinLoader
@@ -32,13 +33,6 @@ import mist.io.BinLoader
 //TODO this should be updated using LegacyMipsDisassembler as a base
 
 class AllegrexDisassembler : Disassembler<MipsInstr> {
-    private companion object {
-        const val COP1 = 0b010_001
-        const val FMT_S = 16
-        const val FMT_D = 17
-        const val FMT_W = 20
-    }
-
     override fun disassemble(loader: BinLoader, funcDef: FunctionDef): Disassembly<MipsInstr> {
         if (funcDef.offset % 4 != 0) error("offset must be multiply of 4")
         if (funcDef.len % 4 != 0) error("length must be multiply of 4")
@@ -54,7 +48,7 @@ class AllegrexDisassembler : Disassembler<MipsInstr> {
             val opcode = instr ushr 26
             when (opcode) {
                 0 -> decoded.add(disassembleRInstruction(vAddr, instr, instrCount))
-                COP1 -> decoded.add(disassembleFpuInstruction(vAddr, instr, instrCount))
+                MipsDefines.COP1 -> decoded.add(disassembleFpuInstruction(vAddr, instr, instrCount))
                 else -> decoded.add(disassembleIAndJInstructions(vAddr, instr, instrCount, opcode))
             }
         }
@@ -140,7 +134,7 @@ class AllegrexDisassembler : Disassembler<MipsInstr> {
                     else -> handleUnknownInstr(vAddr, instrCount)
                 }
             }
-            FMT_S -> {
+            MipsDefines.FMT_S -> {
                 when (funct) {
                     0b000_000 -> MipsInstr(vAddr, FpuAddS, RegOperand(fd), RegOperand(fs), RegOperand(ft))
                     0b000_001 -> MipsInstr(vAddr, FpuSubS, RegOperand(fd), RegOperand(fs), RegOperand(ft))
@@ -162,13 +156,13 @@ class AllegrexDisassembler : Disassembler<MipsInstr> {
                     else -> handleUnknownInstr(vAddr, instrCount)
                 }
             }
-            FMT_W -> {
+            MipsDefines.FMT_W -> {
                 when (funct) {
                     0b100_000 -> MipsInstr(vAddr, FpuCvtSW, RegOperand(fd), RegOperand(fs))
                     else -> handleUnknownInstr(vAddr, instrCount)
                 }
             }
-            FMT_D -> {
+            MipsDefines.FMT_D -> {
                 error("FMT_D is not supported on Allegrex")
             }
             else -> handleUnknownInstr(vAddr, instrCount)

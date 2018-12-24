@@ -24,8 +24,8 @@ import kio.util.readJson
 import kio.util.writeJson
 import mist.asm.mips.EdgeKind
 import mist.asm.mips.EdgeType
-import mist.asm.mips.Graph
-import mist.asm.mips.StackAnalysis
+import mist.asm.mips.MipsGraph
+import mist.asm.mips.MipsStackAnalysis
 import mist.asm.mips.allegrex.AllegrexDisassembler
 import mist.shl.ShlExpr
 import mist.shl.ShlFunctionDef
@@ -54,9 +54,9 @@ class AsmFunctionIO(private val projectIO: ProjectIO, private val def: ShlFuncti
     private fun initialDisassemble(): LoadedFunc {
         log.info(tag, "performing initial disassembly")
         val disassembly = AllegrexDisassembler().disassemble(projectIO.getElfLoader(), def.toLLDef())
-        val graph = Graph(projectIO.getElfLoader(), disassembly.instr, log)
+        val graph = MipsGraph(projectIO.getElfLoader(), disassembly.instr, log)
         graph.generateGraph()
-        val stack = StackAnalysis(graph, log)
+        val stack = MipsStackAnalysis(graph, log)
         stack.analyze()
         val shlGraph = ShlGraph(projectIO, def, log)
         shlGraph.generateGraph(graph, stack)

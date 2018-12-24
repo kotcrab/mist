@@ -24,7 +24,7 @@ import mist.asm.Reg
 
 sealed class VfpuReg(name: String, id: Int) : Reg(name, id) {
     companion object {
-        // TODO "by lazy" here is workaround for KT-8970
+        // warning: "by lazy" here is workaround for KT-8970
         private val vfpuRegs: Array<VfpuReg> by lazy {
             arrayOf(
                 V00, V01, V02, V03, V04, V05, V06, V07, V08, V09, V0A, V0B, V0C, V0D, V0E, V0F,

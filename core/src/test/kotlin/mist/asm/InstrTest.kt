@@ -29,6 +29,7 @@ class InstrTest {
     object TestProcessor : Processor("test")
     object TestOpcode : Opcode(
         "test",
+        "",
         arrayOf(TestProcessor),
         arrayOf(MemoryRead),
         modify = arrayOf(Operand0Ref),

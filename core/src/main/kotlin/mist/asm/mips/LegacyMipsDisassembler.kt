@@ -26,40 +26,21 @@ import mist.io.BinLoader
 /** @author Kotcrab */
 
 class LegacyMipsDisassembler(val srcProcessor: LegacyMipsProcessor) : Disassembler<MipsInstr> {
-    private companion object {
-        const val SPECIAL = 0
-        const val REGIMM = 1
-        const val COP0 = 0b010_000
-        const val COP1 = 0b010_001
-        const val COP2 = 0b010_010
-        const val COP3_COP1X = 0b010_011
-        const val FMT_S = 16
-        const val FMT_D = 17
-        const val FMT_W = 20
-        const val FMT_L = 21
-        const val FMT3_S = 0
-        const val FMT3_D = 1
-        const val FMT3_W = 4
-        const val FMT3_L = 5
-        const val BC = 0b01000
-    }
-
     override fun disassemble(loader: BinLoader, funcDef: FunctionDef): Disassembly<MipsInstr> {
         if (funcDef.offset % 4 != 0) error("offset must be a multiply of 4")
         if (funcDef.len % 4 != 0) error("length must be a multiply of 4")
         val decoded = mutableListOf<MipsInstr>()
-
         repeat(funcDef.len / 4) { instrCount ->
             val vAddr = funcDef.offset + instrCount * 4
             val instr = loader.readInt(vAddr)
             val opcode = instr ushr 26
             when {
                 instr == 0 -> decoded.add(MipsInstr(vAddr, Nop))
-                opcode == SPECIAL -> decoded.add(disasmSpecialInstr(vAddr, instr, instrCount))
-                opcode == REGIMM -> decoded.add(disasmRegimmInstr(vAddr, instr, instrCount))
-                opcode == COP1 -> decoded.add(disasmCop1Instr(vAddr, instr, instrCount))
-                opcode == COP2 -> decoded.add(disasmCop2Instr(vAddr, instr))
-                opcode == COP3_COP1X -> decoded.add(disasmCop3Instr(vAddr, instr, instrCount))
+                opcode == MipsDefines.SPECIAL -> decoded.add(disasmSpecialInstr(vAddr, instr, instrCount))
+                opcode == MipsDefines.REGIMM -> decoded.add(disasmRegimmInstr(vAddr, instr, instrCount))
+                opcode == MipsDefines.COP1 -> decoded.add(disasmCop1Instr(vAddr, instr, instrCount))
+                opcode == MipsDefines.COP2 -> decoded.add(disasmCop2Instr(vAddr, instr))
+                opcode == MipsDefines.COP3_COP1X -> decoded.add(disasmCop3Instr(vAddr, instr, instrCount))
                 else -> decoded.add(disasmOpcodeInstr(vAddr, instr, instrCount, opcode))
             }
         }
@@ -139,7 +120,7 @@ class LegacyMipsDisassembler(val srcProcessor: LegacyMipsProcessor) : Disassembl
             fmt == 0b00110 && fd.reg.id == 0 && funct == 0 -> MipsInstr(vAddr, FpuCtc1, rt, fs)
             fmt == 0b00000 && fd.reg.id == 0 && funct == 0 -> MipsInstr(vAddr, FpuMfc1, rt, fs)
             fmt == 0b00100 && fd.reg.id == 0 && funct == 0 -> MipsInstr(vAddr, FpuMtc1, rt, fs)
-            fmt == BC -> {
+            fmt == 0b01000 -> {
                 val branchTarget = ImmOperand((instr and 0xFFFF).toShort().toInt())
                 val ndtf = instr ushr 16 and 0b11
                 val cc = RegOperand(FpuReg.ccForId(instr ushr 18 and 0b111))
@@ -167,7 +148,7 @@ class LegacyMipsDisassembler(val srcProcessor: LegacyMipsProcessor) : Disassembl
                     }
                 }
             }
-            fmt == FMT_S -> {
+            fmt == MipsDefines.FMT_S -> {
                 when {
                     funct == 0b000_101 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuAbsS, fd, fs)
                     funct == 0b000_000 -> MipsInstr(vAddr, FpuAddS, fd, fs, ft)
@@ -252,7 +233,7 @@ class LegacyMipsDisassembler(val srcProcessor: LegacyMipsProcessor) : Disassembl
                     else -> handleUnknownInstr(vAddr, instrCount)
                 }
             }
-            fmt == FMT_D -> {
+            fmt == MipsDefines.FMT_D -> {
                 when {
                     funct == 0b000_101 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuAbsD, fd, fs)
                     funct == 0b000_000 -> MipsInstr(vAddr, FpuAddD, fd, fs, ft)
@@ -337,14 +318,14 @@ class LegacyMipsDisassembler(val srcProcessor: LegacyMipsProcessor) : Disassembl
                     else -> handleUnknownInstr(vAddr, instrCount)
                 }
             }
-            fmt == FMT_W -> {
+            fmt == MipsDefines.FMT_W -> {
                 when {
                     funct == 0b100_001 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuCvtDW, fd, fs)
                     funct == 0b100_000 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuCvtSW, fd, fs)
                     else -> handleUnknownInstr(vAddr, instrCount)
                 }
             }
-            fmt == FMT_L -> {
+            fmt == MipsDefines.FMT_L -> {
                 when {
                     funct == 0b100_001 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuCvtDL, fd, fs)
                     funct == 0b100_000 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuCvtSL, fd, fs)
@@ -380,14 +361,14 @@ class LegacyMipsDisassembler(val srcProcessor: LegacyMipsProcessor) : Disassembl
                 when {
                     funct == 0b000_001 && expectedZero == 0 -> MipsInstr(vAddr, FpuLdxc1, fd, base, index)
                     funct == 0b000_000 && expectedZero == 0 -> MipsInstr(vAddr, FpuLwxc1, fd, base, index)
-                    fmt3 == FMT3_S && op4 == 0b100 -> MipsInstr(vAddr, FpuMaddS, fd, fr, fs, ft)
-                    fmt3 == FMT3_D && op4 == 0b100 -> MipsInstr(vAddr, FpuMaddD, fd, fr, fs, ft)
-                    fmt3 == FMT3_S && op4 == 0b101 -> MipsInstr(vAddr, FpuMsubS, fd, fr, fs, ft)
-                    fmt3 == FMT3_D && op4 == 0b101 -> MipsInstr(vAddr, FpuMsubD, fd, fr, fs, ft)
-                    fmt3 == FMT3_S && op4 == 0b110 -> MipsInstr(vAddr, FpuNmaddS, fd, fr, fs, ft)
-                    fmt3 == FMT3_D && op4 == 0b110 -> MipsInstr(vAddr, FpuNmaddD, fd, fr, fs, ft)
-                    fmt3 == FMT3_S && op4 == 0b111 -> MipsInstr(vAddr, FpuNmsubS, fd, fr, fs, ft)
-                    fmt3 == FMT3_D && op4 == 0b111 -> MipsInstr(vAddr, FpuNmsubD, fd, fr, fs, ft)
+                    fmt3 == MipsDefines.FMT3_S && op4 == 0b100 -> MipsInstr(vAddr, FpuMaddS, fd, fr, fs, ft)
+                    fmt3 == MipsDefines.FMT3_D && op4 == 0b100 -> MipsInstr(vAddr, FpuMaddD, fd, fr, fs, ft)
+                    fmt3 == MipsDefines.FMT3_S && op4 == 0b101 -> MipsInstr(vAddr, FpuMsubS, fd, fr, fs, ft)
+                    fmt3 == MipsDefines.FMT3_D && op4 == 0b101 -> MipsInstr(vAddr, FpuMsubD, fd, fr, fs, ft)
+                    fmt3 == MipsDefines.FMT3_S && op4 == 0b110 -> MipsInstr(vAddr, FpuNmaddS, fd, fr, fs, ft)
+                    fmt3 == MipsDefines.FMT3_D && op4 == 0b110 -> MipsInstr(vAddr, FpuNmaddD, fd, fr, fs, ft)
+                    fmt3 == MipsDefines.FMT3_S && op4 == 0b111 -> MipsInstr(vAddr, FpuNmsubS, fd, fr, fs, ft)
+                    fmt3 == MipsDefines.FMT3_D && op4 == 0b111 -> MipsInstr(vAddr, FpuNmsubD, fd, fr, fs, ft)
                     funct == 0b001_111 && expectedZero == 0 -> MipsInstr(vAddr, FpuPrefx, fd, base, index)
                     funct == 0b001_001 && expectedZero == 0 -> MipsInstr(vAddr, FpuSdxc1, fd, base, index)
                     funct == 0b001_000 && expectedZero == 0 -> MipsInstr(vAddr, FpuSwxc1, fd, base, index)

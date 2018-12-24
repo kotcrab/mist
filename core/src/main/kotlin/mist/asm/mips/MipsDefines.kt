@@ -16,15 +16,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package mist.asm
+package mist.asm.mips
 
 /** @author Kotcrab */
 
-abstract class Opcode(
-    val mnemonic: String,
-    val description: String = "",
-    val processors: Array<out Processor>,
-    val flags: Array<out OpcodeFlag> = emptyArray(),
-    val use: Array<out OperandRef> = emptyArray(),
-    val modify: Array<out OperandRef> = emptyArray()
-)
+object MipsDefines {
+    const val SPECIAL = 0
+    const val REGIMM = 1
+    const val COP0 = 0b010_000
+    const val COP1 = 0b010_001
+    const val COP2 = 0b010_010
+    const val COP3_COP1X = 0b010_011
+    const val FMT_S = 16
+    const val FMT_D = 17
+    const val FMT_W = 20
+    const val FMT_L = 21
+    const val FMT3_S = 0
+    const val FMT3_D = 1
+    const val FMT3_W = 4
+    const val FMT3_L = 5
+}

@@ -24,7 +24,7 @@ import mist.asm.Reg
 
 sealed class Cop3Reg(name: String, id: Int) : Reg(name, id) {
     companion object {
-        // TODO "by lazy" here is workaround for KT-8970
+        // warning: "by lazy" here is workaround for KT-8970
         private val cop3Regs by lazy {
             arrayOf(
                 Cop3r0, Cop3r1, Cop3r2, Cop3r3, Cop3r4, Cop3r5, Cop3r6, Cop3r7, Cop3r8,

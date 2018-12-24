@@ -28,7 +28,8 @@ import mist.util.logTag
 /** @author Kotcrab */
 
 // TODO rewrite as SHL module or write unit tests for this
-class StackAnalysis(private val graph: Graph, private val log: DecompLog) {
+// TODO this will probably only work when fp register is not used (so -fomit-frame-pointer was used or PSP binary)
+class MipsStackAnalysis(private val graph: MipsGraph, private val log: DecompLog) {
     private val tag = logTag()
 
     var frameSize = 0

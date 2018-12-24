@@ -34,7 +34,7 @@ class ShlGraph(private val projectIO: ProjectIO, private val def: ShlFunctionDef
 
     private val lifter = ShlLifter(projectIO, log)
 
-    fun generateGraph(graph: Graph, stack: StackAnalysis) {
+    fun generateGraph(graph: MipsGraph, stack: MipsStackAnalysis) {
         copyGraphStructure(graph, stack)
     }
 
@@ -49,7 +49,7 @@ class ShlGraph(private val projectIO: ProjectIO, private val def: ShlFunctionDef
         }
     }
 
-    private fun copyGraphStructure(graph: Graph, stack: StackAnalysis) {
+    private fun copyGraphStructure(graph: MipsGraph, stack: MipsStackAnalysis) {
         nodes = MutableList(graph.nodes.size) { Node<ShlInstr>() }
         graph.nodes.forEachIndexed { nodeIdx, node ->
             val shlNode = nodes[nodeIdx]
@@ -102,7 +102,7 @@ class ShlGraph(private val projectIO: ProjectIO, private val def: ShlFunctionDef
         }
     }
 
-    private fun applySwitchInfo(graph: Graph, shlNode: Node<ShlInstr>) {
+    private fun applySwitchInfo(graph: MipsGraph, shlNode: Node<ShlInstr>) {
         for (instr in shlNode.instrs) {
             val switchDes = graph.switchSrcInstrs[instr.addr]
             if (switchDes != null) {

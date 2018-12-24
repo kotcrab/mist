@@ -18,4 +18,6 @@
 
 package mist.asm
 
+/** @author Kotcrab */
+
 class Disassembly<Instruction : Instr>(val def: FunctionDef, val instr: List<Instruction>)
