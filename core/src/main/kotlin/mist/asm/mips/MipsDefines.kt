@@ -21,7 +21,9 @@ package mist.asm.mips
 /** @author Kotcrab */
 
 object MipsDefines {
-    const val SPECIAL = 0
+    const val SPECIAL = 0b000_000
+    const val SPECIAL2 = 0b011_100
+    const val SPECIAL3 = 0b011_111
     const val REGIMM = 1
     const val COP0 = 0b010_000
     const val COP1 = 0b010_001

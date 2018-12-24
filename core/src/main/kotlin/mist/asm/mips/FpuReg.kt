@@ -18,6 +18,7 @@
 
 package mist.asm.mips
 
+import mist.asm.DisassemblerException
 import mist.asm.Reg
 
 /** @author Kotcrab */
@@ -54,7 +55,7 @@ sealed class FpuReg(name: String, id: Int) : Reg(name, id) {
                 5 -> FpuReg.Cc5
                 6 -> FpuReg.Cc6
                 7 -> FpuReg.Cc7
-                else -> error("no such cc register id: $ccId")
+                else -> throw DisassemblerException("no such cc register id: $ccId")
             }
         }
 

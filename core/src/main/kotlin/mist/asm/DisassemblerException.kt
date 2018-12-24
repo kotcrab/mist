@@ -20,18 +20,4 @@ package mist.asm
 
 /** @author Kotcrab */
 
-abstract class Reg(val name: String, val id: Int) {
-    protected companion object {
-        fun <T : Reg> forId(regs: Array<T>, id: Int): T {
-            if (id == -1) throw DisassemblerException("can't return directly inaccessible register")
-            regs.forEach {
-                if (id == it.id) return it
-            }
-            throw DisassemblerException("no such register id: $id")
-        }
-    }
-
-    override fun toString(): String {
-        return name
-    }
-}
+class DisassemblerException(msg: String) : Exception(msg)

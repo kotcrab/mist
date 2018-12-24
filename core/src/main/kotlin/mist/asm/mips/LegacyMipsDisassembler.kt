@@ -18,39 +18,15 @@
 
 package mist.asm.mips
 
-import kio.util.toWHex
-import mist.asm.*
+import mist.asm.DisassemblerException
+import mist.asm.ImmOperand
+import mist.asm.RegOperand
 import mist.asm.mips.MipsOpcode.*
-import mist.io.BinLoader
 
 /** @author Kotcrab */
 
-class LegacyMipsDisassembler(val srcProcessor: LegacyMipsProcessor) : Disassembler<MipsInstr> {
-    override fun disassemble(loader: BinLoader, funcDef: FunctionDef): Disassembly<MipsInstr> {
-        if (funcDef.offset % 4 != 0) error("offset must be a multiply of 4")
-        if (funcDef.len % 4 != 0) error("length must be a multiply of 4")
-        val decoded = mutableListOf<MipsInstr>()
-        repeat(funcDef.len / 4) { instrCount ->
-            val vAddr = funcDef.offset + instrCount * 4
-            val instr = loader.readInt(vAddr)
-            val opcode = instr ushr 26
-            when {
-                instr == 0 -> decoded.add(MipsInstr(vAddr, Nop))
-                opcode == MipsDefines.SPECIAL -> decoded.add(disasmSpecialInstr(vAddr, instr, instrCount))
-                opcode == MipsDefines.REGIMM -> decoded.add(disasmRegimmInstr(vAddr, instr, instrCount))
-                opcode == MipsDefines.COP1 -> decoded.add(disasmCop1Instr(vAddr, instr, instrCount))
-                opcode == MipsDefines.COP2 -> decoded.add(disasmCop2Instr(vAddr, instr))
-                opcode == MipsDefines.COP3_COP1X -> decoded.add(disasmCop3Instr(vAddr, instr, instrCount))
-                else -> decoded.add(disasmOpcodeInstr(vAddr, instr, instrCount, opcode))
-            }
-        }
-        if (decoded.any { it.hasProcessor(srcProcessor) == false }) {
-            error("generated disassembly uses opcodes not supported by specified processor")
-        }
-        return Disassembly(funcDef, decoded)
-    }
-
-    private fun disasmSpecialInstr(vAddr: Int, instr: Int, instrCount: Int): MipsInstr {
+class LegacyMipsDisassembler(private val srcProcessor: LegacyMipsProcessor) : MipsDisassembler(srcProcessor) {
+    override fun disasmSpecialInstr(vAddr: Int, instr: Int, instrCount: Int): MipsInstr {
         val rs = RegOperand(GprReg.forId(instr ushr 21 and 0x1F))
         val rt = RegOperand(GprReg.forId(instr ushr 16 and 0x1F))
         val rd = RegOperand(GprReg.forId(instr ushr 11 and 0x1F))
@@ -106,7 +82,30 @@ class LegacyMipsDisassembler(val srcProcessor: LegacyMipsProcessor) : Disassembl
         }
     }
 
-    private fun disasmCop1Instr(vAddr: Int, instr: Int, instrCount: Int): MipsInstr {
+    override fun disasmRegimmInstr(vAddr: Int, instr: Int, instrCount: Int): MipsInstr {
+        val rs = RegOperand(GprReg.forId(instr ushr 21 and 0x1F))
+        val rt = instr ushr 16 and 0x1F
+        val imm = ImmOperand((instr and 0xFFFF).toShort().toInt())
+        return when (rt) {
+            0b00001 -> MipsInstr(vAddr, Bgez, rs, imm)
+            0b10001 -> MipsInstr(vAddr, Bgezal, rs, imm)
+            0b10011 -> MipsInstr(vAddr, Bgezall, rs, imm)
+            0b00011 -> MipsInstr(vAddr, Bgezl, rs, imm)
+            0b00000 -> MipsInstr(vAddr, Bltz, rs, imm)
+            0b10000 -> MipsInstr(vAddr, Bltzal, rs, imm)
+            0b10010 -> MipsInstr(vAddr, Bltzall, rs, imm)
+            0b00010 -> MipsInstr(vAddr, Bltzl, rs, imm)
+            0b01100 -> MipsInstr(vAddr, Teqi, rs, imm)
+            0b01000 -> MipsInstr(vAddr, Tgei, rs, imm)
+            0b01001 -> MipsInstr(vAddr, Tgeiu, rs, imm)
+            0b01010 -> MipsInstr(vAddr, Tlti, rs, imm)
+            0b01011 -> MipsInstr(vAddr, Tltiu, rs, imm)
+            0b01110 -> MipsInstr(vAddr, Tnei, rs, imm)
+            else -> handleUnknownInstr(vAddr, instrCount)
+        }
+    }
+
+    override fun disasmCop1Instr(vAddr: Int, instr: Int, instrCount: Int): MipsInstr {
         // only for FPU R instruction
         val rt = RegOperand(GprReg.forId(instr ushr 16 and 0x1F))
         // only for FPU instruction
@@ -125,7 +124,7 @@ class LegacyMipsDisassembler(val srcProcessor: LegacyMipsProcessor) : Disassembl
                 val ndtf = instr ushr 16 and 0b11
                 val cc = RegOperand(FpuReg.ccForId(instr ushr 18 and 0b111))
                 if (cc.reg !is FpuReg.Cc0 && srcProcessor !is MipsIVProcessor) {
-                    error("only MIPS IV architecture level can use non 0 condition code (cc)")
+                    throw DisassemblerException("only MIPS IV architecture level can use non 0 condition code (cc)")
                 }
                 when (srcProcessor) {
                     is MipsIVProcessor -> {
@@ -156,7 +155,7 @@ class LegacyMipsDisassembler(val srcProcessor: LegacyMipsProcessor) : Disassembl
                         val cc = RegOperand(FpuReg.ccForId(instr ushr 8 and 0b111))
                         val cond = funct and 0b1111
                         if (cc.reg !is FpuReg.Cc0 && srcProcessor !is MipsIVProcessor) {
-                            error("only MIPS IV architecture level can use non 0 condition code (cc)")
+                            throw DisassemblerException("only MIPS IV architecture level can use non 0 condition code (cc)")
                         }
                         when (srcProcessor) {
                             is MipsIVProcessor -> {
@@ -241,7 +240,7 @@ class LegacyMipsDisassembler(val srcProcessor: LegacyMipsProcessor) : Disassembl
                         val cc = RegOperand(FpuReg.ccForId(instr ushr 8 and 0b111))
                         val cond = funct and 0b1111
                         if (cc.reg !is FpuReg.Cc0 && srcProcessor !is MipsIVProcessor) {
-                            error("only MIPS IV architecture level can use non 0 condition code (cc)")
+                            throw DisassemblerException("only MIPS IV architecture level can use non 0 condition code (cc)")
                         }
                         when (srcProcessor) {
                             is MipsIVProcessor -> {
@@ -336,14 +335,14 @@ class LegacyMipsDisassembler(val srcProcessor: LegacyMipsProcessor) : Disassembl
         }
     }
 
-    private fun disasmCop2Instr(vAddr: Int, instr: Int): MipsInstr {
+    override fun disasmCop2Instr(vAddr: Int, instr: Int, instrCount: Int): MipsInstr {
         return MipsInstr(vAddr, Cop2, ImmOperand(instr and 0x3FFFFFF))
     }
 
-    private fun disasmCop3Instr(vAddr: Int, instr: Int, instrCount: Int): MipsInstr {
+    override fun disasmCop3Instr(vAddr: Int, instr: Int, instrCount: Int): MipsInstr {
         return when (srcProcessor) {
             is MipsIProcessor, MipsIIProcessor -> MipsInstr(vAddr, Cop3, ImmOperand(instr and 0x3FFFFFF))
-            is MipsIIIProcessor -> error("COP3 is not defined on MIPS III architecture level")
+            is MipsIIIProcessor -> throw DisassemblerException("COP3 is not defined on MIPS III architecture level")
             is MipsIVProcessor -> {
                 // for arithmetic ops
                 val fr = RegOperand(FpuReg.forId(instr ushr 21 and 0x1F))
@@ -378,30 +377,7 @@ class LegacyMipsDisassembler(val srcProcessor: LegacyMipsProcessor) : Disassembl
         }
     }
 
-    private fun disasmRegimmInstr(vAddr: Int, instr: Int, instrCount: Int): MipsInstr {
-        val rs = RegOperand(GprReg.forId(instr ushr 21 and 0x1F))
-        val rt = instr ushr 16 and 0x1F
-        val imm = ImmOperand((instr and 0xFFFF).toShort().toInt())
-        return when (rt) {
-            0b00001 -> MipsInstr(vAddr, Bgez, rs, imm)
-            0b10001 -> MipsInstr(vAddr, Bgezal, rs, imm)
-            0b10011 -> MipsInstr(vAddr, Bgezall, rs, imm)
-            0b00011 -> MipsInstr(vAddr, Bgezl, rs, imm)
-            0b00000 -> MipsInstr(vAddr, Bltz, rs, imm)
-            0b10000 -> MipsInstr(vAddr, Bltzal, rs, imm)
-            0b10010 -> MipsInstr(vAddr, Bltzall, rs, imm)
-            0b00010 -> MipsInstr(vAddr, Bltzl, rs, imm)
-            0b01100 -> MipsInstr(vAddr, Teqi, rs, imm)
-            0b01000 -> MipsInstr(vAddr, Tgei, rs, imm)
-            0b01001 -> MipsInstr(vAddr, Tgeiu, rs, imm)
-            0b01010 -> MipsInstr(vAddr, Tlti, rs, imm)
-            0b01011 -> MipsInstr(vAddr, Tltiu, rs, imm)
-            0b01110 -> MipsInstr(vAddr, Tnei, rs, imm)
-            else -> handleUnknownInstr(vAddr, instrCount)
-        }
-    }
-
-    private fun disasmOpcodeInstr(vAddr: Int, instr: Int, instrCount: Int, opcode: Int): MipsInstr {
+    override fun disasmOpcodeInstr(vAddr: Int, instr: Int, instrCount: Int, opcode: Int): MipsInstr {
         // only applies to I instruction
         val rs = RegOperand(GprReg.forId(instr ushr 21 and 0x1F))
         val rt = RegOperand(GprReg.forId(instr ushr 16 and 0x1F))
@@ -462,9 +438,5 @@ class LegacyMipsDisassembler(val srcProcessor: LegacyMipsProcessor) : Disassembl
             opcode == 0b001_110 -> MipsInstr(vAddr, Xori, rt, rs, imm)
             else -> handleUnknownInstr(vAddr, instrCount)
         }
-    }
-
-    private fun handleUnknownInstr(vAddr: Int, instrCount: Int): Nothing {
-        error("unknown instruction at offset ${(instrCount * 4).toWHex()}, address ${vAddr.toWHex()}")
     }
 }
