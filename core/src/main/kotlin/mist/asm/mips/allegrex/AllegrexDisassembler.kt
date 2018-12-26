@@ -60,14 +60,28 @@ class AllegrexDisassembler(strict: Boolean = true) : MipsDisassembler(AllegrexPr
             funct == 0b011_001 && ifStrict(ZeroRd, ZeroShift) -> MipsInstr(vAddr, Multu, rs, rt)
             funct == 0b100_111 && ifStrict(ZeroShift) -> MipsInstr(vAddr, Nor, rd, rs, rt)
             funct == 0b100_101 && ifStrict(ZeroShift) -> MipsInstr(vAddr, Or, rd, rs, rt)
+            // note for ROTR / ROTRV: this doesn't match docs on purpose, normally only LSB of rs.reg.id / shift would be
+            // checked, remaining bits would be checked using ifStrict
+            funct == 0b000_010 && rs.reg.id == 1 && ifStrict { rs.reg.id ushr 1 == 0 } -> {
+                MipsInstr(vAddr, Rotr, rd, rt, ImmOperand(shift))
+            }
+            funct == 0b000_110 && shift == 1 -> {
+                MipsInstr(vAddr, Rotrv, rd, rt, rs)
+            }
             funct == 0b000_000 && ifStrict(ZeroRs) -> MipsInstr(vAddr, Sll, rd, rt, ImmOperand(shift))
             funct == 0b000_100 && ifStrict(ZeroShift) -> MipsInstr(vAddr, Sllv, rd, rt, rs)
             funct == 0b101_010 && ifStrict(ZeroShift) -> MipsInstr(vAddr, Slt, rd, rs, rt)
             funct == 0b101_011 && ifStrict(ZeroShift) -> MipsInstr(vAddr, Sltu, rd, rs, rt)
             funct == 0b000_011 && ifStrict(ZeroRs) -> MipsInstr(vAddr, Sra, rd, rt, ImmOperand(shift))
             funct == 0b000_111 && ifStrict(ZeroShift) -> MipsInstr(vAddr, Srav, rd, rt, rs)
-            funct == 0b000_010 && ifStrict(ZeroRs) -> MipsInstr(vAddr, Srl, rd, rt, ImmOperand(shift))
-            funct == 0b000_110 && ifStrict(ZeroShift) -> MipsInstr(vAddr, Srlv, rd, rt, rs)
+            // note for SRL / SRLV: this doesn't match docs on purpose, normally only LSB of rs.reg.id / shift would be
+            // checked, remaining bits would be checked using ifStrict
+            funct == 0b000_010 && rs.reg.id != 1 && ifStrict { rs.reg.id ushr 1 == 0 } -> {
+                MipsInstr(vAddr, Srl, rd, rt, ImmOperand(shift))
+            }
+            funct == 0b000_110 && shift != 1 -> {
+                MipsInstr(vAddr, Srlv, rd, rt, rs)
+            }
             funct == 0b100_010 && ifStrict(ZeroShift) -> MipsInstr(vAddr, Sub, rd, rs, rt)
             funct == 0b100_011 && ifStrict(ZeroShift) -> MipsInstr(vAddr, Subu, rd, rs, rt)
             funct == 0b001_111 && ifStrict(ZeroRs, ZeroRt, ZeroRd) -> {

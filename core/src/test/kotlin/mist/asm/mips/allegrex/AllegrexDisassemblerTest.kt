@@ -191,6 +191,12 @@ class AllegrexDisassemblerTest {
     fun testOriZeroExtend() = testInstr({ ori(a0, s0, 0x8000) }, { verify(Ori, GprReg.A0, GprReg.S0, 0x8000) })
 
     @Test
+    fun testRotr() = testEncodedInstr(0x00302402) { verify(Rotr, GprReg.A0, GprReg.S0, 0x10) }
+
+    @Test
+    fun testRotrv() = testEncodedInstr(0x01102046) { verify(Rotrv, GprReg.A0, GprReg.S0, GprReg.T0) }
+
+    @Test
     fun testSb() = testInstr({ sb(a0, 0xCD, s0) }, { verify(Sb, GprReg.A0, GprReg.S0, 0xCD) })
 
     @Test
@@ -226,6 +232,9 @@ class AllegrexDisassemblerTest {
 
     @Test
     fun testSrlv() = testInstr({ srlv(a0, s0, t0) }, { verify(Srlv, GprReg.A0, GprReg.S0, GprReg.T0) })
+
+    @Test
+    fun testSrlv0xC6() = testEncodedInstr(0x000000C6) { verify(Srlv, GprReg.Zero, GprReg.Zero, 0) }
 
     @Test
     fun testSra() = testInstr({ sra(a0, s0, 0x10) }, { verify(Sra, GprReg.A0, GprReg.S0, 0x10) })

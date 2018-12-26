@@ -45,6 +45,7 @@ project(':core') {
     dependencies {
         compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
         compile "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion"
+        compile "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.0.1"
         compile "com.github.kotcrab:kio:71476b9441"
         compile "org.apache.commons:commons-collections4:4.0"
         testCompile "com.kotcrab.kmips:kmips:1.2"

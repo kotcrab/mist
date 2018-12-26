@@ -19,6 +19,10 @@
 package mist.asm.mips.allegrex
 
 import kio.util.toHex
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.newFixedThreadPoolContext
+import kotlinx.coroutines.runBlocking
 import mist.asm.*
 import mist.asm.mips.GprReg
 import mist.asm.mips.MipsInstr
@@ -26,6 +30,7 @@ import mist.asm.mips.MipsOpcode
 import mist.io.BinLoader
 import java.io.File
 import java.nio.charset.Charset
+import java.util.*
 
 /** @author Kotcrab */
 
@@ -46,42 +51,51 @@ private class AllegrexInstructionSpaceTest(instrDataDir: File) {
     private val disasm = AllegrexDisassembler(strict = false)
     private val def = FunctionDef("Test", 0x8804000, 4)
     private val invalidInstr = "__invalid"
+    private val skipIgnoredOpcodes = true
+    private val ignoredOpcodes = Collections.synchronizedSet(mutableSetOf<String>())
 
     init {
-        instrDataDir.listFiles()
-            .filter { it.extension == "txt" }
-            .sortedBy { it.nameWithoutExtension.toInt() }
-            .forEach { file ->
-                println("Processing ${file.name}...")
-                file.forEachLine { asm ->
-                    val parts = asm
-                        .trimEnd()
-                        .replace("no instruction :(", invalidInstr)
-                        .replace("syscall \t", "syscall ")
-                        .split("; ", limit = 2)
-                    val encodedInstr = parts[0].toLong(16).toInt()
-                    val expectedInstr = parts[1]
-                    val instrParts = expectedInstr.split(" ", limit = 2)
-                    val operands = if (instrParts.size == 1) emptyList() else instrParts[1].split(",")
-                    val parsedOperands = operands.flatMap { op ->
-                        val memAccess = op.indexOf("(")
-                        if (memAccess == -1) {
-                            return@flatMap listOf(op)
-                        } else {
-                            // parse memory access (remove parenthesis and flip operand order)
-                            return@flatMap op
-                                .split("(")
-                                .map { it.replace(")", "") }
-                                .reversed()
-                        }
-                    }
-                    processAsmInstruction(
-                        encodedInstr,
-                        expectedOpcode = instrParts[0],
-                        expectedOperands = parsedOperands
-                    )
+        val threads = Runtime.getRuntime().availableProcessors()
+        val ctx = newFixedThreadPoolContext(threads, "TestPool")
+        val jobs = instrDataDir.listFiles()
+            .filter { file -> file.extension == "txt" }
+            .sortedBy { file -> file.nameWithoutExtension.toInt() }
+            .map { file -> GlobalScope.launch(ctx) { processFile(file) } }
+        runBlocking {
+            jobs.forEach { it.join() }
+        }
+    }
+
+    private fun processFile(file: File) {
+        println("Processing ${file.name}...")
+        file.forEachLine { asm ->
+            val parts = asm
+                .trimEnd()
+                .replace("no instruction :(", invalidInstr)
+                .replace("syscall \t", "syscall ")
+                .split("; ", limit = 2)
+            val encodedInstr = parts[0].toLong(16).toInt()
+            val expectedInstr = parts[1]
+            val instrParts = expectedInstr.split(" ", limit = 2)
+            val operands = if (instrParts.size == 1) emptyList() else instrParts[1].split(",")
+            val parsedOperands = operands.flatMap { op ->
+                val memAccess = op.indexOf("(")
+                if (memAccess == -1) {
+                    return@flatMap listOf(op)
+                } else {
+                    // parse memory access (remove parenthesis and flip operand order)
+                    return@flatMap op
+                        .split("(")
+                        .map { it.replace(")", "") }
+                        .reversed()
                 }
             }
+            processAsmInstruction(
+                encodedInstr,
+                expectedOpcode = instrParts[0],
+                expectedOperands = parsedOperands
+            )
+        }
     }
 
     private fun processAsmInstruction(encodedInstr: Int, expectedOpcode: String, expectedOperands: List<String>) {
@@ -103,7 +117,9 @@ private class AllegrexInstructionSpaceTest(instrDataDir: File) {
             }
 
             if (opcode != expectedOpcode) {
+                if (skipIgnoredOpcodes && expectedOpcode in ignoredOpcodes) return
                 println("${encodedInstr.toHex()}: invalid opcode $instrInvalidCompare")
+                if (skipIgnoredOpcodes) ignoredOpcodes.add(expectedOpcode)
                 return
             }
             // no need to verify args of those
@@ -115,20 +131,26 @@ private class AllegrexInstructionSpaceTest(instrDataDir: File) {
             if (expectedOpcode in arrayOf("ll", "sc")) return
 
             if (expectedOperands.size != instr.operands.size) {
+                if (skipIgnoredOpcodes && expectedOpcode in ignoredOpcodes) return
                 println("${encodedInstr.toHex()}: invalid operand count $instrInvalidCompare")
+                if (skipIgnoredOpcodes) ignoredOpcodes.add(expectedOpcode)
                 return
             }
             instr.operands.forEachIndexed opCompare@{ idx, operand ->
+                if (skipIgnoredOpcodes && expectedOpcode in ignoredOpcodes) return
                 if (operand.toString() == expectedOperands[idx]) return@opCompare
                 try {
                     if (operand is ImmOperand && operand.value == Integer.decode(expectedOperands[idx])) return@opCompare
                 } catch (ignored: NumberFormatException) {
                 }
                 println("${encodedInstr.toHex()}: invalid operand at index $idx $instrInvalidCompare")
+                if (skipIgnoredOpcodes) ignoredOpcodes.add(expectedOpcode)
             }
         } catch (e: DisassemblerException) {
+            if (skipIgnoredOpcodes && expectedOpcode in ignoredOpcodes) return
             if (expectedOpcode == invalidInstr) return
             println("${encodedInstr.toHex()}: disassembler exception, expected '$expectedInstrTxt'")
+            if (skipIgnoredOpcodes) ignoredOpcodes.add(expectedOpcode)
         }
     }
 

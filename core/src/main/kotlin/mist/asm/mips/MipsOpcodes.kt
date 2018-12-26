@@ -1873,14 +1873,14 @@ abstract class MipsOpcode(
 
     object Rotr : MipsOpcode(
         "rotr",
-        processors = mipsModern(Mips32r2Processor),
+        processors = arrayOf(*mipsModern(Mips32r2Processor), AllegrexProcessor),
         modify = arrayOf(Operand0Ref),
         use = arrayOf(Operand1Ref)
     )
 
     object Rotrv : MipsOpcode(
         "rotrv",
-        processors = mipsModern(Mips32r2Processor),
+        processors = arrayOf(*mipsModern(Mips32r2Processor), AllegrexProcessor),
         modify = arrayOf(Operand0Ref),
         use = arrayOf(Operand1Ref, Operand2Ref)
     )
