@@ -38,7 +38,6 @@ import org.junit.jupiter.api.TestInstance.Lifecycle
 
 /** @author Kotcrab */
 
-@TestInstance(Lifecycle.PER_CLASS)
 class MipsGraphTest {
     private val jumpOutsideCurrentFunGraph = graphFromAsm {
         // 0x0

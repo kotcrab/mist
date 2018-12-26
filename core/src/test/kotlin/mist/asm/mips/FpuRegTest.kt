@@ -18,8 +18,8 @@
 
 package mist.asm.mips
 
+import mist.test.util.assertThatDisassemblerException
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatIllegalStateException
 import org.junit.jupiter.api.Test
 
 /** @author Kotcrab */
@@ -96,11 +96,11 @@ class FpuRegTest {
 
     @Test
     fun `don't return fpu reg for -1 id`() {
-        assertThatIllegalStateException().isThrownBy { FpuReg.forId(-1) }
+        assertThatDisassemblerException().isThrownBy { FpuReg.forId(-1) }
     }
 
     @Test
     fun `don't return fpu reg for invalid id`() {
-        assertThatIllegalStateException().isThrownBy { FpuReg.forId(Integer.MAX_VALUE) }
+        assertThatDisassemblerException().isThrownBy { FpuReg.forId(Integer.MAX_VALUE) }
     }
 }

@@ -100,7 +100,7 @@ class ShlLifter(private val projectIO: ProjectIO, private val log: DecompLog) {
                             )
                         }
                     }
-                    Slti, Sltiu, Slt, Sltu -> {
+                    Slti, Sltiu, Slt, Sltu -> { // FIXME sltiu should be sign extended
                         shl.add(
                             ShlAssignInstr(
                                 it.addr, shlAuto(it.operands[0]),

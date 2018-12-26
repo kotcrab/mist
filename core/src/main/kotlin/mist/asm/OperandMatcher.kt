@@ -41,6 +41,13 @@ fun anyReg() = object : OperandMatcher {
     }
 }
 
+@Deprecated(
+    "Use anyReg() to match any register or specify registers to be matched",
+    ReplaceWith("anyReg()"),
+    DeprecationLevel.ERROR
+)
+fun isReg() = anyReg()
+
 fun isReg(reg: Reg) = object : OperandMatcher {
     override fun match(op: Operand?): Boolean {
         if (op == null) return false
@@ -64,6 +71,13 @@ fun anyImm() = object : OperandMatcher {
         return true
     }
 }
+
+@Deprecated(
+    "Use anyImm() to match any immediate or specify values to be matched",
+    ReplaceWith("anyImm()"),
+    DeprecationLevel.ERROR
+)
+fun isImm() = anyImm()
 
 fun isImm(value: Int) = object : OperandMatcher {
     override fun match(op: Operand?): Boolean {

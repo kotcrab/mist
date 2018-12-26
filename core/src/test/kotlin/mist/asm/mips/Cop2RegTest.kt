@@ -18,8 +18,8 @@
 
 package mist.asm.mips
 
+import mist.test.util.assertThatDisassemblerException
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatIllegalStateException
 import org.junit.jupiter.api.Test
 
 /** @author Kotcrab */
@@ -67,11 +67,11 @@ class Cop2RegTest {
 
     @Test
     fun `don't return cop2 reg for -1 id`() {
-        assertThatIllegalStateException().isThrownBy { Cop2Reg.forId(-1) }
+        assertThatDisassemblerException().isThrownBy { Cop2Reg.forId(-1) }
     }
 
     @Test
     fun `don't return cop2 reg for invalid id`() {
-        assertThatIllegalStateException().isThrownBy { Cop2Reg.forId(Integer.MAX_VALUE) }
+        assertThatDisassemblerException().isThrownBy { Cop2Reg.forId(Integer.MAX_VALUE) }
     }
 }

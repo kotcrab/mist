@@ -18,8 +18,8 @@
 
 package mist.asm.mips
 
+import mist.test.util.assertThatDisassemblerException
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatIllegalStateException
 import org.junit.jupiter.api.Test
 
 /** @author Kotcrab */
@@ -75,11 +75,11 @@ class GprRegTest {
 
     @Test
     fun `don't return gpr reg for -1 id`() {
-        assertThatIllegalStateException().isThrownBy { GprReg.forId(-1) }
+        assertThatDisassemblerException().isThrownBy { GprReg.forId(-1) }
     }
 
     @Test
     fun `don't return gpr reg for invalid id`() {
-        assertThatIllegalStateException().isThrownBy { GprReg.forId(Integer.MAX_VALUE) }
+        assertThatDisassemblerException().isThrownBy { GprReg.forId(Integer.MAX_VALUE) }
     }
 }

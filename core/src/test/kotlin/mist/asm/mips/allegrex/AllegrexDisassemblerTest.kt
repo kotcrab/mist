@@ -35,8 +35,7 @@ import java.nio.ByteBuffer
 /** @author Kotcrab */
 
 class AllegrexDisassemblerTest {
-    private val labelTarget = 0x40
-    private val labelExpected = (labelTarget - 0x4) / 0x4
+    private val labelExpected = 0x40
 
     @Test
     fun testAdd() = testInstr({ add(a0, s0, t0) }, { verify(Add, GprReg.A0, GprReg.S0, GprReg.T0) })
@@ -55,6 +54,9 @@ class AllegrexDisassemblerTest {
 
     @Test
     fun testAndi() = testInstr({ andi(a0, s0, 0xCD) }, { verify(Andi, GprReg.A0, GprReg.S0, 0xCD) })
+
+    @Test
+    fun testAndiZeroExtend() = testInstr({ andi(a0, s0, 0x8000) }, { verify(Andi, GprReg.A0, GprReg.S0, 0x8000) })
 
     @Test
     fun testBeq() = testInstr({ beq(a0, s0, testLabel()) }, { verify(Beq, GprReg.A0, GprReg.S0, labelExpected) })
@@ -144,6 +146,9 @@ class AllegrexDisassemblerTest {
     fun testLui() = testInstr({ lui(a0, 0xCD) }, { verify(Lui, GprReg.A0, 0xCD) })
 
     @Test
+    fun testLuiZeroExtend() = testInstr({ lui(a0, 0x8000) }, { verify(Lui, GprReg.A0, 0x8000) })
+
+    @Test
     fun testLw() = testInstr({ lw(a0, 0xCD, s0) }, { verify(Lw, GprReg.A0, GprReg.S0, 0xCD) })
 
     @Test
@@ -183,6 +188,9 @@ class AllegrexDisassemblerTest {
     fun testOri() = testInstr({ ori(a0, s0, 0xCD) }, { verify(Ori, GprReg.A0, GprReg.S0, 0xCD) })
 
     @Test
+    fun testOriZeroExtend() = testInstr({ ori(a0, s0, 0x8000) }, { verify(Ori, GprReg.A0, GprReg.S0, 0x8000) })
+
+    @Test
     fun testSb() = testInstr({ sb(a0, 0xCD, s0) }, { verify(Sb, GprReg.A0, GprReg.S0, 0xCD) })
 
     @Test
@@ -205,6 +213,10 @@ class AllegrexDisassemblerTest {
 
     @Test
     fun testSltiu() = testInstr({ sltiu(a0, s0, 0xCD) }, { verify(Sltiu, GprReg.A0, GprReg.S0, 0xCD) })
+
+    @Test
+    fun testSltiuUnsigned() =
+        testInstr({ sltiu(a0, s0, 0xFFFF8000.toInt()) }) { verify(Sltiu, GprReg.A0, GprReg.S0, 0xFFFF8000.toInt()) }
 
     @Test
     fun testSltu() = testInstr({ sltu(a0, s0, t0) }, { verify(Sltu, GprReg.A0, GprReg.S0, GprReg.T0) })
@@ -286,6 +298,9 @@ class AllegrexDisassemblerTest {
 
     @Test
     fun testXori() = testInstr({ xori(a0, s0, 0xCD) }, { verify(Xori, GprReg.A0, GprReg.S0, 0xCD) })
+
+    @Test
+    fun testXoriZeroExtend() = testInstr({ xori(a0, s0, 0x8000) }, { verify(Xori, GprReg.A0, GprReg.S0, 0x8000) })
 
     @Test
     fun testNop() = testInstr({ nop() }, { verify(Nop) })
@@ -404,7 +419,7 @@ class AllegrexDisassemblerTest {
     @Test
     fun testFpuTruncWS() = testInstr({ trunc.w.s(f4, f14) }, { verify(FpuTruncWS, FpuReg.F4, FpuReg.F14) })
 
-    private fun testLabel() = Label().apply { address = labelTarget }
+    private fun testLabel() = Label().apply { address = labelExpected }
 
     private fun Instr.verify(opcode: Opcode, op0: Any? = null, op1: Any? = null, op2: Any? = null, op3: Any? = null) {
         assertThat(this.opcode).isEqualTo(opcode)

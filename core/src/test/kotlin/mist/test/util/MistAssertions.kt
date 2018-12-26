@@ -16,31 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package mist.asm
+package mist.test.util
 
-import kio.util.toHex
-import kio.util.toSignedHex
+import mist.asm.DisassemblerException
+import org.assertj.core.api.Assertions
+import org.assertj.core.api.ThrowableTypeAssert
 
 /** @author Kotcrab */
 
-abstract class Operand
-
-class RegOperand(val reg: Reg) : Operand() {
-    override fun toString(): String {
-        return reg.name
-    }
-}
-
-class ImmOperand(val value: Int, val hintUnsigned: Boolean = false) : Operand() {
-    fun toHintedUnsigned(): ImmOperand {
-        return ImmOperand(value, true)
-    }
-
-    override fun toString(): String {
-        return if (hintUnsigned) {
-            value.toHex()
-        } else {
-            value.toSignedHex()
-        }
-    }
+fun assertThatDisassemblerException(): ThrowableTypeAssert<DisassemblerException> {
+    return Assertions.assertThatExceptionOfType<DisassemblerException>(DisassemblerException::class.java)
 }

@@ -69,8 +69,7 @@ class MipsGraph(
             when {
                 srcInstr.hasFlag(Branch) -> {
                     val imm = srcInstr.operands.last { it is ImmOperand } as ImmOperand
-                    val destAddr = srcInstr.addr + 0x4 + imm.value * 0x4
-                    val destInstr = instrs.firstOrNull { it.addr == destAddr }
+                    val destInstr = instrs.firstOrNull { it.addr == imm.value }
                         ?: log.panic(tag, "branch to instruction outside current function")
                     jumpingTo.getOrPut(srcInstr, defaultValue = { mutableSetOf() }).add(destInstr)
                     jumpingToFrom.getOrPut(destInstr, defaultValue = { mutableSetOf() }).add(srcInstr)
@@ -109,9 +108,8 @@ class MipsGraph(
             }
             jumpingTo.getOrPut(srcInstr, defaultValue = { mutableSetOf() }).add(destInstr)
             jumpingToFrom.getOrPut(destInstr, defaultValue = { mutableSetOf() }).add(srcInstr)
-            switchCasesInstrs.getOrPut(destInstr.addr, defaultValue = { SwitchCaseDescriptor(destInstr) }).cases.add(
-                case
-            )
+            switchCasesInstrs.getOrPut(destInstr.addr, defaultValue = { SwitchCaseDescriptor(destInstr) }).cases
+                .add(case)
         }
     }
 
