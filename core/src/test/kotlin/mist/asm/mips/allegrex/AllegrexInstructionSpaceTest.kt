@@ -43,7 +43,7 @@ fun main(args: Array<String>) {
  * to discover missing and incorrect instructions and then add standard unit tests based on the results.
  */
 private class AllegrexInstructionSpaceTest(instrDataDir: File) {
-    private val disasm = AllegrexDisassembler()
+    private val disasm = AllegrexDisassembler(strict = false)
     private val def = FunctionDef("Test", 0x8804000, 4)
     private val invalidInstr = "__invalid"
 

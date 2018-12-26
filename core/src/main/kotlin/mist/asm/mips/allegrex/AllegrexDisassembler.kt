@@ -22,49 +22,55 @@ import mist.asm.DisassemblerException
 import mist.asm.ImmOperand
 import mist.asm.RegOperand
 import mist.asm.mips.*
+import mist.asm.mips.MipsDisassembler.StrictCheck.*
 import mist.asm.mips.MipsOpcode.*
 
 /** @author Kotcrab */
 
 //TODO VFPU instructions and other missing instructions from MIPS32
 
-class AllegrexDisassembler : MipsDisassembler(AllegrexProcessor) {
+class AllegrexDisassembler(strict: Boolean = true) : MipsDisassembler(AllegrexProcessor, strict) {
     override fun disasmSpecialInstr(vAddr: Int, instr: Int, instrCount: Int): MipsInstr {
         val rs = RegOperand(GprReg.forId(instr ushr 21 and 0x1F))
         val rt = RegOperand(GprReg.forId(instr ushr 16 and 0x1F))
         val rd = RegOperand(GprReg.forId(instr ushr 11 and 0x1F))
         val shift = instr ushr 6 and 0x1F
         val funct = instr and 0x3F
+        val ifStrict = StrictChecker()
+        ifStrict.register(ZeroRs) { rs.reg.id == 0 }
+        ifStrict.register(ZeroRt) { rt.reg.id == 0 }
+        ifStrict.register(ZeroRd) { rd.reg.id == 0 }
+        ifStrict.register(ZeroShift) { shift == 0 }
         return when {
-            funct == 0b100_000 && shift == 0 -> MipsInstr(vAddr, Add, rd, rs, rt)
-            funct == 0b100_001 && shift == 0 -> MipsInstr(vAddr, Addu, rd, rs, rt)
-            funct == 0b100_100 && shift == 0 -> MipsInstr(vAddr, And, rd, rs, rt)
+            funct == 0b100_000 && ifStrict(ZeroShift) -> MipsInstr(vAddr, Add, rd, rs, rt)
+            funct == 0b100_001 && ifStrict(ZeroShift) -> MipsInstr(vAddr, Addu, rd, rs, rt)
+            funct == 0b100_100 && ifStrict(ZeroShift) -> MipsInstr(vAddr, And, rd, rs, rt)
             funct == 0b001_101 -> MipsInstr(vAddr, Break, ImmOperand(instr ushr 6 and 0xFFFF))
-            funct == 0b011_010 && rd.reg.id == 0 && shift == 0 -> MipsInstr(vAddr, Div, rs, rt)
-            funct == 0b011_011 && rd.reg.id == 0 && shift == 0 -> MipsInstr(vAddr, Divu, rs, rt)
-            funct == 0b001_001 && rt.reg.id == 0 && shift == 0 -> MipsInstr(vAddr, Jalr, rd, rs)
-            funct == 0b001_000 && rt.reg.id == 0 && rd.reg.id == 0 && shift == 0 -> MipsInstr(vAddr, Jr, rs)
-            funct == 0b010_000 && rs.reg.id == 0 && rt.reg.id == 0 && shift == 0 -> MipsInstr(vAddr, Mfhi, rd)
-            funct == 0b010_010 && rs.reg.id == 0 && rt.reg.id == 0 && shift == 0 -> MipsInstr(vAddr, Mflo, rd)
-//            funct == 0b001_011 && shift == 0 -> MipsInstr(vAddr, Movn, rd, rs, rt)
-//            funct == 0b001_010 && shift == 0 -> MipsInstr(vAddr, Movz, rd, rs, rt)
-            funct == 0b010_001 && rt.reg.id == 0 && rd.reg.id == 0 && shift == 0 -> MipsInstr(vAddr, Mthi, rs)
-            funct == 0b010_011 && rt.reg.id == 0 && rd.reg.id == 0 && shift == 0 -> MipsInstr(vAddr, Mtlo, rs)
-            funct == 0b011_000 && rd.reg.id == 0 && shift == 0 -> MipsInstr(vAddr, Mult, rs, rt)
-            funct == 0b011_001 && rd.reg.id == 0 && shift == 0 -> MipsInstr(vAddr, Multu, rs, rt)
-            funct == 0b100_111 && shift == 0 -> MipsInstr(vAddr, Nor, rd, rs, rt)
-            funct == 0b100_101 && shift == 0 -> MipsInstr(vAddr, Or, rd, rs, rt)
-            funct == 0b000_000 && rs.reg.id == 0 -> MipsInstr(vAddr, Sll, rd, rt, ImmOperand(shift))
-            funct == 0b000_100 && shift == 0 -> MipsInstr(vAddr, Sllv, rd, rt, rs)
-            funct == 0b101_010 && shift == 0 -> MipsInstr(vAddr, Slt, rd, rs, rt)
-            funct == 0b101_011 && shift == 0 -> MipsInstr(vAddr, Sltu, rd, rs, rt)
-            funct == 0b000_011 && rs.reg.id == 0 -> MipsInstr(vAddr, Sra, rd, rt, ImmOperand(shift))
-            funct == 0b000_111 && shift == 0 -> MipsInstr(vAddr, Srav, rd, rt, rs)
-            funct == 0b000_010 && rs.reg.id == 0 -> MipsInstr(vAddr, Srl, rd, rt, ImmOperand(shift))
-            funct == 0b000_110 && shift == 0 -> MipsInstr(vAddr, Srlv, rd, rt, rs)
-            funct == 0b100_010 && shift == 0 -> MipsInstr(vAddr, Sub, rd, rs, rt)
-            funct == 0b100_011 && shift == 0 -> MipsInstr(vAddr, Subu, rd, rs, rt)
-            funct == 0b001_111 && rs.reg.id == 0 && rt.reg.id == 0 && rd.reg.id == 0 -> {
+            funct == 0b011_010 && ifStrict(ZeroRd, ZeroShift) -> MipsInstr(vAddr, Div, rs, rt)
+            funct == 0b011_011 && ifStrict(ZeroRd, ZeroShift) -> MipsInstr(vAddr, Divu, rs, rt)
+            funct == 0b001_001 && ifStrict(ZeroRt, ZeroShift) -> MipsInstr(vAddr, Jalr, rd, rs)
+            funct == 0b001_000 && ifStrict(ZeroRt, ZeroRd, ZeroShift) -> MipsInstr(vAddr, Jr, rs)
+            funct == 0b010_000 && ifStrict(ZeroRs, ZeroRt, ZeroShift) -> MipsInstr(vAddr, Mfhi, rd)
+            funct == 0b010_010 && ifStrict(ZeroRs, ZeroRt, ZeroShift) -> MipsInstr(vAddr, Mflo, rd)
+            funct == 0b001_011 && ifStrict(ZeroShift) -> MipsInstr(vAddr, Movn, rd, rs, rt)
+            funct == 0b001_010 && ifStrict(ZeroShift) -> MipsInstr(vAddr, Movz, rd, rs, rt)
+            funct == 0b010_001 && ifStrict(ZeroRt, ZeroRd, ZeroShift) -> MipsInstr(vAddr, Mthi, rs)
+            funct == 0b010_011 && ifStrict(ZeroRt, ZeroRd, ZeroShift) -> MipsInstr(vAddr, Mtlo, rs)
+            funct == 0b011_000 && ifStrict(ZeroRd, ZeroShift) -> MipsInstr(vAddr, Mult, rs, rt)
+            funct == 0b011_001 && ifStrict(ZeroRd, ZeroShift) -> MipsInstr(vAddr, Multu, rs, rt)
+            funct == 0b100_111 && ifStrict(ZeroShift) -> MipsInstr(vAddr, Nor, rd, rs, rt)
+            funct == 0b100_101 && ifStrict(ZeroShift) -> MipsInstr(vAddr, Or, rd, rs, rt)
+            funct == 0b000_000 && ifStrict(ZeroRs) -> MipsInstr(vAddr, Sll, rd, rt, ImmOperand(shift))
+            funct == 0b000_100 && ifStrict(ZeroShift) -> MipsInstr(vAddr, Sllv, rd, rt, rs)
+            funct == 0b101_010 && ifStrict(ZeroShift) -> MipsInstr(vAddr, Slt, rd, rs, rt)
+            funct == 0b101_011 && ifStrict(ZeroShift) -> MipsInstr(vAddr, Sltu, rd, rs, rt)
+            funct == 0b000_011 && ifStrict(ZeroRs) -> MipsInstr(vAddr, Sra, rd, rt, ImmOperand(shift))
+            funct == 0b000_111 && ifStrict(ZeroShift) -> MipsInstr(vAddr, Srav, rd, rt, rs)
+            funct == 0b000_010 && ifStrict(ZeroRs) -> MipsInstr(vAddr, Srl, rd, rt, ImmOperand(shift))
+            funct == 0b000_110 && ifStrict(ZeroShift) -> MipsInstr(vAddr, Srlv, rd, rt, rs)
+            funct == 0b100_010 && ifStrict(ZeroShift) -> MipsInstr(vAddr, Sub, rd, rs, rt)
+            funct == 0b100_011 && ifStrict(ZeroShift) -> MipsInstr(vAddr, Subu, rd, rs, rt)
+            funct == 0b001_111 && ifStrict(ZeroRs, ZeroRt, ZeroRd) -> {
                 MipsInstr(vAddr, Sync, ImmOperand(shift))
             }
             funct == 0b001_100 -> MipsInstr(vAddr, Syscall, ImmOperand(instr ushr 6 and 0xFFFF))
@@ -74,13 +80,7 @@ class AllegrexDisassembler : MipsDisassembler(AllegrexProcessor) {
             funct == 0b110_010 -> MipsInstr(vAddr, Tlt, rs, rt, ImmOperand(rd.reg.id shl 5 or shift))
             funct == 0b110_011 -> MipsInstr(vAddr, Tltu, rs, rt, ImmOperand(rd.reg.id shl 5 or shift))
             funct == 0b110_110 -> MipsInstr(vAddr, Tne, rs, rt, ImmOperand(rd.reg.id shl 5 or shift))
-            funct == 0b100_110 && shift == 0 -> MipsInstr(vAddr, Xor, rd, rs, rt)
-//            funct == 0b000_001 && instr ushr 16 and 0b11 == 0 && shift == 0 -> {
-//                MipsInstr(vAddr, FpuMovf, rd, rs, RegOperand(FpuReg.ccForId(instr ushr 18 and 0b111)))
-//            }
-//            funct == 0b000_001 && instr ushr 16 and 0b11 == 1 && shift == 0 -> {
-//                MipsInstr(vAddr, FpuMovt, rd, rs, RegOperand(FpuReg.ccForId(instr ushr 18 and 0b111)))
-//            }
+            funct == 0b100_110 && ifStrict(ZeroShift) -> MipsInstr(vAddr, Xor, rd, rs, rt)
             else -> handleUnknownInstr(vAddr, instrCount)
         }
     }
@@ -118,17 +118,22 @@ class AllegrexDisassembler : MipsDisassembler(AllegrexProcessor) {
         val fs = RegOperand(FpuReg.forId(instr ushr 11 and 0x1F))
         val fd = RegOperand(FpuReg.forId(instr ushr 6 and 0x1F))
         val funct = instr and 0x3F
+        val ifStrict = StrictChecker()
+        ifStrict.register(ZeroFt) { ft.reg.id == 0 }
+        ifStrict.register(ZeroFs) { fs.reg.id == 0 }
+        ifStrict.register(ZeroFd) { fd.reg.id == 0 }
+        ifStrict.register(ZeroFunct) { funct == 0 }
         return when {
-            fmt == 0b00010 && fd.reg.id == 0 && funct == 0 -> MipsInstr(vAddr, FpuCfc1, rt, fs)
-            fmt == 0b00110 && fd.reg.id == 0 && funct == 0 -> MipsInstr(vAddr, FpuCtc1, rt, fs)
-            fmt == 0b00000 && fd.reg.id == 0 && funct == 0 -> MipsInstr(vAddr, FpuMfc1, rt, fs)
-            fmt == 0b00100 && fd.reg.id == 0 && funct == 0 -> MipsInstr(vAddr, FpuMtc1, rt, fs)
+            fmt == 0b00010 && ifStrict(ZeroFd, ZeroFunct) -> MipsInstr(vAddr, FpuCfc1, rt, fs)
+            fmt == 0b00110 && ifStrict(ZeroFd, ZeroFunct) -> MipsInstr(vAddr, FpuCtc1, rt, fs)
+            fmt == 0b00000 && ifStrict(ZeroFd, ZeroFunct) -> MipsInstr(vAddr, FpuMfc1, rt, fs)
+            fmt == 0b00100 && ifStrict(ZeroFd, ZeroFunct) -> MipsInstr(vAddr, FpuMtc1, rt, fs)
             fmt == 0b01000 -> {
                 val branchImm = (instr and 0xFFFF).toShort().toInt()
                 val branchTarget = ImmOperand(vAddr + 0x4 + branchImm * 0x4)
                 val ndtf = instr ushr 16 and 0b11
                 val cc = RegOperand(FpuReg.ccForId(instr ushr 18 and 0b111))
-                if (cc.reg !is FpuReg.Cc0) {
+                if (strict && cc.reg !is FpuReg.Cc0) {
                     throw DisassemblerException("Allegrex can't use non 0 condition code (cc)")
                 }
                 when (ndtf) {
@@ -141,12 +146,12 @@ class AllegrexDisassembler : MipsDisassembler(AllegrexProcessor) {
             }
             fmt == MipsDefines.FMT_S -> {
                 when {
-                    funct == 0b000_101 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuAbsS, fd, fs)
+                    funct == 0b000_101 && ifStrict(ZeroFt) -> MipsInstr(vAddr, FpuAbsS, fd, fs)
                     funct == 0b000_000 -> MipsInstr(vAddr, FpuAddS, fd, fs, ft)
-                    funct and 0b110_000 == 0b110_000 -> {
+                    funct and 0b110_000 == 0b110_000 && ifStrict { funct ushr 6 and 0b11 == 0 } -> {
                         val cc = RegOperand(FpuReg.ccForId(instr ushr 8 and 0b111))
                         val cond = funct and 0b1111
-                        if (cc.reg !is FpuReg.Cc0) {
+                        if (strict && cc.reg !is FpuReg.Cc0) {
                             throw DisassemblerException("Allegrex can't use non 0 condition code (cc)")
                         }
                         when (cond) {
@@ -169,27 +174,20 @@ class AllegrexDisassembler : MipsDisassembler(AllegrexProcessor) {
                             else -> handleUnknownInstr(vAddr, instrCount)
                         }
                     }
-                    funct == 0b001_110 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuCeilWS, fd, fs)
-                    funct == 0b100_100 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuCvtWS, fd, fs)
+                    funct == 0b001_110 && ifStrict(ZeroFt) -> MipsInstr(vAddr, FpuCeilWS, fd, fs)
+                    funct == 0b100_100 && ifStrict(ZeroFt) -> MipsInstr(vAddr, FpuCvtWS, fd, fs)
                     funct == 0b000_011 -> MipsInstr(vAddr, FpuDivS, fd, fs, ft)
-                    funct == 0b001_111 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuFloorWS, fd, fs)
-                    funct == 0b000_110 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuMovS, fd, fs)
-//                    funct == 0b010_001 && ft.reg.id and 0b11 == 0 -> {
-//                        MipsInstr(vAddr, FpuMovfS, fd, fs, RegOperand(FpuReg.ccForId(instr ushr 18 and 0b111)))
-//                    }
-//                    funct == 0b010_011 -> MipsInstr(vAddr, FpuMovnS, fd, fs, rt)
-//                    funct == 0b010_001 && ft.reg.id and 0b11 == 1 -> {
-//                        MipsInstr(vAddr, FpuMovtS, fd, fs, RegOperand(FpuReg.ccForId(instr ushr 18 and 0b111)))
-//                    }
-//                    funct == 0b010_010 -> MipsInstr(vAddr, FpuMovzS, fd, fs, rt)
+                    funct == 0b001_111 && ifStrict(ZeroFt) -> MipsInstr(vAddr, FpuFloorWS, fd, fs)
+                    funct == 0b000_110 && ifStrict(ZeroFt) -> MipsInstr(vAddr, FpuMovS, fd, fs)
+                    funct == 0b010_010 -> MipsInstr(vAddr, FpuMovzS, fd, fs, rt)
                     funct == 0b000_010 -> MipsInstr(vAddr, FpuMulS, fd, fs, ft)
-                    funct == 0b000_111 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuNegS, fd, fs)
-//                    funct == 0b010_101 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuRecipS, fd, fs)
-                    funct == 0b001_100 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuRoundWS, fd, fs)
-//                    funct == 0b010_110 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuRsqrtS, fd, fs)
-                    funct == 0b000_100 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuSqrtS, fd, fs)
+                    funct == 0b000_111 && ifStrict(ZeroFt) -> MipsInstr(vAddr, FpuNegS, fd, fs)
+                    funct == 0b010_101 && ifStrict(ZeroFt) -> MipsInstr(vAddr, FpuRecipS, fd, fs)
+                    funct == 0b001_100 && ifStrict(ZeroFt) -> MipsInstr(vAddr, FpuRoundWS, fd, fs)
+                    funct == 0b010_110 && ifStrict(ZeroFt) -> MipsInstr(vAddr, FpuRsqrtS, fd, fs)
+                    funct == 0b000_100 && ifStrict(ZeroFt) -> MipsInstr(vAddr, FpuSqrtS, fd, fs)
                     funct == 0b000_001 -> MipsInstr(vAddr, FpuSubS, fd, fs, ft)
-                    funct == 0b001_101 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuTruncWS, fd, fs)
+                    funct == 0b001_101 && ifStrict(ZeroFt) -> MipsInstr(vAddr, FpuTruncWS, fd, fs)
                     else -> handleUnknownInstr(vAddr, instrCount)
                 }
             }
@@ -198,7 +196,7 @@ class AllegrexDisassembler : MipsDisassembler(AllegrexProcessor) {
             }
             fmt == MipsDefines.FMT_W -> {
                 when {
-                    funct == 0b100_000 && ft.reg.id == 0 -> MipsInstr(vAddr, FpuCvtSW, fd, fs)
+                    funct == 0b100_000 && ifStrict(ZeroFt) -> MipsInstr(vAddr, FpuCvtSW, fd, fs)
                     else -> handleUnknownInstr(vAddr, instrCount)
                 }
             }
@@ -215,36 +213,37 @@ class AllegrexDisassembler : MipsDisassembler(AllegrexProcessor) {
         val imm = ImmOperand((instr and 0xFFFF).toShort().toInt())
         val zeroExtendImm = ImmOperand(instr and 0xFFFF)
         val branchImm = ImmOperand(vAddr + 0x4 + imm.value * 0x4)
+        val ifStrict = StrictChecker()
+        ifStrict.register(ZeroRs) { rs.reg.id == 0 }
+        ifStrict.register(ZeroRt) { rt.reg.id == 0 }
+        ifStrict.register(ZeroImm) { imm.value == 0 }
         return when {
             opcode == 0b001_000 -> MipsInstr(vAddr, Addi, rt, rs, imm)
             opcode == 0b001_001 -> MipsInstr(vAddr, Addiu, rt, rs, imm)
             opcode == 0b001_100 -> MipsInstr(vAddr, Andi, rt, rs, zeroExtendImm)
             opcode == 0b000_100 -> MipsInstr(vAddr, Beq, rs, rt, branchImm)
             opcode == 0b010_100 -> MipsInstr(vAddr, Beql, rs, rt, branchImm)
-            opcode == 0b000_111 -> MipsInstr(vAddr, Bgtz, rs, branchImm)
-            opcode == 0b010_111 -> MipsInstr(vAddr, Bgtzl, rs, branchImm)
-            opcode == 0b000_110 -> MipsInstr(vAddr, Blez, rs, branchImm)
-            opcode == 0b010_110 -> MipsInstr(vAddr, Blezl, rs, branchImm)
+            opcode == 0b000_111 && ifStrict(ZeroRt) -> MipsInstr(vAddr, Bgtz, rs, branchImm)
+            opcode == 0b010_111 && ifStrict(ZeroRt) -> MipsInstr(vAddr, Bgtzl, rs, branchImm)
+            opcode == 0b000_110 && ifStrict(ZeroRt) -> MipsInstr(vAddr, Blez, rs, branchImm)
+            opcode == 0b010_110 && ifStrict(ZeroRt) -> MipsInstr(vAddr, Blezl, rs, branchImm)
             opcode == 0b000_101 -> MipsInstr(vAddr, Bne, rs, rt, branchImm)
             opcode == 0b010_101 -> MipsInstr(vAddr, Bnel, rs, rt, branchImm)
             opcode == 0b000_010 -> MipsInstr(vAddr, J, ImmOperand(instr and 0x3FFFFFF shl 2))
             opcode == 0b000_011 -> MipsInstr(vAddr, Jal, ImmOperand(instr and 0x3FFFFFF shl 2))
             opcode == 0b100_000 -> MipsInstr(vAddr, Lb, rt, rs, imm)
             opcode == 0b100_100 -> MipsInstr(vAddr, Lbu, rt, rs, imm)
-//            opcode == 0b110_101 -> MipsInstr(vAddr, Ldc1, RegOperand(FpuReg.forId(rt.reg.id)), rs, imm)
             opcode == 0b100_001 -> MipsInstr(vAddr, Lh, rt, rs, imm)
             opcode == 0b100_101 -> MipsInstr(vAddr, Lhu, rt, rs, imm)
             opcode == 0b110_000 -> MipsInstr(vAddr, Ll, rt, rs, imm)
-            opcode == 0b001_111 -> MipsInstr(vAddr, Lui, rt, zeroExtendImm)
+            opcode == 0b001_111 && ifStrict(ZeroRs) -> MipsInstr(vAddr, Lui, rt, zeroExtendImm)
             opcode == 0b100_011 -> MipsInstr(vAddr, Lw, rt, rs, imm)
             opcode == 0b110_001 -> MipsInstr(vAddr, Lwc1, RegOperand(FpuReg.forId(rt.reg.id)), rs, imm)
             opcode == 0b100_010 -> MipsInstr(vAddr, Lwl, rt, rs, imm)
             opcode == 0b100_110 -> MipsInstr(vAddr, Lwr, rt, rs, imm)
             opcode == 0b001_101 -> MipsInstr(vAddr, Ori, rt, rs, zeroExtendImm)
-//            opcode == 0b110_011 -> MipsInstr(vAddr, Pref, ImmOperand(rt.reg.id), rs, imm)
             opcode == 0b101_000 -> MipsInstr(vAddr, Sb, rt, rs, imm)
             opcode == 0b111_000 -> MipsInstr(vAddr, Sc, rt, rs, imm)
-//            opcode == 0b111_101 -> MipsInstr(vAddr, Sdc1, RegOperand(FpuReg.forId(rt.reg.id)), rs, imm)
             opcode == 0b101_001 -> MipsInstr(vAddr, Sh, rt, rs, imm)
             opcode == 0b001_010 -> MipsInstr(vAddr, Slti, rt, rs, imm)
             opcode == 0b001_011 -> MipsInstr(vAddr, Sltiu, rt, rs, imm.toHintedUnsigned())

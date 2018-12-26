@@ -20,15 +20,16 @@ package mist.asm.mips
 
 import kio.util.toWHex
 import mist.asm.Disassembler
-import mist.asm.Disassembly
 import mist.asm.DisassemblerException
+import mist.asm.Disassembly
 import mist.asm.FunctionDef
 import mist.asm.mips.MipsOpcode.Nop
 import mist.io.BinLoader
 
 /** @author Kotcrab */
 
-abstract class MipsDisassembler(private val srcProcessor: MipsProcessor) : Disassembler<MipsInstr> {
+abstract class MipsDisassembler(private val srcProcessor: MipsProcessor, protected val strict: Boolean = true) :
+    Disassembler<MipsInstr> {
     final override fun disassemble(loader: BinLoader, funcDef: FunctionDef): Disassembly<MipsInstr> {
         if (funcDef.offset % 4 != 0) throw DisassemblerException("offset must be a multiply of 4")
         if (funcDef.len % 4 != 0) throw DisassemblerException("length must be a multiply of 4")
@@ -81,5 +82,31 @@ abstract class MipsDisassembler(private val srcProcessor: MipsProcessor) : Disas
 
     protected fun handleUnknownInstr(vAddr: Int, instrCount: Int): Nothing {
         throw DisassemblerException("unknown instruction at offset ${(instrCount * 4).toWHex()}, address ${vAddr.toWHex()}")
+    }
+
+    protected inner class StrictChecker {
+        private val tests = mutableMapOf<StrictCheck, () -> Boolean>()
+
+        fun register(check: StrictCheck, test: () -> Boolean) {
+            if (tests.contains(check)) throw DisassemblerException("strict check for this type was already registered")
+            tests[check] = test
+        }
+
+        operator fun invoke(vararg checks: StrictCheck): Boolean {
+            if (!strict) return true
+            return checks.all { check ->
+                val test = tests[check] ?: throw DisassemblerException("strict check not supported in this context")
+                return test()
+            }
+        }
+
+        operator fun invoke(test: () -> Boolean): Boolean {
+            if (!strict) return true
+            return test()
+        }
+    }
+
+    protected enum class StrictCheck {
+        ZeroImm, ZeroShift, ZeroRs, ZeroRt, ZeroRd, ZeroFs, ZeroFt, ZeroFd, ZeroFunct
     }
 }
