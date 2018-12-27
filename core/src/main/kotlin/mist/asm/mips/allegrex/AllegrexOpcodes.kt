@@ -33,24 +33,9 @@ abstract class AllegrexOpcode(
     flags: Array<out OpcodeFlag> = emptyArray(),
     modify: Array<out OperandRef> = emptyArray(),
     use: Array<out OperandRef> = emptyArray()
-) : MipsOpcode(
-    mnemonic,
-    processors = arrayOf(AllegrexProcessor),
-    flags = flags,
-    modify = modify,
-    use = use
-) {
-    object Max : AllegrexOpcode(
-        "max",
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
-    )
-
-    object Min : AllegrexOpcode(
-        "min",
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
-    )
+) : MipsOpcode(mnemonic, processors = arrayOf(AllegrexProcessor), flags = flags, modify = modify, use = use) {
+    object Max : AllegrexOpcode("max", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
+    object Min : AllegrexOpcode("min", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
 }
 
 // These are likely to be incomplete and specify wrong flags, used and modified operands
@@ -60,12 +45,7 @@ abstract class VfpuOpcode(
     flags: Array<out OpcodeFlag> = emptyArray(),
     modify: Array<out OperandRef> = emptyArray(),
     use: Array<out OperandRef> = emptyArray()
-) : AllegrexOpcode(
-    mnemonic,
-    flags = arrayOf(Vfpu, *flags),
-    modify = modify,
-    use = use
-) {
+) : AllegrexOpcode(mnemonic, flags = arrayOf(Vfpu, *flags), modify = modify, use = use) {
     object Bvf : VfpuOpcode(
         "bvf",
         flags = arrayOf(Branch, DelaySlot),

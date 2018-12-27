@@ -30,136 +30,105 @@ abstract class MipsOpcode(
     modify: Array<out OperandRef> = emptyArray(),
     use: Array<out OperandRef> = emptyArray()
 ) : Opcode(mnemonic, "", processors, flags, use, modify) {
+
     object Add : MipsOpcode("add", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
-
     object Addi : MipsOpcode("addi", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
-
     object Addiu : MipsOpcode("addiu", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
-
     object Addu : MipsOpcode("addu", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
-
     object And : MipsOpcode("and", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
-
     object Andi : MipsOpcode("andi", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
 
     object Beq : MipsOpcode(
-        "beq",
-        flags = arrayOf(Branch, DelaySlot),
-        modify = arrayOf(OperandRegRef(GprReg.Pc)),
-        use = arrayOf(Operand0Ref, Operand1Ref)
+        "beq", flags = arrayOf(Branch, DelaySlot),
+        modify = arrayOf(OperandRegRef(GprReg.Pc)), use = arrayOf(Operand0Ref, Operand1Ref)
     )
 
     object Beql : MipsOpcode(
-        "beql",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor),
+        "beql", processors = mipsCommon(legacyOrigin = MipsIIProcessor),
         flags = arrayOf(Branch, BranchLikely, DelaySlot),
-        modify = arrayOf(OperandRegRef(GprReg.Pc)),
-        use = arrayOf(Operand0Ref, Operand1Ref)
+        modify = arrayOf(OperandRegRef(GprReg.Pc)), use = arrayOf(Operand0Ref, Operand1Ref)
     )
 
     object Bgez : MipsOpcode(
-        "bgez",
-        flags = arrayOf(Branch, DelaySlot),
-        modify = arrayOf(OperandRegRef(GprReg.Pc)),
-        use = arrayOf(Operand0Ref)
+        "bgez", flags = arrayOf(Branch, DelaySlot),
+        modify = arrayOf(OperandRegRef(GprReg.Pc)), use = arrayOf(Operand0Ref)
     )
 
     object Bgezal : MipsOpcode(
-        "bgezal",
-        flags = arrayOf(Branch, DelaySlot),
-        modify = arrayOf(OperandRegRef(GprReg.Pc)),
-        use = arrayOf(Operand0Ref)
+        "bgezal", flags = arrayOf(Branch, DelaySlot),
+        modify = arrayOf(OperandRegRef(GprReg.Pc)), use = arrayOf(Operand0Ref)
     )
 
     object Bgezall : MipsOpcode(
-        "bgezall",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor),
+        "bgezall", processors = mipsCommon(legacyOrigin = MipsIIProcessor),
         flags = arrayOf(Branch, BranchLikely, DelaySlot),
-        modify = arrayOf(OperandRegRef(GprReg.Pc)),
-        use = arrayOf(Operand0Ref)
+        modify = arrayOf(OperandRegRef(GprReg.Pc)), use = arrayOf(Operand0Ref)
     )
 
     object Bgezl : MipsOpcode(
-        "bgezl",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor),
+        "bgezl", processors = mipsCommon(legacyOrigin = MipsIIProcessor),
         flags = arrayOf(Branch, BranchLikely, DelaySlot),
-        modify = arrayOf(OperandRegRef(GprReg.Pc)),
-        use = arrayOf(Operand0Ref)
+        modify = arrayOf(OperandRegRef(GprReg.Pc)), use = arrayOf(Operand0Ref)
     )
 
     object Bgtz : MipsOpcode(
         "bgtz",
         flags = arrayOf(Branch, DelaySlot),
-        modify = arrayOf(OperandRegRef(GprReg.Pc)),
-        use = arrayOf(Operand0Ref)
+        modify = arrayOf(OperandRegRef(GprReg.Pc)), use = arrayOf(Operand0Ref)
     )
 
     object Bgtzl : MipsOpcode(
-        "bgtzl",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor),
+        "bgtzl", processors = mipsCommon(legacyOrigin = MipsIIProcessor),
         flags = arrayOf(Branch, BranchLikely, DelaySlot),
-        modify = arrayOf(OperandRegRef(GprReg.Pc)),
-        use = arrayOf(Operand0Ref)
+        modify = arrayOf(OperandRegRef(GprReg.Pc)), use = arrayOf(Operand0Ref)
     )
 
     object Blez : MipsOpcode(
         "blez",
         flags = arrayOf(Branch, DelaySlot),
-        modify = arrayOf(OperandRegRef(GprReg.Pc)),
-        use = arrayOf(Operand0Ref)
+        modify = arrayOf(OperandRegRef(GprReg.Pc)), use = arrayOf(Operand0Ref)
     )
 
     object Blezl : MipsOpcode(
-        "blezl",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor),
+        "blezl", processors = mipsCommon(legacyOrigin = MipsIIProcessor),
         flags = arrayOf(Branch, BranchLikely, DelaySlot),
-        modify = arrayOf(OperandRegRef(GprReg.Pc)),
-        use = arrayOf(Operand0Ref)
+        modify = arrayOf(OperandRegRef(GprReg.Pc)), use = arrayOf(Operand0Ref)
     )
 
     object Bltz : MipsOpcode(
         "bltz",
         flags = arrayOf(Branch, DelaySlot),
-        modify = arrayOf(OperandRegRef(GprReg.Pc)),
-        use = arrayOf(Operand0Ref)
+        modify = arrayOf(OperandRegRef(GprReg.Pc)), use = arrayOf(Operand0Ref)
     )
 
     object Bltzal : MipsOpcode(
         "bltzal",
         flags = arrayOf(Branch, DelaySlot),
-        modify = arrayOf(OperandRegRef(GprReg.Pc)),
-        use = arrayOf(Operand0Ref)
+        modify = arrayOf(OperandRegRef(GprReg.Pc)), use = arrayOf(Operand0Ref)
     )
 
     object Bltzall : MipsOpcode(
-        "bltzall",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor),
+        "bltzall", processors = mipsCommon(legacyOrigin = MipsIIProcessor),
         flags = arrayOf(Branch, BranchLikely, DelaySlot),
-        modify = arrayOf(OperandRegRef(GprReg.Pc)),
-        use = arrayOf(Operand0Ref)
+        modify = arrayOf(OperandRegRef(GprReg.Pc)), use = arrayOf(Operand0Ref)
     )
 
     object Bltzl : MipsOpcode(
-        "bltzl",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor),
+        "bltzl", processors = mipsCommon(legacyOrigin = MipsIIProcessor),
         flags = arrayOf(Branch, BranchLikely, DelaySlot),
-        modify = arrayOf(OperandRegRef(GprReg.Pc)),
-        use = arrayOf(Operand0Ref)
+        modify = arrayOf(OperandRegRef(GprReg.Pc)), use = arrayOf(Operand0Ref)
     )
 
     object Bne : MipsOpcode(
         "bne",
         flags = arrayOf(Branch, DelaySlot),
-        modify = arrayOf(OperandRegRef(GprReg.Pc)),
-        use = arrayOf(Operand0Ref, Operand1Ref)
+        modify = arrayOf(OperandRegRef(GprReg.Pc)), use = arrayOf(Operand0Ref, Operand1Ref)
     )
 
     object Bnel : MipsOpcode(
-        "bnel",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor),
+        "bnel", processors = mipsCommon(legacyOrigin = MipsIIProcessor),
         flags = arrayOf(Branch, BranchLikely, DelaySlot),
-        modify = arrayOf(OperandRegRef(GprReg.Pc)),
-        use = arrayOf(Operand0Ref, Operand1Ref)
+        modify = arrayOf(OperandRegRef(GprReg.Pc)), use = arrayOf(Operand0Ref, Operand1Ref)
     )
 
     object Break : MipsOpcode("break", flags = arrayOf(Trap))
@@ -168,19 +137,17 @@ abstract class MipsOpcode(
 
     object Cop0 : MipsOpcode("cop0")
     object Cop1 : MipsOpcode("cop1")
-    object Cop2 : MipsOpcode("cop2")
+    object Cop2 : MipsOpcode("cop2", processors = mipsCommon(allegrex = false))
     object Cop3 : MipsOpcode("cop3", processors = arrayOf(MipsIProcessor, MipsIIProcessor))
 
     object Div : MipsOpcode(
         "div",
-        modify = arrayOf(OperandRegRef(GprReg.Lo), OperandRegRef(GprReg.Hi)),
-        use = arrayOf(Operand0Ref, Operand1Ref)
+        modify = arrayOf(OperandRegRef(GprReg.Lo), OperandRegRef(GprReg.Hi)), use = arrayOf(Operand0Ref, Operand1Ref)
     )
 
     object Divu : MipsOpcode(
         "divu",
-        modify = arrayOf(OperandRegRef(GprReg.Lo), OperandRegRef(GprReg.Hi)),
-        use = arrayOf(Operand0Ref, Operand1Ref)
+        modify = arrayOf(OperandRegRef(GprReg.Lo), OperandRegRef(GprReg.Hi)), use = arrayOf(Operand0Ref, Operand1Ref)
     )
 
     object J : MipsOpcode(
@@ -198,192 +165,134 @@ abstract class MipsOpcode(
     object Jalr : MipsOpcode(
         "jalr",
         flags = arrayOf(Jump, DelaySlot),
-        modify = arrayOf(OperandRegRef(GprReg.Pc), Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(OperandRegRef(GprReg.Pc), Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object Jr : MipsOpcode(
         "jr",
         flags = arrayOf(Jump, DelaySlot),
-        modify = arrayOf(OperandRegRef(GprReg.Pc)),
-        use = arrayOf(Operand0Ref)
+        modify = arrayOf(OperandRegRef(GprReg.Pc)), use = arrayOf(Operand0Ref)
     )
 
     object Lb : MipsOpcode(
         "lb",
         flags = arrayOf(MemoryRead),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object Lbu : MipsOpcode(
         "lbu",
         flags = arrayOf(MemoryRead),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object Ldc1 : MipsOpcode(
-        "ldc1",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor, allegrex = false),
+        "ldc1", processors = mipsCommon(legacyOrigin = MipsIIProcessor, allegrex = false),
         flags = arrayOf(Fpu, MemoryRead),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object Ldc2 : MipsOpcode(
-        "ldc2",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor, allegrex = false),
+        "ldc2", processors = mipsCommon(legacyOrigin = MipsIIProcessor, allegrex = false),
         flags = arrayOf(MemoryRead),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object Ldc3 : MipsOpcode(
-        "ldc3",
-        processors = arrayOf(MipsIProcessor, MipsIIProcessor),
+        "ldc3", processors = arrayOf(MipsIProcessor, MipsIIProcessor),
         flags = arrayOf(MemoryRead),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object Lh : MipsOpcode(
         "lh",
         flags = arrayOf(MemoryRead),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object Lhu : MipsOpcode(
         "lhu",
         flags = arrayOf(MemoryRead),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object Ll : MipsOpcode(
-        "ll",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor),
+        "ll", processors = mipsCommon(legacyOrigin = MipsIIProcessor),
         flags = arrayOf(MemoryRead),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
-    object Lui : MipsOpcode("lui", modify = arrayOf(Operand0Ref))
+    object Lui : MipsOpcode(
+        "lui",
+        modify = arrayOf(Operand0Ref)
+    )
 
     object Lw : MipsOpcode(
         "lw",
         flags = arrayOf(MemoryRead),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object Lwc1 : MipsOpcode(
         "lwc1",
         flags = arrayOf(Fpu, MemoryRead),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object Lwc2 : MipsOpcode(
-        "lwc2",
-        processors = mipsCommon(allegrex = false),
+        "lwc2", processors = mipsCommon(allegrex = false),
         flags = arrayOf(MemoryRead),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object Lwc3 : MipsOpcode(
-        "lwc3",
-        processors = arrayOf(MipsIProcessor, MipsIIProcessor),
+        "lwc3", processors = arrayOf(MipsIProcessor, MipsIIProcessor),
         flags = arrayOf(MemoryRead),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object Lwl : MipsOpcode(
         "lwl",
         flags = arrayOf(MemoryRead),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object Lwr : MipsOpcode(
         "lwr",
         flags = arrayOf(MemoryRead),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
-    object Mfhi : MipsOpcode(
-        "mfhi",
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(OperandRegRef(GprReg.Hi))
-    )
-
-    object Mflo : MipsOpcode(
-        "mflo",
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(OperandRegRef(GprReg.Lo))
-    )
+    object Mfhi : MipsOpcode("mfhi", modify = arrayOf(Operand0Ref), use = arrayOf(OperandRegRef(GprReg.Hi)))
+    object Mflo : MipsOpcode("mflo", modify = arrayOf(Operand0Ref), use = arrayOf(OperandRegRef(GprReg.Lo)))
 
     object Movn : MipsOpcode(
-        "movn",
-        processors = mipsCommon(legacyOrigin = MipsIVProcessor),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        "movn", processors = mipsCommon(legacyOrigin = MipsIVProcessor),
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object Movz : MipsOpcode(
-        "movz",
-        processors = mipsCommon(legacyOrigin = MipsIVProcessor),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        "movz", processors = mipsCommon(legacyOrigin = MipsIVProcessor),
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
-    object Mthi : MipsOpcode(
-        "mthi",
-        modify = arrayOf(OperandRegRef(GprReg.Hi)),
-        use = arrayOf(Operand0Ref)
-    )
-
-    object Mtlo : MipsOpcode(
-        "mtlo",
-        modify = arrayOf(OperandRegRef(GprReg.Lo)),
-        use = arrayOf(Operand0Ref)
-    )
+    object Mthi : MipsOpcode("mthi", modify = arrayOf(OperandRegRef(GprReg.Hi)), use = arrayOf(Operand0Ref))
+    object Mtlo : MipsOpcode("mtlo", modify = arrayOf(OperandRegRef(GprReg.Lo)), use = arrayOf(Operand0Ref))
 
     object Mult : MipsOpcode(
         "mult",
-        modify = arrayOf(OperandRegRef(GprReg.Lo), OperandRegRef(GprReg.Hi)),
-        use = arrayOf(Operand0Ref, Operand1Ref)
+        modify = arrayOf(OperandRegRef(GprReg.Lo), OperandRegRef(GprReg.Hi)), use = arrayOf(Operand0Ref, Operand1Ref)
     )
 
     object Multu : MipsOpcode(
         "multu",
-        modify = arrayOf(OperandRegRef(GprReg.Lo), OperandRegRef(GprReg.Hi)),
-        use = arrayOf(Operand0Ref, Operand1Ref)
+        modify = arrayOf(OperandRegRef(GprReg.Lo), OperandRegRef(GprReg.Hi)), use = arrayOf(Operand0Ref, Operand1Ref)
     )
 
     object Nop : MipsOpcode("nop")
-
-    object Nor : MipsOpcode(
-        "nor",
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
-    )
-
-    object Or : MipsOpcode(
-        "or",
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
-    )
-
-    object Ori : MipsOpcode(
-        "ori",
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
-    )
+    object Nor : MipsOpcode("nor", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
+    object Or : MipsOpcode("or", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
+    object Ori : MipsOpcode("ori", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
 
     object Pref : MipsOpcode(
         "pref",
@@ -391,133 +300,50 @@ abstract class MipsOpcode(
         use = arrayOf(Operand1Ref)
     )
 
-    object Sb : MipsOpcode(
-        "sb",
-        flags = arrayOf(MemoryWrite),
-        use = arrayOf(Operand0Ref, Operand1Ref)
-    )
+    object Sb : MipsOpcode("sb", flags = arrayOf(MemoryWrite), use = arrayOf(Operand0Ref, Operand1Ref))
 
     object Sc : MipsOpcode(
-        "sc",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor),
+        "sc", processors = mipsCommon(legacyOrigin = MipsIIProcessor),
         flags = arrayOf(MemoryWrite),
         use = arrayOf(Operand0Ref, Operand1Ref)
     )
 
     object Sdc1 : MipsOpcode(
-        "sdc1",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor, allegrex = false),
+        "sdc1", processors = mipsCommon(legacyOrigin = MipsIIProcessor, allegrex = false),
         flags = arrayOf(Fpu, MemoryWrite),
         use = arrayOf(Operand0Ref, Operand1Ref)
     )
 
     object Sdc2 : MipsOpcode(
-        "sdc2",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor, allegrex = false),
+        "sdc2", processors = mipsCommon(legacyOrigin = MipsIIProcessor, allegrex = false),
         flags = arrayOf(MemoryWrite),
         use = arrayOf(Operand0Ref, Operand1Ref)
     )
 
     object Sdc3 : MipsOpcode(
-        "sdc3",
-        processors = arrayOf(MipsIProcessor, MipsIIProcessor),
+        "sdc3", processors = arrayOf(MipsIProcessor, MipsIIProcessor),
         flags = arrayOf(MemoryWrite),
         use = arrayOf(Operand0Ref, Operand1Ref)
     )
 
-    object Sh : MipsOpcode(
-        "sh",
-        flags = arrayOf(MemoryWrite),
-        use = arrayOf(Operand0Ref, Operand1Ref)
-    )
-
-    object Sll : MipsOpcode(
-        "sll",
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
-    )
-
-    object Sllv : MipsOpcode(
-        "sllv",
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
-    )
-
-    object Slt : MipsOpcode(
-        "slt",
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
-    )
-
-    object Slti : MipsOpcode(
-        "slti",
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
-    )
-
-    object Sltiu : MipsOpcode(
-        "sltiu",
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
-    )
-
-    object Sltu : MipsOpcode(
-        "sltu",
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
-    )
-
-    object Sra : MipsOpcode(
-        "sra",
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
-    )
-
-    object Srav : MipsOpcode(
-        "srav",
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
-    )
-
-    object Srl : MipsOpcode(
-        "srl",
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
-    )
-
-    object Srlv : MipsOpcode(
-        "srlv",
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
-    )
-
-    object Sub : MipsOpcode(
-        "sub",
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
-    )
-
-    object Subu : MipsOpcode(
-        "subu",
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
-    )
-
-    object Sw : MipsOpcode(
-        "sw",
-        flags = arrayOf(MemoryWrite),
-        use = arrayOf(Operand0Ref, Operand1Ref)
-    )
-
-    object Swc1 : MipsOpcode(
-        "swc1",
-        flags = arrayOf(Fpu, MemoryWrite),
-        use = arrayOf(Operand0Ref, Operand1Ref)
-    )
+    object Sh : MipsOpcode("sh", flags = arrayOf(MemoryWrite), use = arrayOf(Operand0Ref, Operand1Ref))
+    object Sll : MipsOpcode("sll", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object Sllv : MipsOpcode("sllv", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
+    object Slt : MipsOpcode("slt", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
+    object Slti : MipsOpcode("slti", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object Sltiu : MipsOpcode("sltiu", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object Sltu : MipsOpcode("sltu", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
+    object Sra : MipsOpcode("sra", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object Srav : MipsOpcode("srav", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
+    object Srl : MipsOpcode("srl", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object Srlv : MipsOpcode("srlv", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
+    object Sub : MipsOpcode("sub", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
+    object Subu : MipsOpcode("subu", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
+    object Sw : MipsOpcode("sw", flags = arrayOf(MemoryWrite), use = arrayOf(Operand0Ref, Operand1Ref))
+    object Swc1 : MipsOpcode("swc1", flags = arrayOf(Fpu, MemoryWrite), use = arrayOf(Operand0Ref, Operand1Ref))
 
     object Swc2 : MipsOpcode(
-        "swc2",
-        processors = mipsCommon(allegrex = false),
+        "swc2", processors = mipsCommon(allegrex = false),
         flags = arrayOf(MemoryWrite),
         use = arrayOf(Operand0Ref, Operand1Ref)
     )
@@ -529,213 +355,159 @@ abstract class MipsOpcode(
         use = arrayOf(Operand0Ref, Operand1Ref)
     )
 
-    object Swl : MipsOpcode(
-        "swl",
-        flags = arrayOf(MemoryWrite),
-        use = arrayOf(Operand0Ref, Operand1Ref)
-    )
-
-    object Swr : MipsOpcode(
-        "swr",
-        flags = arrayOf(MemoryWrite),
-        use = arrayOf(Operand0Ref, Operand1Ref)
-    )
-
+    object Swl : MipsOpcode("swl", flags = arrayOf(MemoryWrite), use = arrayOf(Operand0Ref, Operand1Ref))
+    object Swr : MipsOpcode("swr", flags = arrayOf(MemoryWrite), use = arrayOf(Operand0Ref, Operand1Ref))
     object Sync : MipsOpcode("sync")
-
     object Syscall : MipsOpcode("syscall", flags = arrayOf(Trap))
 
     object Teq : MipsOpcode(
-        "teq",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor),
+        "teq", processors = mipsCommon(legacyOrigin = MipsIIProcessor),
         flags = arrayOf(Trap),
         use = arrayOf(Operand0Ref, Operand1Ref)
     )
 
     object Teqi : MipsOpcode(
-        "teqi",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor),
+        "teqi", processors = mipsCommon(legacyOrigin = MipsIIProcessor),
         flags = arrayOf(Trap),
         use = arrayOf(Operand0Ref)
     )
 
     object Tge : MipsOpcode(
-        "tge",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor),
+        "tge", processors = mipsCommon(legacyOrigin = MipsIIProcessor),
         flags = arrayOf(Trap),
         use = arrayOf(Operand0Ref, Operand1Ref)
     )
 
     object Tgei : MipsOpcode(
-        "tgei",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor),
+        "tgei", processors = mipsCommon(legacyOrigin = MipsIIProcessor),
         flags = arrayOf(Trap),
         use = arrayOf(Operand0Ref)
     )
 
     object Tgeiu : MipsOpcode(
-        "tgeiu",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor),
+        "tgeiu", processors = mipsCommon(legacyOrigin = MipsIIProcessor),
         flags = arrayOf(Trap),
         use = arrayOf(Operand0Ref)
     )
 
     object Tgeu : MipsOpcode(
-        "tgeu",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor),
+        "tgeu", processors = mipsCommon(legacyOrigin = MipsIIProcessor),
         flags = arrayOf(Trap),
         use = arrayOf(Operand0Ref, Operand1Ref)
     )
 
     object Tlt : MipsOpcode(
-        "tlt",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor),
+        "tlt", processors = mipsCommon(legacyOrigin = MipsIIProcessor),
         flags = arrayOf(Trap),
         use = arrayOf(Operand0Ref, Operand1Ref)
     )
 
     object Tlti : MipsOpcode(
-        "tlti",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor),
+        "tlti", processors = mipsCommon(legacyOrigin = MipsIIProcessor),
         flags = arrayOf(Trap),
         use = arrayOf(Operand0Ref)
     )
 
     object Tltiu : MipsOpcode(
-        "tltiu",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor),
+        "tltiu", processors = mipsCommon(legacyOrigin = MipsIIProcessor),
         flags = arrayOf(Trap),
         use = arrayOf(Operand0Ref)
     )
 
     object Tltu : MipsOpcode(
-        "tltu",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor),
+        "tltu", processors = mipsCommon(legacyOrigin = MipsIIProcessor),
         flags = arrayOf(Trap),
         use = arrayOf(Operand0Ref, Operand1Ref)
     )
 
     object Tne : MipsOpcode(
-        "tne",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor),
+        "tne", processors = mipsCommon(legacyOrigin = MipsIIProcessor),
         flags = arrayOf(Trap),
         use = arrayOf(Operand0Ref, Operand1Ref)
     )
 
     object Tnei : MipsOpcode(
-        "tnei",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor),
+        "tnei", processors = mipsCommon(legacyOrigin = MipsIIProcessor),
         flags = arrayOf(Trap),
         use = arrayOf(Operand0Ref)
     )
 
-    object Xor : MipsOpcode(
-        "xor",
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
-    )
-
-    object Xori : MipsOpcode(
-        "xori",
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
-    )
+    object Xor : MipsOpcode("xor", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
+    object Xori : MipsOpcode("xori", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
 
     // ----- FPU -----
 
     object FpuAbsS : MipsOpcode(
         "abs.s",
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuAbsD : MipsOpcode(
-        "abs.d",
-        processors = mipsCommon(allegrex = false),
+        "abs.d", processors = mipsCommon(allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
 
     object FpuAddS : MipsOpcode(
         "add.s",
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object FpuAddD : MipsOpcode(
-        "add.d",
-        processors = mipsCommon(allegrex = false),
+        "add.d", processors = mipsCommon(allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object FpuBc1f : MipsOpcode(
-        "bc1f",
-        processors = arrayOf(MipsIProcessor, MipsIIProcessor, MipsIIIProcessor, AllegrexProcessor),
+        "bc1f", processors = arrayOf(MipsIProcessor, MipsIIProcessor, MipsIIIProcessor, AllegrexProcessor),
         flags = arrayOf(Fpu, Branch, DelaySlot),
-        modify = arrayOf(OperandRegRef(GprReg.Pc)),
-        use = arrayOf(OperandRegRef(FpuReg.Cc0))
+        modify = arrayOf(OperandRegRef(GprReg.Pc)), use = arrayOf(OperandRegRef(FpuReg.Cc0))
     )
 
     object FpuBc1fCcAny : MipsOpcode(
-        "bc1f",
-        processors = mipsCommon(legacyOrigin = MipsIVProcessor, allegrex = false),
+        "bc1f", processors = mipsCommon(legacyOrigin = MipsIVProcessor, allegrex = false),
         flags = arrayOf(Fpu, Branch, DelaySlot),
-        modify = arrayOf(OperandRegRef(GprReg.Pc)),
-        use = arrayOf(Operand0Ref)
+        modify = arrayOf(OperandRegRef(GprReg.Pc)), use = arrayOf(Operand0Ref)
     )
 
     object FpuBc1fl : MipsOpcode(
-        "bc1fl",
-        processors = arrayOf(MipsIIProcessor, MipsIIIProcessor, AllegrexProcessor),
+        "bc1fl", processors = arrayOf(MipsIIProcessor, MipsIIIProcessor, AllegrexProcessor),
         flags = arrayOf(Fpu, Branch, BranchLikely, DelaySlot),
-        modify = arrayOf(OperandRegRef(GprReg.Pc)),
-        use = arrayOf(OperandRegRef(FpuReg.Cc0))
+        modify = arrayOf(OperandRegRef(GprReg.Pc)), use = arrayOf(OperandRegRef(FpuReg.Cc0))
     )
 
     object FpuBc1flCcAny : MipsOpcode(
-        "bc1fl",
-        processors = mipsCommon(legacyOrigin = MipsIVProcessor, allegrex = false),
+        "bc1fl", processors = mipsCommon(legacyOrigin = MipsIVProcessor, allegrex = false),
         flags = arrayOf(Fpu, Branch, BranchLikely, DelaySlot),
-        modify = arrayOf(OperandRegRef(GprReg.Pc)),
-        use = arrayOf(Operand0Ref)
+        modify = arrayOf(OperandRegRef(GprReg.Pc)), use = arrayOf(Operand0Ref)
     )
 
     object FpuBc1t : MipsOpcode(
-        "bc1t",
-        processors = arrayOf(MipsIProcessor, MipsIIProcessor, MipsIIIProcessor, AllegrexProcessor),
+        "bc1t", processors = arrayOf(MipsIProcessor, MipsIIProcessor, MipsIIIProcessor, AllegrexProcessor),
         flags = arrayOf(Fpu, Branch, DelaySlot),
-        modify = arrayOf(OperandRegRef(GprReg.Pc)),
-        use = arrayOf(OperandRegRef(FpuReg.Cc0))
+        modify = arrayOf(OperandRegRef(GprReg.Pc)), use = arrayOf(OperandRegRef(FpuReg.Cc0))
     )
 
     object FpuBc1tCcAny : MipsOpcode(
-        "bc1t",
-        processors = mipsCommon(legacyOrigin = MipsIVProcessor, allegrex = false),
+        "bc1t", processors = mipsCommon(legacyOrigin = MipsIVProcessor, allegrex = false),
         flags = arrayOf(Fpu, Branch, DelaySlot),
-        modify = arrayOf(OperandRegRef(GprReg.Pc)),
-        use = arrayOf(Operand0Ref)
+        modify = arrayOf(OperandRegRef(GprReg.Pc)), use = arrayOf(Operand0Ref)
     )
 
     object FpuBc1tl : MipsOpcode(
-        "bc1tl",
-        processors = arrayOf(MipsIIProcessor, MipsIIIProcessor, AllegrexProcessor),
+        "bc1tl", processors = arrayOf(MipsIIProcessor, MipsIIIProcessor, AllegrexProcessor),
         flags = arrayOf(Fpu, Branch, BranchLikely, DelaySlot),
-        modify = arrayOf(OperandRegRef(GprReg.Pc)),
-        use = arrayOf(OperandRegRef(FpuReg.Cc0))
+        modify = arrayOf(OperandRegRef(GprReg.Pc)), use = arrayOf(OperandRegRef(FpuReg.Cc0))
     )
 
     object FpuBc1tlCcAny : MipsOpcode(
-        "bc1tl",
-        processors = mipsCommon(legacyOrigin = MipsIVProcessor, allegrex = false),
+        "bc1tl", processors = mipsCommon(legacyOrigin = MipsIVProcessor, allegrex = false),
         flags = arrayOf(Fpu, Branch, BranchLikely, DelaySlot),
-        modify = arrayOf(OperandRegRef(GprReg.Pc)),
-        use = arrayOf(Operand0Ref)
+        modify = arrayOf(OperandRegRef(GprReg.Pc)), use = arrayOf(Operand0Ref)
     )
 
     object FpuCFS : FpuCCondFmt("c.f.s")
@@ -845,390 +617,318 @@ abstract class MipsOpcode(
         "ceil.l.s",
         processors = mipsCommon(legacyOrigin = MipsIIIProcessor, modernOrigin = Mips32r2Processor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuCeilLD : MipsOpcode(
         "ceil.l.d",
         processors = mipsCommon(legacyOrigin = MipsIIIProcessor, modernOrigin = Mips32r2Processor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuCeilWS : MipsOpcode(
-        "ceil.w.s",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor),
+        "ceil.w.s", processors = mipsCommon(legacyOrigin = MipsIIProcessor),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuCeilWD : MipsOpcode(
-        "ceil.w.d",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor, allegrex = false),
+        "ceil.w.d", processors = mipsCommon(legacyOrigin = MipsIIProcessor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuCfc1 : MipsOpcode(
         "cfc1",
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuCtc1 : MipsOpcode(
         "ctc1",
         flags = arrayOf(Fpu),
-        modify = arrayOf(),
-        use = arrayOf(Operand0Ref, Operand1Ref)
+        modify = arrayOf(), use = arrayOf(Operand0Ref, Operand1Ref)
     )
 
     object FpuCvtDS : MipsOpcode(
-        "cvt.d.s",
-        processors = mipsCommon(allegrex = false),
+        "cvt.d.s", processors = mipsCommon(allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuCvtDW : MipsOpcode(
-        "cvt.d.w",
-        processors = mipsCommon(allegrex = false),
+        "cvt.d.w", processors = mipsCommon(allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuCvtDL : MipsOpcode(
         "cvt.d.l",
         processors = mipsCommon(legacyOrigin = MipsIIIProcessor, modernOrigin = Mips32r2Processor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuCvtLS : MipsOpcode(
         "cvt.l.s",
         processors = mipsCommon(legacyOrigin = MipsIIIProcessor, modernOrigin = Mips32r2Processor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuCvtLD : MipsOpcode(
         "cvt.l.d",
         processors = mipsCommon(legacyOrigin = MipsIIIProcessor, modernOrigin = Mips32r2Processor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuCvtSD : MipsOpcode(
-        "cvt.s.d",
-        processors = mipsCommon(allegrex = false),
+        "cvt.s.d", processors = mipsCommon(allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuCvtSW : MipsOpcode(
         "cvt.s.w",
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuCvtSL : MipsOpcode(
         "cvt.s.l",
         processors = mipsCommon(legacyOrigin = MipsIIIProcessor, modernOrigin = Mips32r2Processor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuCvtWS : MipsOpcode(
         "cvt.w.s",
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuCvtWD : MipsOpcode(
-        "cvt.w.d",
-        processors = mipsCommon(allegrex = false),
+        "cvt.w.d", processors = mipsCommon(allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuDivS : MipsOpcode(
         "div.s",
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object FpuDivD : MipsOpcode(
-        "div.d",
-        processors = mipsCommon(allegrex = false),
+        "div.d", processors = mipsCommon(allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object FpuFloorLS : MipsOpcode(
         "floor.l.s",
         processors = mipsCommon(legacyOrigin = MipsIIIProcessor, modernOrigin = Mips32r2Processor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuFloorLD : MipsOpcode(
         "floor.l.d",
         processors = mipsCommon(legacyOrigin = MipsIIIProcessor, modernOrigin = Mips32r2Processor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuFloorWS : MipsOpcode(
-        "floor.w.s",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor),
+        "floor.w.s", processors = mipsCommon(legacyOrigin = MipsIIProcessor),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuFloorWD : MipsOpcode(
-        "floor.w.d",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor, allegrex = false),
+        "floor.w.d", processors = mipsCommon(legacyOrigin = MipsIIProcessor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuLdxc1 : MipsOpcode(
         "ldxc1",
         processors = mipsCommon(legacyOrigin = MipsIVProcessor, modernOrigin = Mips32r2Processor, allegrex = false),
         flags = arrayOf(MemoryRead),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object FpuLwxc1 : MipsOpcode(
         "lwxc1",
         processors = mipsCommon(legacyOrigin = MipsIVProcessor, modernOrigin = Mips32r2Processor, allegrex = false),
         flags = arrayOf(MemoryRead),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object FpuMaddS : MipsOpcode(
         "madd.s",
         processors = mipsCommon(legacyOrigin = MipsIVProcessor, modernOrigin = Mips32r2Processor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref, Operand3Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref, Operand3Ref)
     )
 
     object FpuMaddD : MipsOpcode(
         "madd.d",
         processors = mipsCommon(legacyOrigin = MipsIVProcessor, modernOrigin = Mips32r2Processor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref, Operand3Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref, Operand3Ref)
     )
 
     object FpuMfc1 : MipsOpcode(
         "mfc1",
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuMovS : MipsOpcode(
         "mov.s",
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuMovD : MipsOpcode(
-        "mov.d",
-        processors = mipsCommon(allegrex = false),
+        "mov.d", processors = mipsCommon(allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuMovf : MipsOpcode(
-        "movf",
-        processors = mipsCommon(legacyOrigin = MipsIVProcessor, allegrex = false),
+        "movf", processors = mipsCommon(legacyOrigin = MipsIVProcessor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object FpuMovfS : MipsOpcode(
-        "movf.s",
-        processors = mipsCommon(legacyOrigin = MipsIVProcessor, allegrex = false),
+        "movf.s", processors = mipsCommon(legacyOrigin = MipsIVProcessor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object FpuMovfD : MipsOpcode(
-        "movf.d",
-        processors = mipsCommon(legacyOrigin = MipsIVProcessor, allegrex = false),
+        "movf.d", processors = mipsCommon(legacyOrigin = MipsIVProcessor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object FpuMovnS : MipsOpcode(
-        "movn.s",
-        processors = mipsCommon(legacyOrigin = MipsIVProcessor, allegrex = false),
+        "movn.s", processors = mipsCommon(legacyOrigin = MipsIVProcessor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object FpuMovnD : MipsOpcode(
-        "movn.d",
-        processors = mipsCommon(legacyOrigin = MipsIVProcessor, allegrex = false),
+        "movn.d", processors = mipsCommon(legacyOrigin = MipsIVProcessor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object FpuMovt : MipsOpcode(
-        "movt",
-        processors = mipsCommon(legacyOrigin = MipsIVProcessor, allegrex = false),
+        "movt", processors = mipsCommon(legacyOrigin = MipsIVProcessor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object FpuMovtS : MipsOpcode(
-        "movt.s",
-        processors = mipsCommon(legacyOrigin = MipsIVProcessor, allegrex = false),
+        "movt.s", processors = mipsCommon(legacyOrigin = MipsIVProcessor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object FpuMovtD : MipsOpcode(
-        "movt.d",
-        processors = mipsCommon(legacyOrigin = MipsIVProcessor, allegrex = false),
+        "movt.d", processors = mipsCommon(legacyOrigin = MipsIVProcessor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object FpuMovzS : MipsOpcode(
-        "movz.s",
-        processors = mipsCommon(legacyOrigin = MipsIVProcessor, allegrex = false),
+        "movz.s", processors = mipsCommon(legacyOrigin = MipsIVProcessor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object FpuMovzD : MipsOpcode(
-        "movz.d",
-        processors = mipsCommon(legacyOrigin = MipsIVProcessor, allegrex = false),
+        "movz.d", processors = mipsCommon(legacyOrigin = MipsIVProcessor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object FpuMsubS : MipsOpcode(
         "msub.s",
         processors = mipsCommon(legacyOrigin = MipsIVProcessor, modernOrigin = Mips32r2Processor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref, Operand3Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref, Operand3Ref)
     )
 
     object FpuMsubD : MipsOpcode(
         "msub.d",
         processors = mipsCommon(legacyOrigin = MipsIVProcessor, modernOrigin = Mips32r2Processor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref, Operand3Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref, Operand3Ref)
     )
 
     object FpuMtc1 : MipsOpcode(
         "mtc1",
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand1Ref),
-        use = arrayOf(Operand0Ref)
+        modify = arrayOf(Operand1Ref), use = arrayOf(Operand0Ref)
     )
 
     object FpuMulS : MipsOpcode(
         "mul.s",
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object FpuMulD : MipsOpcode(
-        "mul.d",
-        processors = mipsCommon(allegrex = false),
+        "mul.d", processors = mipsCommon(allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object FpuNegS : MipsOpcode(
         "neg.s",
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuNegD : MipsOpcode(
-        "neg.d",
-        processors = mipsCommon(allegrex = false),
+        "neg.d", processors = mipsCommon(allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuNmaddS : MipsOpcode(
         "nmadd.s",
         processors = mipsCommon(legacyOrigin = MipsIVProcessor, modernOrigin = Mips32r2Processor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref, Operand3Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref, Operand3Ref)
     )
 
     object FpuNmaddD : MipsOpcode(
         "nmadd.d",
         processors = mipsCommon(legacyOrigin = MipsIVProcessor, modernOrigin = Mips32r2Processor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref, Operand3Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref, Operand3Ref)
     )
 
     object FpuNmsubS : MipsOpcode(
         "nmsub.s",
         processors = mipsCommon(legacyOrigin = MipsIVProcessor, modernOrigin = Mips32r2Processor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref, Operand3Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref, Operand3Ref)
     )
 
     object FpuNmsubD : MipsOpcode(
         "nmsub.d",
         processors = mipsCommon(legacyOrigin = MipsIVProcessor, modernOrigin = Mips32r2Processor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref, Operand3Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref, Operand3Ref)
     )
 
     object FpuPrefx : MipsOpcode(
@@ -1242,64 +942,54 @@ abstract class MipsOpcode(
         "recip.s",
         processors = mipsCommon(legacyOrigin = MipsIVProcessor, modernOrigin = Mips32r2Processor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuRecipD : MipsOpcode(
         "recip.d",
         processors = mipsCommon(legacyOrigin = MipsIVProcessor, modernOrigin = Mips32r2Processor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuRoundLS : MipsOpcode(
         "round.l.s",
         processors = mipsCommon(legacyOrigin = MipsIIIProcessor, modernOrigin = Mips32r2Processor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuRoundLD : MipsOpcode(
         "round.l.d",
         processors = mipsCommon(legacyOrigin = MipsIIIProcessor, modernOrigin = Mips32r2Processor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuRoundWS : MipsOpcode(
-        "round.w.s",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor),
+        "round.w.s", processors = mipsCommon(legacyOrigin = MipsIIProcessor),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuRoundWD : MipsOpcode(
-        "round.w.d",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor, allegrex = false),
+        "round.w.d", processors = mipsCommon(legacyOrigin = MipsIIProcessor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuRsqrtS : MipsOpcode(
         "rsqrt.s",
         processors = mipsCommon(legacyOrigin = MipsIVProcessor, modernOrigin = Mips32r2Processor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuRsqrtD : MipsOpcode(
         "rsqrt.d",
         processors = mipsCommon(legacyOrigin = MipsIVProcessor, modernOrigin = Mips32r2Processor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuSdxc1 : MipsOpcode(
@@ -1310,34 +1000,27 @@ abstract class MipsOpcode(
     )
 
     object FpuSqrtS : MipsOpcode(
-        "sqrt.s",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor),
+        "sqrt.s", processors = mipsCommon(legacyOrigin = MipsIIProcessor),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuSqrtD : MipsOpcode(
-        "sqrt.d",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor, allegrex = false),
+        "sqrt.d", processors = mipsCommon(legacyOrigin = MipsIIProcessor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuSubS : MipsOpcode(
         "sub.s",
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object FpuSubD : MipsOpcode(
-        "sub.d",
-        processors = mipsCommon(allegrex = false),
+        "sub.d", processors = mipsCommon(allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object FpuSwxc1 : MipsOpcode(
@@ -1351,171 +1034,132 @@ abstract class MipsOpcode(
         "trunc.l.s",
         processors = mipsCommon(legacyOrigin = MipsIIIProcessor, modernOrigin = Mips32r2Processor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuTruncLD : MipsOpcode(
         "trunc.l.d",
         processors = mipsCommon(legacyOrigin = MipsIIIProcessor, modernOrigin = Mips32r2Processor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuTruncWS : MipsOpcode(
-        "trunc.w.s",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor),
+        "trunc.w.s", processors = mipsCommon(legacyOrigin = MipsIIProcessor),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuTruncWD : MipsOpcode(
-        "trunc.w.d",
-        processors = mipsCommon(legacyOrigin = MipsIIProcessor, allegrex = false),
+        "trunc.w.d", processors = mipsCommon(legacyOrigin = MipsIIProcessor, allegrex = false),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     // ----- Specific to MIPS32 and Allegrex -----
 
     object FpuAbsPS : MipsOpcode(
-        "abs.ps",
-        processors = mipsModern(Mips32r2Processor),
+        "abs.ps", processors = mipsModern(Mips32r2Processor),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuAddPS : MipsOpcode(
-        "add.ps",
-        processors = mipsModern(Mips32r2Processor),
+        "add.ps", processors = mipsModern(Mips32r2Processor),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object FpuAlnvPS : MipsOpcode(
-        "alnv.ps",
-        processors = mipsModern(Mips32r2Processor),
+        "alnv.ps", processors = mipsModern(Mips32r2Processor),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object Bc2f : MipsOpcode(
-        "bc2f",
-        processors = mipsModern(),
+        "bc2f", processors = mipsModern(),
         flags = arrayOf(Branch, DelaySlot),
-        modify = arrayOf(OperandRegRef(GprReg.Pc)),
-        use = arrayOf(Operand0Ref)
+        modify = arrayOf(OperandRegRef(GprReg.Pc)), use = arrayOf(Operand0Ref)
     )
 
     object Bc2fl : MipsOpcode(
-        "bc2fl",
-        processors = mipsModern(),
+        "bc2fl", processors = mipsModern(),
         flags = arrayOf(Branch, BranchLikely, DelaySlot),
-        modify = arrayOf(OperandRegRef(GprReg.Pc)),
-        use = arrayOf(Operand0Ref)
+        modify = arrayOf(OperandRegRef(GprReg.Pc)), use = arrayOf(Operand0Ref)
     )
 
     object Bc2t : MipsOpcode(
-        "bc2t",
-        processors = mipsModern(),
+        "bc2t", processors = mipsModern(),
         flags = arrayOf(Branch, DelaySlot),
-        modify = arrayOf(OperandRegRef(GprReg.Pc)),
-        use = arrayOf(Operand0Ref)
+        modify = arrayOf(OperandRegRef(GprReg.Pc)), use = arrayOf(Operand0Ref)
     )
 
     object Bc2tl : MipsOpcode(
-        "bc2tl",
-        processors = mipsModern(),
+        "bc2tl", processors = mipsModern(),
         flags = arrayOf(Branch, BranchLikely, DelaySlot),
-        modify = arrayOf(OperandRegRef(GprReg.Pc)),
-        use = arrayOf(Operand0Ref)
+        modify = arrayOf(OperandRegRef(GprReg.Pc)), use = arrayOf(Operand0Ref)
     )
 
     object Cache : MipsOpcode(
-        "cache",
-        processors = mipsModern(),
+        "cache", processors = mipsModern(),
         use = arrayOf(Operand1Ref)
     )
 
     object Cachee : MipsOpcode(
-        "cachee",
-        processors = mipsModern(Mips32r3Processor),
+        "cachee", processors = mipsModern(Mips32r3Processor),
         use = arrayOf(Operand1Ref)
     )
 
     object Cfc2 : MipsOpcode(
-        "cfc2",
-        processors = mipsModern(),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        "cfc2", processors = mipsModern(),
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object Clo : MipsOpcode(
-        "clo",
-        processors = arrayOf(*mipsModern(), AllegrexProcessor),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        "clo", processors = arrayOf(*mipsModern(), AllegrexProcessor),
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object Clz : MipsOpcode(
-        "clz",
-        processors = arrayOf(*mipsModern(), AllegrexProcessor),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        "clz", processors = arrayOf(*mipsModern(), AllegrexProcessor),
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object Ctc2 : MipsOpcode(
-        "ctc2",
-        processors = mipsModern(),
+        "ctc2", processors = mipsModern(),
         use = arrayOf(Operand0Ref, Operand1Ref)
     )
 
     object FpuCvtPSS : MipsOpcode(
-        "cvt.ps.s",
-        processors = mipsModern(Mips32r2Processor),
+        "cvt.ps.s", processors = mipsModern(Mips32r2Processor),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object FpuCvtSPL : MipsOpcode(
-        "cvt.s.pl",
-        processors = mipsModern(Mips32r2Processor),
+        "cvt.s.pl", processors = mipsModern(Mips32r2Processor),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuCvtSPU : MipsOpcode(
-        "cvt.s.pu",
-        processors = mipsModern(Mips32r2Processor),
+        "cvt.s.pu", processors = mipsModern(Mips32r2Processor),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object Deret : MipsOpcode("deret", processors = mipsModern()) // EJTAG
 
     object Di : MipsOpcode(
-        "di",
-        processors = mipsModern(Mips32r2Processor),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf()
+        "di", processors = mipsModern(Mips32r2Processor),
+        modify = arrayOf(Operand0Ref), use = arrayOf()
     )
 
     object Ehb : MipsOpcode("ehb", processors = mipsModern(Mips32r2Processor))
 
     object Ei : MipsOpcode(
-        "ei",
-        processors = mipsModern(Mips32r2Processor),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf()
+        "ei", processors = mipsModern(Mips32r2Processor),
+        modify = arrayOf(Operand0Ref), use = arrayOf()
     )
 
     object Eret : MipsOpcode("eret", processors = mipsModern())
@@ -1523,382 +1167,289 @@ abstract class MipsOpcode(
     object Eretnc : MipsOpcode("eretnc", processors = mipsModern(Mips32r5Processor))
 
     object Ext : MipsOpcode(
-        "ext",
-        processors = arrayOf(*mipsModern(Mips32r2Processor), AllegrexProcessor),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        "ext", processors = arrayOf(*mipsModern(Mips32r2Processor), AllegrexProcessor),
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object Ins : MipsOpcode(
-        "ins",
-        processors = arrayOf(*mipsModern(Mips32r2Processor), AllegrexProcessor),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        "ins", processors = arrayOf(*mipsModern(Mips32r2Processor), AllegrexProcessor),
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object JalrHb : MipsOpcode(
-        "jalr.hb",
-        processors = mipsModern(Mips32r2Processor),
+        "jalr.hb", processors = mipsModern(Mips32r2Processor),
         flags = arrayOf(Jump, DelaySlot),
-        modify = arrayOf(OperandRegRef(GprReg.Pc), Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(OperandRegRef(GprReg.Pc), Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     // JALX instruction was skipped because it switches ISA mode to microMIPS32 or MIPS16e
 
     object JrHb : MipsOpcode(
-        "jr.hb",
-        processors = mipsModern(Mips32r2Processor),
+        "jr.hb", processors = mipsModern(Mips32r2Processor),
         flags = arrayOf(Jump, DelaySlot),
-        modify = arrayOf(OperandRegRef(GprReg.Pc)),
-        use = arrayOf(Operand0Ref)
+        modify = arrayOf(OperandRegRef(GprReg.Pc)), use = arrayOf(Operand0Ref)
     )
 
     object Lbe : MipsOpcode(
-        "lbe",
-        processors = mipsModern(Mips32r3Processor),
+        "lbe", processors = mipsModern(Mips32r3Processor),
         flags = arrayOf(MemoryRead),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object Lbue : MipsOpcode(
-        "lbue",
-        processors = mipsModern(Mips32r3Processor),
+        "lbue", processors = mipsModern(Mips32r3Processor),
         flags = arrayOf(MemoryRead),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object Lhe : MipsOpcode(
-        "lhe",
-        processors = mipsModern(Mips32r3Processor),
+        "lhe", processors = mipsModern(Mips32r3Processor),
         flags = arrayOf(MemoryRead),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object Lhue : MipsOpcode(
-        "lhue",
-        processors = mipsModern(Mips32r3Processor),
+        "lhue", processors = mipsModern(Mips32r3Processor),
         flags = arrayOf(MemoryRead),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object Lle : MipsOpcode(
-        "lle",
-        processors = mipsModern(Mips32r3Processor),
+        "lle", processors = mipsModern(Mips32r3Processor),
         flags = arrayOf(MemoryRead),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuLuxc1 : MipsOpcode(
-        "luxc1",
-        processors = mipsModern(Mips32r2Processor),
+        "luxc1", processors = mipsModern(Mips32r2Processor),
         flags = arrayOf(Fpu, MemoryRead),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object Lwe : MipsOpcode(
-        "lwe",
-        processors = mipsModern(Mips32r3Processor),
+        "lwe", processors = mipsModern(Mips32r3Processor),
         flags = arrayOf(MemoryRead),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object Lwle : MipsOpcode(
-        "lwle",
-        processors = mipsModern(Mips32r3Processor),
+        "lwle", processors = mipsModern(Mips32r3Processor),
         flags = arrayOf(MemoryRead),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object Lwre : MipsOpcode(
-        "lwre",
-        processors = mipsModern(Mips32r3Processor),
+        "lwre", processors = mipsModern(Mips32r3Processor),
         flags = arrayOf(MemoryRead),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object Madd : MipsOpcode(
-        "madd",
-        processors = arrayOf(*mipsModern(), AllegrexProcessor),
+        "madd", processors = arrayOf(*mipsModern(), AllegrexProcessor),
         modify = arrayOf(OperandRegRef(GprReg.Lo), OperandRegRef(GprReg.Hi)),
         use = arrayOf(OperandRegRef(GprReg.Lo), OperandRegRef(GprReg.Hi), Operand0Ref, Operand1Ref)
     )
 
     object FpuMaddPS : MipsOpcode(
-        "madd.ps",
-        processors = mipsModern(Mips32r2Processor),
+        "madd.ps", processors = mipsModern(Mips32r2Processor),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref, Operand3Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref, Operand3Ref)
     )
 
     object Maddu : MipsOpcode(
-        "maddu",
-        processors = arrayOf(*mipsModern(), AllegrexProcessor),
+        "maddu", processors = arrayOf(*mipsModern(), AllegrexProcessor),
         modify = arrayOf(OperandRegRef(GprReg.Lo), OperandRegRef(GprReg.Hi)),
         use = arrayOf(OperandRegRef(GprReg.Lo), OperandRegRef(GprReg.Hi), Operand0Ref, Operand1Ref)
     )
 
     object Mfc0 : MipsOpcode(
-        "mfc0",
-        processors = mipsModern(),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        "mfc0", processors = mipsModern(),
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object Mfc2 : MipsOpcode(
-        "mfc2",
-        processors = mipsModern(),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        "mfc2", processors = mipsModern(),
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object Mfhc0 : MipsOpcode(
-        "mfhc0",
-        processors = mipsModern(Mips32r5Processor),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        "mfhc0", processors = mipsModern(Mips32r5Processor),
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object Mfhc1 : MipsOpcode(
-        "mfhc1",
-        processors = mipsModern(Mips32r2Processor),
+        "mfhc1", processors = mipsModern(Mips32r2Processor),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object Mfhc2 : MipsOpcode(
-        "mfhc2",
-        processors = mipsModern(Mips32r2Processor),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        "mfhc2", processors = mipsModern(Mips32r2Processor),
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuMovPS : MipsOpcode(
-        "mov.ps",
-        processors = mipsModern(Mips32r2Processor),
+        "mov.ps", processors = mipsModern(Mips32r2Processor),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuMovfPS : MipsOpcode(
-        "movf.ps",
-        processors = mipsModern(Mips32r2Processor),
+        "movf.ps", processors = mipsModern(Mips32r2Processor),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object FpuMovnPS : MipsOpcode(
-        "movn.ps",
-        processors = mipsModern(Mips32r2Processor),
+        "movn.ps", processors = mipsModern(Mips32r2Processor),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object FpuMovtPS : MipsOpcode(
-        "movt.ps",
-        processors = mipsModern(Mips32r2Processor),
+        "movt.ps", processors = mipsModern(Mips32r2Processor),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object FpuMovzPS : MipsOpcode(
-        "movz.ps",
-        processors = mipsModern(Mips32r2Processor),
+        "movz.ps", processors = mipsModern(Mips32r2Processor),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object Msub : MipsOpcode(
-        "msub",
-        processors = arrayOf(*mipsModern(), AllegrexProcessor),
+        "msub", processors = arrayOf(*mipsModern(), AllegrexProcessor),
         modify = arrayOf(OperandRegRef(GprReg.Lo), OperandRegRef(GprReg.Hi)),
         use = arrayOf(OperandRegRef(GprReg.Lo), OperandRegRef(GprReg.Hi), Operand0Ref, Operand1Ref)
     )
 
     object FpuMsubPS : MipsOpcode(
-        "msub.ps",
-        processors = mipsModern(Mips32r2Processor),
+        "msub.ps", processors = mipsModern(Mips32r2Processor),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref, Operand3Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref, Operand3Ref)
     )
 
     object Msubu : MipsOpcode(
-        "msubu",
-        processors = arrayOf(*mipsModern(), AllegrexProcessor),
+        "msubu", processors = arrayOf(*mipsModern(), AllegrexProcessor),
         modify = arrayOf(OperandRegRef(GprReg.Lo), OperandRegRef(GprReg.Hi)),
         use = arrayOf(OperandRegRef(GprReg.Lo), OperandRegRef(GprReg.Hi), Operand0Ref, Operand1Ref)
     )
 
     object Mtc0 : MipsOpcode(
-        "mtc0",
-        processors = mipsModern(),
-        modify = arrayOf(Operand1Ref),
-        use = arrayOf(Operand0Ref)
+        "mtc0", processors = mipsModern(),
+        modify = arrayOf(Operand1Ref), use = arrayOf(Operand0Ref)
     )
 
     object Mtc2 : MipsOpcode(
-        "mtc2",
-        processors = mipsModern(),
-        modify = arrayOf(Operand1Ref),
-        use = arrayOf(Operand0Ref)
+        "mtc2", processors = mipsModern(),
+        modify = arrayOf(Operand1Ref), use = arrayOf(Operand0Ref)
     )
 
     object Mthc0 : MipsOpcode(
-        "mthc0",
-        processors = mipsModern(Mips32r5Processor),
-        modify = arrayOf(Operand1Ref),
-        use = arrayOf(Operand0Ref)
+        "mthc0", processors = mipsModern(Mips32r5Processor),
+        modify = arrayOf(Operand1Ref), use = arrayOf(Operand0Ref)
     )
 
     object Mthc1 : MipsOpcode(
-        "mthc1",
-        processors = mipsModern(Mips32r2Processor),
+        "mthc1", processors = mipsModern(Mips32r2Processor),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand1Ref),
-        use = arrayOf(Operand0Ref)
+        modify = arrayOf(Operand1Ref), use = arrayOf(Operand0Ref)
     )
 
     object Mthc2 : MipsOpcode(
-        "mthc2",
-        processors = mipsModern(Mips32r2Processor),
-        modify = arrayOf(Operand1Ref),
-        use = arrayOf(Operand0Ref)
+        "mthc2", processors = mipsModern(Mips32r2Processor),
+        modify = arrayOf(Operand1Ref), use = arrayOf(Operand0Ref)
     )
 
     object Mul : MipsOpcode(
-        "mul",
-        processors = mipsModern(),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        "mul", processors = mipsModern(),
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object FpuMulPS : MipsOpcode(
-        "mul.ps",
-        processors = mipsModern(Mips32r2Processor),
+        "mul.ps", processors = mipsModern(Mips32r2Processor),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object FpuNegPS : MipsOpcode(
-        "neg.ps",
-        processors = mipsModern(Mips32r2Processor),
+        "neg.ps", processors = mipsModern(Mips32r2Processor),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object FpuNmaddPS : MipsOpcode(
-        "nmadd.ps",
-        processors = mipsModern(Mips32r2Processor),
+        "nmadd.ps", processors = mipsModern(Mips32r2Processor),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref, Operand3Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref, Operand3Ref)
     )
 
     object FpuNmsubPS : MipsOpcode(
-        "nmsub.ps",
-        processors = mipsModern(Mips32r2Processor),
+        "nmsub.ps", processors = mipsModern(Mips32r2Processor),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref, Operand3Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref, Operand3Ref)
     )
 
     object Pause : MipsOpcode("pause", processors = mipsModern(Mips32r2Processor))
 
     object FpuPllPS : MipsOpcode(
-        "pll.ps",
-        processors = mipsModern(Mips32r2Processor),
+        "pll.ps", processors = mipsModern(Mips32r2Processor),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object FpuPluPS : MipsOpcode(
-        "plu.ps",
-        processors = mipsModern(Mips32r2Processor),
+        "plu.ps", processors = mipsModern(Mips32r2Processor),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object Prefe : MipsOpcode(
-        "prefe",
-        processors = mipsModern(Mips32r3Processor),
+        "prefe", processors = mipsModern(Mips32r3Processor),
         use = arrayOf(Operand1Ref)
     )
 
     object FpuPulPS : MipsOpcode(
-        "pul.ps",
-        processors = mipsModern(Mips32r2Processor),
+        "pul.ps", processors = mipsModern(Mips32r2Processor),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object FpuPuuPS : MipsOpcode(
-        "puu.ps",
-        processors = mipsModern(Mips32r2Processor),
+        "puu.ps", processors = mipsModern(Mips32r2Processor),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object Rdhwr : MipsOpcode(
-        "rdhwr",
-        processors = mipsModern(Mips32r2Processor),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        "rdhwr", processors = mipsModern(Mips32r2Processor),
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object Rdpgpr : MipsOpcode(
-        "rdpgpr",
-        processors = mipsModern(Mips32r2Processor),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        "rdpgpr", processors = mipsModern(Mips32r2Processor),
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object Rotr : MipsOpcode(
-        "rotr",
-        processors = arrayOf(*mipsModern(Mips32r2Processor), AllegrexProcessor),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        "rotr", processors = arrayOf(*mipsModern(Mips32r2Processor), AllegrexProcessor),
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object Rotrv : MipsOpcode(
-        "rotrv",
-        processors = arrayOf(*mipsModern(Mips32r2Processor), AllegrexProcessor),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        "rotrv", processors = arrayOf(*mipsModern(Mips32r2Processor), AllegrexProcessor),
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object Sbe : MipsOpcode(
-        "sbe",
-        processors = mipsModern(Mips32r3Processor),
+        "sbe", processors = mipsModern(Mips32r3Processor),
         flags = arrayOf(MemoryWrite),
         use = arrayOf(Operand0Ref, Operand1Ref)
     )
 
     object Sce : MipsOpcode(
-        "sce",
-        processors = mipsModern(Mips32r3Processor),
+        "sce", processors = mipsModern(Mips32r3Processor),
         flags = arrayOf(MemoryWrite),
         use = arrayOf(Operand0Ref, Operand1Ref)
     )
@@ -1906,22 +1457,17 @@ abstract class MipsOpcode(
     object Sdbbp : MipsOpcode("sdbbp", processors = mipsModern()) // EJTAG
 
     object Seb : MipsOpcode(
-        "seb",
-        processors = arrayOf(*mipsModern(Mips32r2Processor), AllegrexProcessor),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        "seb", processors = arrayOf(*mipsModern(Mips32r2Processor), AllegrexProcessor),
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object Seh : MipsOpcode(
-        "seh",
-        processors = arrayOf(*mipsModern(Mips32r2Processor), AllegrexProcessor),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        "seh", processors = arrayOf(*mipsModern(Mips32r2Processor), AllegrexProcessor),
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
     object She : MipsOpcode(
-        "she",
-        processors = mipsModern(Mips32r3Processor),
+        "she", processors = mipsModern(Mips32r3Processor),
         flags = arrayOf(MemoryWrite),
         use = arrayOf(Operand0Ref, Operand1Ref)
     )
@@ -1929,67 +1475,51 @@ abstract class MipsOpcode(
     object SsNop : MipsOpcode("ssnop", processors = mipsModern())
 
     object FpuSubPs : MipsOpcode(
-        "sub.ps",
-        processors = mipsModern(Mips32r2Processor),
+        "sub.ps", processors = mipsModern(Mips32r2Processor),
         flags = arrayOf(Fpu),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref, Operand2Ref)
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref)
     )
 
     object FpuSuxc1 : MipsOpcode(
-        "suxc1",
-        processors = mipsModern(Mips32r2Processor),
+        "suxc1", processors = mipsModern(Mips32r2Processor),
         flags = arrayOf(MemoryWrite, Fpu),
         use = arrayOf(Operand0Ref, Operand1Ref, Operand2Ref)
     )
 
     object Swe : MipsOpcode(
-        "swe",
-        processors = mipsModern(Mips32r3Processor),
+        "swe", processors = mipsModern(Mips32r3Processor),
         flags = arrayOf(MemoryWrite),
         use = arrayOf(Operand0Ref, Operand1Ref)
     )
 
     object Swle : MipsOpcode(
-        "swle",
-        processors = mipsModern(Mips32r3Processor),
+        "swle", processors = mipsModern(Mips32r3Processor),
         flags = arrayOf(MemoryWrite),
         use = arrayOf(Operand0Ref, Operand1Ref)
     )
 
     object Swre : MipsOpcode(
-        "swre",
-        processors = mipsModern(Mips32r3Processor),
+        "swre", processors = mipsModern(Mips32r3Processor),
         flags = arrayOf(MemoryWrite),
         use = arrayOf(Operand0Ref, Operand1Ref)
     )
 
     object Synci : MipsOpcode("synci", processors = arrayOf(*mipsModern(Mips32r2Processor), AllegrexProcessor))
-
     object Tlbinv : MipsOpcode("tlbinv", processors = mipsModern())
-
     object Tlbinvf : MipsOpcode("tlbinvf", processors = mipsModern())
-
     object Tlbp : MipsOpcode("tlbp", processors = mipsModern())
-
     object Tlbr : MipsOpcode("tlbr", processors = mipsModern())
-
     object Tlbwi : MipsOpcode("tlbwi", processors = mipsModern())
-
     object Tlbwr : MipsOpcode("tlbwr", processors = mipsModern())
-
     object Wait : MipsOpcode("wait", processors = mipsModern())
 
     object Wrpgpr : MipsOpcode(
-        "wrpgpr",
-        processors = mipsModern(Mips32r2Processor),
+        "wrpgpr", processors = mipsModern(Mips32r2Processor),
         use = arrayOf(Operand0Ref, Operand1Ref)
     )
 
     object Wsbh : MipsOpcode(
-        "wsbh",
-        processors = arrayOf(*mipsModern(Mips32r2Processor), AllegrexProcessor),
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
+        "wsbh", processors = arrayOf(*mipsModern(Mips32r2Processor), AllegrexProcessor),
+        modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 }
