@@ -50,8 +50,10 @@ abstract class MipsDisassembler(private val srcProcessor: MipsProcessor, protect
                 else -> decoded.add(disasmOpcodeInstr(vAddr, instr, instrCount, opcode))
             }
         }
-        if (decoded.any { it.hasProcessor(srcProcessor) == false }) {
-            throw DisassemblerException("generated disassembly uses opcodes not supported by specified processor")
+        val illegalOpcodes = decoded.filterNot { it.hasProcessor(srcProcessor) }
+        if (illegalOpcodes.isNotEmpty()) {
+            val illegalMnemonics = illegalOpcodes.joinToString(transform = { it.opcode.mnemonic })
+            throw DisassemblerException("generated disassembly uses opcodes not supported by specified processor: $illegalMnemonics")
         }
         return Disassembly(funcDef, decoded)
     }
@@ -96,7 +98,7 @@ abstract class MipsDisassembler(private val srcProcessor: MipsProcessor, protect
             if (!strict) return true
             return checks.all { check ->
                 val test = tests[check] ?: throw DisassemblerException("strict check not supported in this context")
-                return test()
+                return@all test()
             }
         }
 

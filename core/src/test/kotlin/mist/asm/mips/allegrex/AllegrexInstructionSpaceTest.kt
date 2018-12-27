@@ -51,7 +51,7 @@ private class AllegrexInstructionSpaceTest(instrDataDir: File) {
     private val disasm = AllegrexDisassembler(strict = false)
     private val def = FunctionDef("Test", 0x8804000, 4)
     private val invalidInstr = "__invalid"
-    private val skipIgnoredOpcodes = true
+    private val skipIgnoredOpcodes = false
     private val ignoredOpcodes = Collections.synchronizedSet(mutableSetOf<String>())
 
     init {
@@ -127,8 +127,8 @@ private class AllegrexInstructionSpaceTest(instrDataDir: File) {
             // seems to be decoded incorrectly by the emulator (code field is not read, argument order flipped)
             if (expectedOpcode in arrayOf("teq", "tge", "tgeu", "tlt", "tltu", "tne")) return
             if (expectedOpcode in arrayOf("teqi", "tgei", "tgeiu", "tlti", "tltiu", "tnei")) return
-            // opcodes not decoded by the emulator
-            if (expectedOpcode in arrayOf("ll", "sc")) return
+            // opcodes' operands not decoded by the emulator
+            if (expectedOpcode in arrayOf("ll", "sc", "synci")) return
 
             if (expectedOperands.size != instr.operands.size) {
                 if (skipIgnoredOpcodes && expectedOpcode in ignoredOpcodes) return

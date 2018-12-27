@@ -24,6 +24,8 @@ import mist.asm.RegOperand
 import mist.asm.mips.*
 import mist.asm.mips.MipsDisassembler.StrictCheck.*
 import mist.asm.mips.MipsOpcode.*
+import mist.asm.mips.allegrex.AllegrexOpcode.Max
+import mist.asm.mips.allegrex.AllegrexOpcode.Min
 
 /** @author Kotcrab */
 
@@ -95,6 +97,15 @@ class AllegrexDisassembler(strict: Boolean = true) : MipsDisassembler(AllegrexPr
             funct == 0b110_011 -> MipsInstr(vAddr, Tltu, rs, rt, ImmOperand(rd.reg.id shl 5 or shift))
             funct == 0b110_110 -> MipsInstr(vAddr, Tne, rs, rt, ImmOperand(rd.reg.id shl 5 or shift))
             funct == 0b100_110 && ifStrict(ZeroShift) -> MipsInstr(vAddr, Xor, rd, rs, rt)
+            // Allegrex specific
+            funct == 0b010_110 && ifStrict(ZeroShift, ZeroRt) -> MipsInstr(vAddr, Clz, rd, rs)
+            funct == 0b010_111 && ifStrict(ZeroShift, ZeroRt) -> MipsInstr(vAddr, Clo, rd, rs)
+            funct == 0b101_100 && ifStrict(ZeroShift) -> MipsInstr(vAddr, Max, rd, rs, rt)
+            funct == 0b101_101 && ifStrict(ZeroShift) -> MipsInstr(vAddr, Min, rd, rs, rt)
+            funct == 0b011_100 && ifStrict(ZeroShift, ZeroRd) -> MipsInstr(vAddr, Madd, rs, rt)
+            funct == 0b011_101 && ifStrict(ZeroShift, ZeroRd) -> MipsInstr(vAddr, Maddu, rs, rt)
+            funct == 0b101_110 && ifStrict(ZeroShift, ZeroRd) -> MipsInstr(vAddr, Msub, rs, rt)
+            funct == 0b101_111 && ifStrict(ZeroShift, ZeroRd) -> MipsInstr(vAddr, Msubu, rs, rt)
             else -> handleUnknownInstr(vAddr, instrCount)
         }
     }
@@ -119,6 +130,7 @@ class AllegrexDisassembler(strict: Boolean = true) : MipsDisassembler(AllegrexPr
             0b01010 -> MipsInstr(vAddr, Tlti, rs, imm)
             0b01011 -> MipsInstr(vAddr, Tltiu, rs, imm)
             0b01110 -> MipsInstr(vAddr, Tnei, rs, imm)
+            0b11111 -> MipsInstr(vAddr, Synci, rs, imm)
             else -> handleUnknownInstr(vAddr, instrCount)
         }
     }

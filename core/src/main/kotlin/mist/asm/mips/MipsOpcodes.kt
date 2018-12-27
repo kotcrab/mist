@@ -1458,14 +1458,14 @@ abstract class MipsOpcode(
 
     object Clo : MipsOpcode(
         "clo",
-        processors = mipsModern(),
+        processors = arrayOf(*mipsModern(), AllegrexProcessor),
         modify = arrayOf(Operand0Ref),
         use = arrayOf(Operand1Ref)
     )
 
     object Clz : MipsOpcode(
         "clz",
-        processors = mipsModern(),
+        processors = arrayOf(*mipsModern(), AllegrexProcessor),
         modify = arrayOf(Operand0Ref),
         use = arrayOf(Operand1Ref)
     )
@@ -1628,8 +1628,9 @@ abstract class MipsOpcode(
 
     object Madd : MipsOpcode(
         "madd",
-        processors = mipsModern(),
-        use = arrayOf(Operand0Ref, Operand1Ref)
+        processors = arrayOf(*mipsModern(), AllegrexProcessor),
+        modify = arrayOf(OperandRegRef(GprReg.Lo), OperandRegRef(GprReg.Hi)),
+        use = arrayOf(OperandRegRef(GprReg.Lo), OperandRegRef(GprReg.Hi), Operand0Ref, Operand1Ref)
     )
 
     object FpuMaddPS : MipsOpcode(
@@ -1642,8 +1643,9 @@ abstract class MipsOpcode(
 
     object Maddu : MipsOpcode(
         "maddu",
-        processors = mipsModern(),
-        use = arrayOf(Operand0Ref, Operand1Ref)
+        processors = arrayOf(*mipsModern(), AllegrexProcessor),
+        modify = arrayOf(OperandRegRef(GprReg.Lo), OperandRegRef(GprReg.Hi)),
+        use = arrayOf(OperandRegRef(GprReg.Lo), OperandRegRef(GprReg.Hi), Operand0Ref, Operand1Ref)
     )
 
     object Mfc0 : MipsOpcode(
@@ -1724,8 +1726,9 @@ abstract class MipsOpcode(
 
     object Msub : MipsOpcode(
         "msub",
-        processors = mipsModern(),
-        use = arrayOf(Operand0Ref, Operand1Ref)
+        processors = arrayOf(*mipsModern(), AllegrexProcessor),
+        modify = arrayOf(OperandRegRef(GprReg.Lo), OperandRegRef(GprReg.Hi)),
+        use = arrayOf(OperandRegRef(GprReg.Lo), OperandRegRef(GprReg.Hi), Operand0Ref, Operand1Ref)
     )
 
     object FpuMsubPS : MipsOpcode(
@@ -1738,8 +1741,9 @@ abstract class MipsOpcode(
 
     object Msubu : MipsOpcode(
         "msubu",
-        processors = mipsModern(),
-        use = arrayOf(Operand0Ref, Operand1Ref)
+        processors = arrayOf(*mipsModern(), AllegrexProcessor),
+        modify = arrayOf(OperandRegRef(GprReg.Lo), OperandRegRef(GprReg.Hi)),
+        use = arrayOf(OperandRegRef(GprReg.Lo), OperandRegRef(GprReg.Hi), Operand0Ref, Operand1Ref)
     )
 
     object Mtc0 : MipsOpcode(
@@ -1960,7 +1964,7 @@ abstract class MipsOpcode(
         use = arrayOf(Operand0Ref, Operand1Ref)
     )
 
-    object Synci : MipsOpcode("synci", processors = mipsModern(Mips32r2Processor))
+    object Synci : MipsOpcode("synci", processors = arrayOf(*mipsModern(Mips32r2Processor), AllegrexProcessor))
 
     object Tlbinv : MipsOpcode("tlbinv", processors = mipsModern())
 
