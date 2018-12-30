@@ -72,6 +72,10 @@ private class AllegrexInstructionSpaceTest(instrDataDir: File) {
             val parts = asm
                 .trimEnd()
                 .replace("no instruction :(", invalidInstr)
+                .replace("?? ---unknown---", invalidInstr)
+                .replace("* jitblock: (invalid emuhack)", invalidInstr)
+                .replace("* (invalid): (invalid emuhack)", invalidInstr)
+                .replace("* replacement: (invalid emuhack)", invalidInstr)
                 .replace("syscall \t", "syscall ")
                 .split("; ", limit = 2)
             val encodedInstr = parts[0].toLong(16).toInt()
@@ -99,6 +103,10 @@ private class AllegrexInstructionSpaceTest(instrDataDir: File) {
     }
 
     private fun processAsmInstruction(encodedInstr: Int, expectedOpcode: String, expectedOperands: List<String>) {
+        // no idea about those, not present in any available docs, ignored
+        // mfmc0 is actually EI / DI
+        if (expectedOpcode in arrayOf("iack", "dis.int", "mfmc0")) return
+
         val expectedInstrTxt = "$expectedOpcode ${expectedOperands.joinToString()}"
         try {
             val instr = rewriteInstr(disasm.disassemble(TestBinLoader(encodedInstr), def).instr.first())
@@ -124,11 +132,12 @@ private class AllegrexInstructionSpaceTest(instrDataDir: File) {
             }
             // no need to verify args of those
             if (expectedOpcode in arrayOf("syscall", "break", "sync")) return
-            // seems to be decoded incorrectly by the emulator (code field is not read, argument order flipped)
+            // seems to be decoded incorrectly by the emulator (code field is not read / argument order flipped)
             if (expectedOpcode in arrayOf("teq", "tge", "tgeu", "tlt", "tltu", "tne")) return
             if (expectedOpcode in arrayOf("teqi", "tgei", "tgeiu", "tlti", "tltiu", "tnei")) return
             // opcodes' operands not decoded by the emulator
-            if (expectedOpcode in arrayOf("ll", "sc", "synci")) return
+            if (expectedOpcode in arrayOf("ll", "sc", "synci", "mfc0", "mtc0", "rdpgpr", "mfmc0", "wrpgpr")) return
+            if (expectedOpcode in arrayOf("tlbp", "tlbr", "tlbwi", "tlbwr", "eret", "deret", "wait")) return
 
             if (expectedOperands.size != instr.operands.size) {
                 if (skipIgnoredOpcodes && expectedOpcode in ignoredOpcodes) return
@@ -156,6 +165,7 @@ private class AllegrexInstructionSpaceTest(instrDataDir: File) {
 
     private fun rewriteInstr(instr: MipsInstr): MipsInstr {
         // this should give an general idea which asm idioms needs to be supported
+        // not shown here: la (load address) idiom
         if (instr.matches(MipsOpcode.Addu, anyReg(), isReg(GprReg.Zero), isReg(GprReg.Zero))) {
             return MipsInstr(instr.addr, IdiomLi, instr.operands[0], ImmOperand(0))
         }

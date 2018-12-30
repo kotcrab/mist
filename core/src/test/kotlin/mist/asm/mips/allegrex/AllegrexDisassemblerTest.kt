@@ -457,12 +457,52 @@ class AllegrexDisassemblerTest {
     @Test
     fun testSynci() = testEncodedInstr(0x61F00CD) { verify(Synci, GprReg.S0, 0xCD) }
 
+    @Test
+    fun testDi() = testEncodedInstr(0x41706000) { verify(Di, GprReg.S0) }
+
+    @Test
+    fun testEi() = testEncodedInstr(0x41706020) { verify(Ei, GprReg.S0) }
+
+    @Test
+    fun testMfc0() = testEncodedInstr(0x40104001) { verify(Mfc0, GprReg.S0, GprReg.T0, 1) }
+
+    @Test
+    fun testMtc0() = testEncodedInstr(0x40904001) { verify(Mtc0, GprReg.S0, GprReg.T0, 1) }
+
+    @Test
+    fun testRdpgpr() = testEncodedInstr(0x41504000) { verify(Rdpgpr, GprReg.S0, GprReg.T0) }
+
+    @Test
+    fun testWrpgpr() = testEncodedInstr(0x41D04000) { verify(Wrpgpr, GprReg.S0, GprReg.T0) }
+
+    @Test
+    fun testTlbp() = testEncodedInstr(0x42000008) { verify(Tlbp) }
+
+    @Test
+    fun testTlbr() = testEncodedInstr(0x42000001) { verify(Tlbr) }
+
+    @Test
+    fun testTlbwi() = testEncodedInstr(0x42000002) { verify(Tlbwi) }
+
+    @Test
+    fun testTlbwr() = testEncodedInstr(0x42000006) { verify(Tlbwr) }
+
+    @Test
+    fun testDeret() = testEncodedInstr(0x4200001F) { verify(Deret) }
+
+    @Test
+    fun testEret() = testEncodedInstr(0x42000018) { verify(Eret) }
+
+    @Test
+    fun testWait() = testEncodedInstr(0x42000020) { verify(Wait) }
+
     private fun testLabel() = Label().apply { address = labelExpected }
 
     private fun Instr.verify(opcode: Opcode, op0: Any? = null, op1: Any? = null, op2: Any? = null, op3: Any? = null) {
         assertThat(this.opcode).isEqualTo(opcode)
-        // unfortunately there are some opcodes (e.g. madd, maddu, msub, msubu) that doesn't meet this assertion
-        //assertThat(this.opcode.use.intersect(opcode.modify.asIterable())).isEmpty()
+        if (opcode !in arrayOf(Madd, Maddu, Msub, Msubu)) {
+            assertThat(this.opcode.use.intersect(opcode.modify.asIterable())).isEmpty()
+        }
         val combinedRegisters = opcode.use.union(opcode.modify.asIterable()).toMutableList()
         val ops = arrayOf(op0, op1, op2, op3).mapIndexed { index, op -> Pair(this.operands.getOrNull(index), op) }
         ops.forEachIndexed { index, it ->

@@ -44,6 +44,7 @@ abstract class MipsDisassembler(private val srcProcessor: MipsProcessor, protect
                 opcode == MipsDefines.SPECIAL2 -> decoded.add(disasmSpecial2Instr(vAddr, instr, instrCount))
                 opcode == MipsDefines.SPECIAL3 -> decoded.add(disasmSpecial3Instr(vAddr, instr, instrCount))
                 opcode == MipsDefines.REGIMM -> decoded.add(disasmRegimmInstr(vAddr, instr, instrCount))
+                opcode == MipsDefines.COP0 -> decoded.add(disasmCop0Instr(vAddr, instr, instrCount))
                 opcode == MipsDefines.COP1 -> decoded.add(disasmCop1Instr(vAddr, instr, instrCount))
                 opcode == MipsDefines.COP2 -> decoded.add(disasmCop2Instr(vAddr, instr, instrCount))
                 opcode == MipsDefines.COP3_COP1X -> decoded.add(disasmCop3Instr(vAddr, instr, instrCount))
@@ -68,6 +69,9 @@ abstract class MipsDisassembler(private val srcProcessor: MipsProcessor, protect
         handleUnknownInstr(vAddr, instrCount)
 
     protected open fun disasmRegimmInstr(vAddr: Int, instr: Int, instrCount: Int): MipsInstr =
+        handleUnknownInstr(vAddr, instrCount)
+
+    protected open fun disasmCop0Instr(vAddr: Int, instr: Int, instrCount: Int): MipsInstr =
         handleUnknownInstr(vAddr, instrCount)
 
     protected open fun disasmCop1Instr(vAddr: Int, instr: Int, instrCount: Int): MipsInstr =

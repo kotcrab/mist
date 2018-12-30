@@ -1148,21 +1148,21 @@ abstract class MipsOpcode(
         modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
-    object Deret : MipsOpcode("deret", processors = mipsModern()) // EJTAG
+    object Deret : MipsOpcode("deret", processors = arrayOf(*mipsModern(), AllegrexProcessor)) // EJTAG
 
     object Di : MipsOpcode(
-        "di", processors = mipsModern(Mips32r2Processor),
+        "di", processors = arrayOf(*mipsModern(Mips32r2Processor), AllegrexProcessor),
         modify = arrayOf(Operand0Ref), use = arrayOf()
     )
 
     object Ehb : MipsOpcode("ehb", processors = mipsModern(Mips32r2Processor))
 
     object Ei : MipsOpcode(
-        "ei", processors = mipsModern(Mips32r2Processor),
+        "ei", processors = arrayOf(*mipsModern(Mips32r2Processor), AllegrexProcessor),
         modify = arrayOf(Operand0Ref), use = arrayOf()
     )
 
-    object Eret : MipsOpcode("eret", processors = mipsModern())
+    object Eret : MipsOpcode("eret", processors = arrayOf(*mipsModern(), AllegrexProcessor))
 
     object Eretnc : MipsOpcode("eretnc", processors = mipsModern(Mips32r5Processor))
 
@@ -1263,7 +1263,7 @@ abstract class MipsOpcode(
     )
 
     object Mfc0 : MipsOpcode(
-        "mfc0", processors = mipsModern(),
+        "mfc0", processors = arrayOf(*mipsModern(), AllegrexProcessor),
         modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
@@ -1337,7 +1337,7 @@ abstract class MipsOpcode(
     )
 
     object Mtc0 : MipsOpcode(
-        "mtc0", processors = mipsModern(),
+        "mtc0", processors = arrayOf(*mipsModern(), AllegrexProcessor),
         modify = arrayOf(Operand1Ref), use = arrayOf(Operand0Ref)
     )
 
@@ -1428,7 +1428,7 @@ abstract class MipsOpcode(
     )
 
     object Rdpgpr : MipsOpcode(
-        "rdpgpr", processors = mipsModern(Mips32r2Processor),
+        "rdpgpr", processors = arrayOf(*mipsModern(Mips32r2Processor), AllegrexProcessor),
         modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 
@@ -1507,14 +1507,14 @@ abstract class MipsOpcode(
     object Synci : MipsOpcode("synci", processors = arrayOf(*mipsModern(Mips32r2Processor), AllegrexProcessor))
     object Tlbinv : MipsOpcode("tlbinv", processors = mipsModern())
     object Tlbinvf : MipsOpcode("tlbinvf", processors = mipsModern())
-    object Tlbp : MipsOpcode("tlbp", processors = mipsModern())
-    object Tlbr : MipsOpcode("tlbr", processors = mipsModern())
-    object Tlbwi : MipsOpcode("tlbwi", processors = mipsModern())
-    object Tlbwr : MipsOpcode("tlbwr", processors = mipsModern())
-    object Wait : MipsOpcode("wait", processors = mipsModern())
+    object Tlbp : MipsOpcode("tlbp", processors = arrayOf(*mipsModern(), AllegrexProcessor))
+    object Tlbr : MipsOpcode("tlbr", processors = arrayOf(*mipsModern(), AllegrexProcessor))
+    object Tlbwi : MipsOpcode("tlbwi", processors = arrayOf(*mipsModern(), AllegrexProcessor))
+    object Tlbwr : MipsOpcode("tlbwr", processors = arrayOf(*mipsModern(), AllegrexProcessor))
+    object Wait : MipsOpcode("wait", processors = arrayOf(*mipsModern(), AllegrexProcessor))
 
     object Wrpgpr : MipsOpcode(
-        "wrpgpr", processors = mipsModern(Mips32r2Processor),
+        "wrpgpr", processors = arrayOf(*mipsModern(Mips32r2Processor), AllegrexProcessor),
         use = arrayOf(Operand0Ref, Operand1Ref)
     )
 

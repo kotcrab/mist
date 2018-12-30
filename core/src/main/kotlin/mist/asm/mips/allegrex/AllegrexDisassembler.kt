@@ -135,6 +135,43 @@ class AllegrexDisassembler(strict: Boolean = true) : MipsDisassembler(AllegrexPr
         }
     }
 
+    override fun disasmCop0Instr(vAddr: Int, instr: Int, instrCount: Int): MipsInstr {
+        val op = instr ushr 21 and 0x1F
+        val rt = RegOperand(GprReg.forId(instr ushr 16 and 0x1F))
+        val rd = RegOperand(GprReg.forId(instr ushr 11 and 0x1F))
+        val co = instr ushr 25 and 0b1
+        val tlop = instr and 0x3f
+        val ifStrict = StrictChecker()
+        ifStrict.register(ZeroRt) { rt.reg.id == 0 }
+        ifStrict.register(ZeroRd) { rd.reg.id == 0 }
+        return when {
+            op == 0b01_011 && instr ushr 5 and 0b1 == 0 && rd.reg.id == 0xC
+                    && ifStrict { instr and 0x1F == 0 } && ifStrict { instr ushr 6 and 0x1F == 0 } -> {
+                MipsInstr(vAddr, Di, rt)
+            }
+            op == 0b01_011 && instr ushr 5 and 0b1 == 1 && rd.reg.id == 0xC
+                    && ifStrict { instr and 0x1F == 0 } && ifStrict { instr ushr 6 and 0x1F == 0 } -> {
+                MipsInstr(vAddr, Ei, rt)
+            }
+            op == 0b00_000 && ifStrict { instr ushr 3 and 0xFF == 0 } -> {
+                MipsInstr(vAddr, Mfc0, rt, rd, ImmOperand(instr and 0b111))
+            }
+            op == 0b00_100 && ifStrict { instr ushr 3 and 0xFF == 0 } -> {
+                MipsInstr(vAddr, Mtc0, rt, rd, ImmOperand(instr and 0b111))
+            }
+            co == 1 && tlop == 0b001_000 && ifStrict { instr ushr 6 and 0x7FFFF == 0 } -> MipsInstr(vAddr, Tlbp)
+            co == 1 && tlop == 0b000_001 && ifStrict { instr ushr 6 and 0x7FFFF == 0 } -> MipsInstr(vAddr, Tlbr)
+            co == 1 && tlop == 0b000_010 && ifStrict { instr ushr 6 and 0x7FFFF == 0 } -> MipsInstr(vAddr, Tlbwi)
+            co == 1 && tlop == 0b000_110 && ifStrict { instr ushr 6 and 0x7FFFF == 0 } -> MipsInstr(vAddr, Tlbwr)
+            co == 1 && tlop == 0b011_111 && ifStrict { instr ushr 6 and 0x7FFFF == 0 } -> MipsInstr(vAddr, Deret)
+            co == 1 && tlop == 0b011_000 && ifStrict { instr ushr 6 and 0x7FFFF == 0 } -> MipsInstr(vAddr, Eret)
+            co == 1 && tlop == 0b100_000 && ifStrict { instr ushr 6 and 0x7FFFF == 0 } -> MipsInstr(vAddr, Wait)
+            op == 0b01_010 && ifStrict { instr and 0xFFF == 0 } -> MipsInstr(vAddr, Rdpgpr, rt, rd)
+            op == 0b01_110 && ifStrict { instr and 0xFFF == 0 } -> MipsInstr(vAddr, Wrpgpr, rt, rd)
+            else -> handleUnknownInstr(vAddr, instrCount)
+        }
+    }
+
     override fun disasmCop1Instr(vAddr: Int, instr: Int, instrCount: Int): MipsInstr {
         // only for FPU R instruction
         val rt = RegOperand(GprReg.forId(instr ushr 16 and 0x1F))
@@ -159,7 +196,8 @@ class AllegrexDisassembler(strict: Boolean = true) : MipsDisassembler(AllegrexPr
                 val branchTarget = ImmOperand(vAddr + 0x4 + branchImm * 0x4)
                 val ndtf = instr ushr 16 and 0b11
                 val cc = RegOperand(FpuReg.ccForId(instr ushr 18 and 0b111))
-                if (strict && cc.reg !is FpuReg.Cc0) {
+                // note: strict mode enabled is not checked here on purpose
+                if (cc.reg !is FpuReg.Cc0) {
                     throw DisassemblerException("Allegrex can't use non 0 condition code (cc)")
                 }
                 when (ndtf) {
