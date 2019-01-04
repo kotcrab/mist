@@ -22,7 +22,7 @@ import mist.asm.Reg
 
 /** @author Kotcrab */
 
-sealed class GprReg(name: String, id: Int) : Reg(name, id) {
+sealed class GprReg(name: String, id: Int, bitsSize: Int = 32) : Reg(name, id, bitsSize) {
     companion object {
         // warning: "by lazy" here is workaround for KT-8970
         private val gprRegs by lazy {

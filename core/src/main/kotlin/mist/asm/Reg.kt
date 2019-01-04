@@ -20,7 +20,7 @@ package mist.asm
 
 /** @author Kotcrab */
 
-abstract class Reg(val name: String, val id: Int) {
+abstract class Reg(val name: String, val id: Int, val bitsSize: Int) {
     protected companion object {
         fun <T : Reg> forId(regs: Array<T>, id: Int): T {
             if (id == -1) throw DisassemblerException("can't return directly inaccessible register")

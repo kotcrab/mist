@@ -21,7 +21,7 @@ package mist.asm
 /** @author Kotcrab */
 
 class IdiomMatcher<Instruction : Instr, State, Result>(
-    private val maxOffset: Int,
+    private val maxInstrOffset: Int,
     private val stateProvider: () -> State,
     private val resultTransform: (relInstrs: List<Instruction>, State) -> Result,
     private val phases: Array<IdiomPhase<Instruction, State>>
@@ -37,7 +37,7 @@ class IdiomMatcher<Instruction : Instr, State, Result>(
         val relInstrs: MutableList<Instruction> = mutableListOf()
         var phaseIdx = 0
         if (phases.isEmpty()) return Pair(true, relInstrs)
-        repeat(maxOffset) { offset ->
+        repeat(maxInstrOffset) { offset ->
             val instrIdx = startIdx - offset
             if (instrIdx < 0) return Pair(false, relInstrs)
             val instr = instrs[instrIdx]

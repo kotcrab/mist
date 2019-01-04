@@ -24,7 +24,7 @@ object MipsDefines {
     const val SPECIAL = 0b000_000
     const val SPECIAL2 = 0b011_100
     const val SPECIAL3 = 0b011_111
-    const val REGIMM = 1
+    const val REGIMM = 0b000_001
     const val COP0 = 0b010_000
     const val COP1 = 0b010_001
     const val COP2 = 0b010_010

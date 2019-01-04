@@ -51,14 +51,16 @@ private class AllegrexInstructionSpaceTest(instrDataDir: File) {
     private val disasm = AllegrexDisassembler(strict = false)
     private val def = FunctionDef("Test", 0x8804000, 4)
     private val invalidInstr = "__invalid"
-    private val skipIgnoredOpcodes = false
+    private val singleThreaded = false
+    private val ignoreRepeatedOpcodes = true
     private val ignoredOpcodes = Collections.synchronizedSet(mutableSetOf<String>())
 
     init {
-        val threads = Runtime.getRuntime().availableProcessors()
+        val threads = if (singleThreaded) 1 else Runtime.getRuntime().availableProcessors()
         val ctx = newFixedThreadPoolContext(threads, "TestPool")
         val jobs = instrDataDir.listFiles()
             .filter { file -> file.extension == "txt" }
+            .filter { file -> file.nameWithoutExtension != "104" } // 0x68 is emuhack space, ignoring it
             .sortedBy { file -> file.nameWithoutExtension.toInt() }
             .map { file -> GlobalScope.launch(ctx) { processFile(file) } }
         runBlocking {
@@ -76,27 +78,43 @@ private class AllegrexInstructionSpaceTest(instrDataDir: File) {
                 .replace("* jitblock: (invalid emuhack)", invalidInstr)
                 .replace("* (invalid): (invalid emuhack)", invalidInstr)
                 .replace("* replacement: (invalid emuhack)", invalidInstr)
+                .replace("vcrs ERROR", invalidInstr)
+                .replace("BADVTFM", invalidInstr)
                 .replace("syscall \t", "syscall ")
                 .split("; ", limit = 2)
             val encodedInstr = parts[0].toLong(16).toInt()
             val expectedInstr = parts[1]
             val instrParts = expectedInstr.split(" ", limit = 2)
-            val operands = if (instrParts.size == 1) emptyList() else instrParts[1].split(",")
-            val parsedOperands = operands.flatMap { op ->
-                val memAccess = op.indexOf("(")
-                if (memAccess == -1) {
-                    return@flatMap listOf(op)
-                } else {
-                    // parse memory access (remove parenthesis and flip operand order)
-                    return@flatMap op
-                        .split("(")
-                        .map { it.replace(")", "") }
-                        .reversed()
+            val expectedOpcode = instrParts[0]
+            val operands = when {
+                instrParts.size == 1 -> emptyList()
+                expectedOpcode in arrayOf("vpfxs", "vpfxt", "vpfxd") -> listOf(instrParts[1].replace(",", ", "))
+                expectedOpcode.startsWith("vrot") -> {
+                    val p = instrParts[1].split(",", limit = 3).toMutableList()
+                    p[2] = p[2].replace(",", ", ")
+                    p
                 }
+                else -> instrParts[1].split(",")
             }
+            val parsedOperands = operands
+                .map { op ->
+                    if (op == "(interlock)") "S733" else op
+                }
+                .flatMap { op ->
+                    val memAccess = op.indexOf("(")
+                    if (memAccess == -1 || expectedOpcode.startsWith("vcst.")) {
+                        return@flatMap listOf(op)
+                    } else {
+                        // parse memory access (remove parenthesis and flip operand order)
+                        return@flatMap op
+                            .split("(")
+                            .map { it.replace(")", "") }
+                            .reversed()
+                    }
+                }
             processAsmInstruction(
                 encodedInstr,
-                expectedOpcode = instrParts[0],
+                expectedOpcode,
                 expectedOperands = parsedOperands
             )
         }
@@ -104,8 +122,15 @@ private class AllegrexInstructionSpaceTest(instrDataDir: File) {
 
     private fun processAsmInstruction(encodedInstr: Int, expectedOpcode: String, expectedOperands: List<String>) {
         // no idea about those, not present in any available docs, ignored
-        // mfmc0 is actually EI / DI
+        // mfmc0 is actually implemented as EI / DI
         if (expectedOpcode in arrayOf("iack", "dis.int", "mfmc0")) return
+        // VFPU related but unknown encoding and implementation
+        if (expectedOpcode in arrayOf("mfc2", "cfc2", "mtc2", "ctc2", "???.s", "???.p")) return
+        if (expectedOpcode in arrayOf("vf2h.s", "vf2h.t", "vh2f.t", "vh2f.q", "vi2c.s", "vi2c.t")) return
+        if (expectedOpcode in arrayOf("vi2s.s", "vi2s.t", "vi2us.s", "vi2us.t", "vcmov")) return
+        if (expectedOpcode in arrayOf("vt4444.s", "vt4444.t", "vt5551.s", "vt5551.t", "vt5650.s", "vt5650.t")) return
+        // don't know why this is using different encoding beyond CC 0..5
+        if (expectedOpcode.startsWith("vcmov") && expectedOperands.contains("CC[...]")) return
 
         val expectedInstrTxt = "$expectedOpcode ${expectedOperands.joinToString()}"
         try {
@@ -125,47 +150,58 @@ private class AllegrexInstructionSpaceTest(instrDataDir: File) {
             }
 
             if (opcode != expectedOpcode) {
-                if (skipIgnoredOpcodes && expectedOpcode in ignoredOpcodes) return
+                if (ignoreRepeatedOpcodes && expectedOpcode in ignoredOpcodes) return
                 println("${encodedInstr.toHex()}: invalid opcode $instrInvalidCompare")
-                if (skipIgnoredOpcodes) ignoredOpcodes.add(expectedOpcode)
+                if (ignoreRepeatedOpcodes) ignoredOpcodes.add(expectedOpcode)
                 return
             }
             // no need to verify args of those
-            if (expectedOpcode in arrayOf("syscall", "break", "sync")) return
+            if (expectedOpcode in arrayOf("syscall", "break", "sync", "cache")) return
             // seems to be decoded incorrectly by the emulator (code field is not read / argument order flipped)
             if (expectedOpcode in arrayOf("teq", "tge", "tgeu", "tlt", "tltu", "tne")) return
             if (expectedOpcode in arrayOf("teqi", "tgei", "tgeiu", "tlti", "tltiu", "tnei")) return
             // opcodes' operands not decoded by the emulator
             if (expectedOpcode in arrayOf("ll", "sc", "synci", "mfc0", "mtc0", "rdpgpr", "mfmc0", "wrpgpr")) return
             if (expectedOpcode in arrayOf("tlbp", "tlbr", "tlbwi", "tlbwr", "eret", "deret", "wait")) return
+            if (expectedOpcode in arrayOf("halt", "mfic", "mtic", "rdhwr")) return
+            if (expectedOpcode in arrayOf("vsbz", "vlgb")) return
+            // first operand is probably wrong (https://github.com/hrydgard/ppsspp/blob/7acb051cae389eec51299d7d50c61fe6f8b44b70/Core/MIPS/MIPSDisVFPU.cpp#L348)
+            if (expectedOpcode in arrayOf("vcrs.t")) return
 
             if (expectedOperands.size != instr.operands.size) {
-                if (skipIgnoredOpcodes && expectedOpcode in ignoredOpcodes) return
+                if (ignoreRepeatedOpcodes && expectedOpcode in ignoredOpcodes) return
                 println("${encodedInstr.toHex()}: invalid operand count $instrInvalidCompare")
-                if (skipIgnoredOpcodes) ignoredOpcodes.add(expectedOpcode)
+                if (ignoreRepeatedOpcodes) ignoredOpcodes.add(expectedOpcode)
                 return
             }
             instr.operands.forEachIndexed opCompare@{ idx, operand ->
-                if (skipIgnoredOpcodes && expectedOpcode in ignoredOpcodes) return
+                if (ignoreRepeatedOpcodes && expectedOpcode in ignoredOpcodes) return
                 if (operand.toString() == expectedOperands[idx]) return@opCompare
                 try {
-                    if (operand is ImmOperand && operand.value == Integer.decode(expectedOperands[idx])) return@opCompare
+                    val expectedOp = expectedOperands[idx].replace("\t", "")
+                    if (operand is ImmOperand && operand.value == Integer.decode(expectedOp)) return@opCompare
+                    if (operand is FloatOperand) {
+                        if (operand.value.isNaN() && expectedOp == "nan") return@opCompare
+                        if (operand.value.isInfinite() && expectedOp == "inf") return@opCompare
+                        if (Math.abs(operand.value - expectedOp.toFloat()) < 1e-3) return@opCompare
+                    }
                 } catch (ignored: NumberFormatException) {
                 }
                 println("${encodedInstr.toHex()}: invalid operand at index $idx $instrInvalidCompare")
-                if (skipIgnoredOpcodes) ignoredOpcodes.add(expectedOpcode)
+                if (ignoreRepeatedOpcodes) ignoredOpcodes.add(expectedOpcode)
+                return
             }
         } catch (e: DisassemblerException) {
-            if (skipIgnoredOpcodes && expectedOpcode in ignoredOpcodes) return
+            if (ignoreRepeatedOpcodes && expectedOpcode in ignoredOpcodes) return
             if (expectedOpcode == invalidInstr) return
             println("${encodedInstr.toHex()}: disassembler exception, expected '$expectedInstrTxt'")
-            if (skipIgnoredOpcodes) ignoredOpcodes.add(expectedOpcode)
+            if (ignoreRepeatedOpcodes) ignoredOpcodes.add(expectedOpcode)
         }
     }
 
     private fun rewriteInstr(instr: MipsInstr): MipsInstr {
         // this should give an general idea which asm idioms needs to be supported
-        // not shown here: la (load address) idiom
+        // not shown here: la (load address) idiom, uses 2 instructions
         if (instr.matches(MipsOpcode.Addu, anyReg(), isReg(GprReg.Zero), isReg(GprReg.Zero))) {
             return MipsInstr(instr.addr, IdiomLi, instr.operands[0], ImmOperand(0))
         }

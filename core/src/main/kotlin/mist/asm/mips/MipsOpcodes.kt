@@ -1101,7 +1101,7 @@ abstract class MipsOpcode(
     )
 
     object Cache : MipsOpcode(
-        "cache", processors = mipsModern(),
+        "cache", processors = arrayOf(*mipsModern(), AllegrexProcessor),
         use = arrayOf(Operand1Ref)
     )
 
@@ -1423,7 +1423,7 @@ abstract class MipsOpcode(
     )
 
     object Rdhwr : MipsOpcode(
-        "rdhwr", processors = mipsModern(Mips32r2Processor),
+        "rdhwr", processors = arrayOf(*mipsModern(Mips32r2Processor), AllegrexProcessor),
         modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref)
     )
 

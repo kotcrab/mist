@@ -24,8 +24,8 @@ import org.junit.jupiter.api.Test
 /** @author Kotcrab */
 
 class InstrTest {
-    object TestReg : Reg("test", 0)
-    object TestReg2 : Reg("test2", 1)
+    object TestReg : Reg("test", 0, 32)
+    object TestReg2 : Reg("test2", 1, 32)
     object TestProcessor : Processor("test")
     object TestOpcode : Opcode(
         "test",

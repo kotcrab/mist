@@ -16,9 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// TODO should not be necessary after implementing all VFPU disassembly
-@file:Suppress("unused")
-
 package mist.asm.mips.allegrex
 
 import mist.asm.*
@@ -28,6 +25,8 @@ import mist.asm.mips.MipsOpcode
 
 /** @author Kotcrab */
 
+// These are likely to be incomplete and specify wrong flags, used and modified operands
+
 abstract class AllegrexOpcode(
     mnemonic: String,
     flags: Array<out OpcodeFlag> = emptyArray(),
@@ -36,9 +35,12 @@ abstract class AllegrexOpcode(
 ) : MipsOpcode(mnemonic, processors = arrayOf(AllegrexProcessor), flags = flags, modify = modify, use = use) {
     object Max : AllegrexOpcode("max", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
     object Min : AllegrexOpcode("min", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
+    object Halt : AllegrexOpcode("halt")
+    object Mfic : AllegrexOpcode("mfic", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object Mtic : AllegrexOpcode("mtic", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object Wsbw : AllegrexOpcode("wsbw") // TODO wrong modify / use
+    object Bitrev : AllegrexOpcode("bitrev") // TODO wrong modify / use
 }
-
-// These are likely to be incomplete and specify wrong flags, used and modified operands
 
 abstract class VfpuOpcode(
     mnemonic: String,
@@ -50,28 +52,52 @@ abstract class VfpuOpcode(
         "bvf",
         flags = arrayOf(Branch, DelaySlot),
         modify = arrayOf(OperandRegRef(GprReg.Pc)),
-        use = arrayOf(OperandRegRef(VfpuReg.Cc))
+        use = arrayOf(Operand0Ref)
     )
 
     object Bvfl : VfpuOpcode(
         "bvfl",
         flags = arrayOf(Branch, BranchLikely, DelaySlot),
         modify = arrayOf(OperandRegRef(GprReg.Pc)),
-        use = arrayOf(OperandRegRef(VfpuReg.Cc))
+        use = arrayOf(Operand0Ref)
     )
 
     object Bvt : VfpuOpcode(
         "bvt",
         flags = arrayOf(Branch, DelaySlot),
         modify = arrayOf(OperandRegRef(GprReg.Pc)),
-        use = arrayOf(OperandRegRef(VfpuReg.Cc))
+        use = arrayOf(Operand0Ref)
     )
 
     object Bvtl : VfpuOpcode(
         "bvtl",
         flags = arrayOf(Branch, BranchLikely, DelaySlot),
         modify = arrayOf(OperandRegRef(GprReg.Pc)),
-        use = arrayOf(OperandRegRef(VfpuReg.Cc))
+        use = arrayOf(Operand0Ref)
+    )
+
+    object Mtv : VfpuOpcode(
+        "mtv",
+        modify = arrayOf(Operand1Ref),
+        use = arrayOf(Operand0Ref)
+    )
+
+    object Mtvc : VfpuOpcode(
+        "mtvc",
+        modify = arrayOf(Operand1Ref),
+        use = arrayOf(Operand0Ref)
+    )
+
+    object Mfv : VfpuOpcode(
+        "mfv",
+        modify = arrayOf(Operand0Ref),
+        use = arrayOf(Operand1Ref)
+    )
+
+    object Mfvc : VfpuOpcode(
+        "mfvc",
+        modify = arrayOf(Operand0Ref),
+        use = arrayOf(Operand1Ref)
     )
 
     object LvS : VfpuOpcode(
@@ -126,28 +152,12 @@ abstract class VfpuOpcode(
         use = arrayOf(Operand0Ref, Operand1Ref)
     )
 
-    object Mtv : VfpuOpcode(
-        "mtv",
-        modify = arrayOf(Operand1Ref),
-        use = arrayOf(Operand0Ref)
-    )
-
-    object Mfv : VfpuOpcode(
-        "mfv",
-        modify = arrayOf(Operand0Ref),
-        use = arrayOf(Operand1Ref)
-    )
-
-    object Vmfvc : VfpuOpcode("vmfvc", use = arrayOf(Operand0Ref))
-    object Vmtvc : VfpuOpcode("vmtvc", modify = arrayOf(Operand0Ref))
-
-    object Vflush : VfpuOpcode("vflush")
-
     object VaddS : VfpuOpcode("vadd.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
     object VaddP : VfpuOpcode("vadd.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
     object VaddT : VfpuOpcode("vadd.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
     object VaddQ : VfpuOpcode("vadd.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
 
+    object VsclS : VfpuOpcode("vscl.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
     object VsclP : VfpuOpcode("vscl.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
     object VsclT : VfpuOpcode("vscl.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
     object VsclQ : VfpuOpcode("vscl.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
@@ -156,6 +166,11 @@ abstract class VfpuOpcode(
     object VsubP : VfpuOpcode("vsub.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
     object VsubT : VfpuOpcode("vsub.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
     object VsubQ : VfpuOpcode("vsub.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
+
+    object VsbnS : VfpuOpcode("vsbn.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
+    object VsbnP : VfpuOpcode("vsbn.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
+    object VsbnT : VfpuOpcode("vsbn.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
+    object VsbnQ : VfpuOpcode("vsbn.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
 
     object VdivS : VfpuOpcode("vdiv.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
     object VdivP : VfpuOpcode("vdiv.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
@@ -167,14 +182,29 @@ abstract class VfpuOpcode(
     object VmulT : VfpuOpcode("vmul.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
     object VmulQ : VfpuOpcode("vmul.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
 
-    object VdotT : VfpuOpcode("vdot.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
+    object VdotS : VfpuOpcode("vdot.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
     object VdotP : VfpuOpcode("vdot.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
+    object VdotT : VfpuOpcode("vdot.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
     object VdotQ : VfpuOpcode("vdot.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
 
-    object VhdpT : VfpuOpcode("vhdp.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
+    object VhdpS : VfpuOpcode("vhdp.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
     object VhdpP : VfpuOpcode("vhdp.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
+    object VhdpT : VfpuOpcode("vhdp.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
     object VhdpQ : VfpuOpcode("vhdp.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
 
+    object VcrsT : VfpuOpcode("vcrs.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
+
+    object VdetS : VfpuOpcode("vdet.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
+    object VdetP : VfpuOpcode("vdet.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
+    object VdetT : VfpuOpcode("vdet.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
+    object VdetQ : VfpuOpcode("vdet.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
+
+    object Vmfvc : VfpuOpcode("vmfvc", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object Vmtvc : VfpuOpcode("vmtvc", modify = arrayOf(Operand1Ref), use = arrayOf(Operand0Ref))
+
+    object Vflush : VfpuOpcode("vflush")
+
+    object VidtS : VfpuOpcode("vidt.s", modify = arrayOf(Operand0Ref))
     object VidtP : VfpuOpcode("vidt.p", modify = arrayOf(Operand0Ref))
     object VidtT : VfpuOpcode("vidt.t", modify = arrayOf(Operand0Ref))
     object VidtQ : VfpuOpcode("vidt.q", modify = arrayOf(Operand0Ref))
@@ -204,25 +234,19 @@ abstract class VfpuOpcode(
     object VmaxT : VfpuOpcode("vmax.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
     object VmaxQ : VfpuOpcode("vmax.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
 
+    object Vhtfm1S : VfpuOpcode("vhtfm1.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
+
     object Vtfm2P : VfpuOpcode("vtfm2.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
     object Vtfm3T : VfpuOpcode("vtfm3.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
     object Vtfm4Q : VfpuOpcode("vtfm4.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
 
     object Vhtfm2P : VfpuOpcode("vhtfm2.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
     object Vhtfm3T : VfpuOpcode("vhtfm3.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
-    object Vhtfm4Q : VfpuOpcode("vhtfm4.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
 
-    object VcmpS :
-        VfpuOpcode("vcmp.s", modify = arrayOf(OperandRegRef(VfpuReg.Cc)), use = arrayOf(Operand1Ref, Operand2Ref))
-
-    object VcmpP :
-        VfpuOpcode("vcmp.p", modify = arrayOf(OperandRegRef(VfpuReg.Cc)), use = arrayOf(Operand1Ref, Operand2Ref))
-
-    object VcmpT :
-        VfpuOpcode("vcmp.t", modify = arrayOf(OperandRegRef(VfpuReg.Cc)), use = arrayOf(Operand1Ref, Operand2Ref))
-
-    object VcmpQ :
-        VfpuOpcode("vcmp.q", modify = arrayOf(OperandRegRef(VfpuReg.Cc)), use = arrayOf(Operand1Ref, Operand2Ref))
+    object VcmpS : VfpuOpcode("vcmp.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object VcmpP : VfpuOpcode("vcmp.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object VcmpT : VfpuOpcode("vcmp.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object VcmpQ : VfpuOpcode("vcmp.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
 
     object VcstS : VfpuOpcode("vcst.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
     object VcstP : VfpuOpcode("vcst.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
@@ -244,8 +268,12 @@ abstract class VfpuOpcode(
     object VsltT : VfpuOpcode("vslt.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
     object VsltQ : VfpuOpcode("vslt.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
 
+    object Vi2ucS : VfpuOpcode("vi2uc.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object Vi2ucP : VfpuOpcode("vi2uc.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object Vi2ucT : VfpuOpcode("vi2uc.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
     object Vi2ucQ : VfpuOpcode("vi2uc.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
 
+    object Vi2cP : VfpuOpcode("vi2c.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
     object Vi2cQ : VfpuOpcode("vi2c.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
 
     object Vi2usP : VfpuOpcode("vi2us.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
@@ -352,13 +380,34 @@ abstract class VfpuOpcode(
     object Vf2hP : VfpuOpcode("vf2h.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
     object Vf2hQ : VfpuOpcode("vf2h.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
 
+    object Vsrt1S : VfpuOpcode("vsrt1.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object Vsrt1P : VfpuOpcode("vsrt1.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object Vsrt1T : VfpuOpcode("vsrt1.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
     object Vsrt1Q : VfpuOpcode("vsrt1.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+
+    object Vsrt2S : VfpuOpcode("vsrt2.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object Vsrt2P : VfpuOpcode("vsrt2.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object Vsrt2T : VfpuOpcode("vsrt2.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
     object Vsrt2Q : VfpuOpcode("vsrt2.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+
+    object Vsrt3S : VfpuOpcode("vsrt3.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object Vsrt3P : VfpuOpcode("vsrt3.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object Vsrt3T : VfpuOpcode("vsrt3.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
     object Vsrt3Q : VfpuOpcode("vsrt3.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+
+    object Vsrt4S : VfpuOpcode("vsrt4.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object Vsrt4P : VfpuOpcode("vsrt4.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object Vsrt4T : VfpuOpcode("vsrt4.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
     object Vsrt4Q : VfpuOpcode("vsrt4.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
 
+    object Vbfy1S : VfpuOpcode("vbfy1.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
     object Vbfy1P : VfpuOpcode("vbfy1.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object Vbfy1T : VfpuOpcode("vbfy1.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
     object Vbfy1Q : VfpuOpcode("vbfy1.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+
+    object Vbfy2S : VfpuOpcode("vbfy2.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object Vbfy2P : VfpuOpcode("vbfy2.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object Vbfy2T : VfpuOpcode("vbfy2.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
     object Vbfy2Q : VfpuOpcode("vbfy2.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
 
     object VocpS : VfpuOpcode("vocp.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
@@ -366,10 +415,12 @@ abstract class VfpuOpcode(
     object VocpT : VfpuOpcode("vocp.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
     object VocpQ : VfpuOpcode("vocp.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
 
+    object VfadS : VfpuOpcode("vfad.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
     object VfadP : VfpuOpcode("vfad.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
     object VfadT : VfpuOpcode("vfad.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
     object VfadQ : VfpuOpcode("vfad.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
 
+    object VavgS : VfpuOpcode("vavg.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
     object VavgP : VfpuOpcode("vavg.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
     object VavgT : VfpuOpcode("vavg.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
     object VavgQ : VfpuOpcode("vavg.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
@@ -399,11 +450,6 @@ abstract class VfpuOpcode(
     object Vi2fT : VfpuOpcode("vi2f.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
     object Vi2fQ : VfpuOpcode("vi2f.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
 
-    object VcmovS : VfpuOpcode("vcmov.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
-    object VcmovP : VfpuOpcode("vcmov.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
-    object VcmovT : VfpuOpcode("vcmov.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
-    object VcmovQ : VfpuOpcode("vcmov.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
-
     object VcmovtS : VfpuOpcode("vcmovt.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
     object VcmovtP : VfpuOpcode("vcmovt.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
     object VcmovtT : VfpuOpcode("vcmovt.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
@@ -414,68 +460,99 @@ abstract class VfpuOpcode(
     object VcmovfT : VfpuOpcode("vcmovf.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
     object VcmovfQ : VfpuOpcode("vcmovf.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
 
+    object VwbnSS : VfpuOpcode("vwbn.s.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object VwbnSP : VfpuOpcode("vwbn.s.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object VwbnST : VfpuOpcode("vwbn.s.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object VwbnSQ : VfpuOpcode("vwbn.s.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+
+    object VmmulS : VfpuOpcode("vmmul.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
     object VmmulP : VfpuOpcode("vmmul.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
     object VmmulT : VfpuOpcode("vmmul.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
     object VmmulQ : VfpuOpcode("vmmul.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
 
+    object VmsclS : VfpuOpcode("vmscl.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
     object VmsclP : VfpuOpcode("vmscl.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
     object VmsclT : VfpuOpcode("vmscl.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
     object VmsclQ : VfpuOpcode("vmscl.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
 
     object VqmulQ : VfpuOpcode("vqmul.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
 
+    object VmmovS : VfpuOpcode("vmmov.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
     object VmmovP : VfpuOpcode("vmmov.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
     object VmmovT : VfpuOpcode("vmmov.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
     object VmmovQ : VfpuOpcode("vmmov.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
 
+    object VmidtS : VfpuOpcode("vmidt.s", modify = arrayOf(Operand0Ref))
     object VmidtP : VfpuOpcode("vmidt.p", modify = arrayOf(Operand0Ref))
     object VmidtT : VfpuOpcode("vmidt.t", modify = arrayOf(Operand0Ref))
     object VmidtQ : VfpuOpcode("vmidt.q", modify = arrayOf(Operand0Ref))
 
+    object VmzeroS : VfpuOpcode("vmzero.s", modify = arrayOf(Operand0Ref))
     object VmzeroP : VfpuOpcode("vmzero.p", modify = arrayOf(Operand0Ref))
     object VmzeroT : VfpuOpcode("vmzero.t", modify = arrayOf(Operand0Ref))
     object VmzeroQ : VfpuOpcode("vmzero.q", modify = arrayOf(Operand0Ref))
 
+    object VmoneS : VfpuOpcode("vmone.s", modify = arrayOf(Operand0Ref))
     object VmoneP : VfpuOpcode("vmone.p", modify = arrayOf(Operand0Ref))
     object VmoneT : VfpuOpcode("vmone.t", modify = arrayOf(Operand0Ref))
     object VmoneQ : VfpuOpcode("vmone.q", modify = arrayOf(Operand0Ref))
 
+    object VrotS : VfpuOpcode("vrot.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
     object VrotP : VfpuOpcode("vrot.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
     object VrotT : VfpuOpcode("vrot.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
     object VrotQ : VfpuOpcode("vrot.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
 
+    object Vt4444P : VfpuOpcode("vt4444.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
     object Vt4444Q : VfpuOpcode("vt4444.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object Vt5551P : VfpuOpcode("vt5551.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
     object Vt5551Q : VfpuOpcode("vt5551.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object Vt5650P : VfpuOpcode("vt5650.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
     object Vt5650Q : VfpuOpcode("vt5650.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
 
-    object VcrsT : VfpuOpcode("vcrs.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
+
     object VcrspT : VfpuOpcode("vcrsp.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
 
-    object VdetP : VfpuOpcode("vdet.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
 
     object Vus2iS : VfpuOpcode("vus2i.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
     object Vus2iP : VfpuOpcode("vus2i.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object Vus2iT : VfpuOpcode("vus2i.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object Vus2iQ : VfpuOpcode("vus2i.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
 
     object Vs2iS : VfpuOpcode("vs2i.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
     object Vs2iP : VfpuOpcode("vs2i.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object Vs2iT : VfpuOpcode("vs2i.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object Vs2iQ : VfpuOpcode("vs2i.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
 
     object Vh2fS : VfpuOpcode("vh2f.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
     object Vh2fP : VfpuOpcode("vh2f.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
 
     object VsocpS : VfpuOpcode("vsocp.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
     object VsocpP : VfpuOpcode("vsocp.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object VsocpT : VfpuOpcode("vsocp.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object VsocpQ : VfpuOpcode("vsocp.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
 
     object Vuc2iS : VfpuOpcode("vuc2i.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object Vuc2iP : VfpuOpcode("vuc2i.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object Vuc2iT : VfpuOpcode("vuc2i.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object Vuc2iQ : VfpuOpcode("vuc2i.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+
     object Vc2iS : VfpuOpcode("vc2i.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object Vc2iP : VfpuOpcode("vc2i.p", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object Vc2iT : VfpuOpcode("vc2i.t", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object Vc2iQ : VfpuOpcode("vc2i.q", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+
     object VrndsS : VfpuOpcode("vrnds.s")
-    object VsbzS : VfpuOpcode("vsbz.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
-    object VsbnS : VfpuOpcode("vsbn.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref, Operand2Ref))
-    object VlgbS : VfpuOpcode("vlgb.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
-    object VwbnS : VfpuOpcode("vwbn.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object VrndsP : VfpuOpcode("vrnds.p")
+    object VrndsT : VfpuOpcode("vrnds.t")
+    object VrndsQ : VfpuOpcode("vrnds.q")
+
+    object Vsbz : VfpuOpcode("vsbz", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+    object Vlgb : VfpuOpcode("vlgb", modify = arrayOf(Operand0Ref), use = arrayOf(Operand1Ref))
+
     object ViimS : VfpuOpcode("viim.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand0Ref))
     object VfimS : VfpuOpcode("vfim.s", modify = arrayOf(Operand0Ref), use = arrayOf(Operand0Ref))
 
-    object VpfxsS : VfpuOpcode("vpfxs")
-    object VpfxtS : VfpuOpcode("vpfxt")
-    object VpfxdS : VfpuOpcode("vpfxd")
+    object Vpfxs : VfpuOpcode("vpfxs")
+    object Vpfxt : VfpuOpcode("vpfxt")
+    object Vpfxd : VfpuOpcode("vpfxd")
 }

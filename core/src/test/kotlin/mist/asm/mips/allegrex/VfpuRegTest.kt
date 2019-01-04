@@ -166,10 +166,12 @@ class VfpuRegTest {
     @Test
     fun `values contains special purpose fpu registers`() {
         val values = VfpuReg.values()
-        assertThat(values.contains(VfpuReg.Pfxs)).isTrue()
-        assertThat(values.contains(VfpuReg.Pfxt)).isTrue()
-        assertThat(values.contains(VfpuReg.Pfxd)).isTrue()
+        assertThat(values.contains(VfpuReg.Spfx)).isTrue()
+        assertThat(values.contains(VfpuReg.Tpfx)).isTrue()
+        assertThat(values.contains(VfpuReg.Dpfx)).isTrue()
         assertThat(values.contains(VfpuReg.Cc)).isTrue()
+        assertThat(values.contains(VfpuReg.Rsv5)).isTrue()
+        assertThat(values.contains(VfpuReg.Rsv6)).isTrue()
         assertThat(values.contains(VfpuReg.Rev)).isTrue()
         assertThat(values.contains(VfpuReg.Rcx0)).isTrue()
         assertThat(values.contains(VfpuReg.Rcx1)).isTrue()

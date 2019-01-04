@@ -25,12 +25,15 @@ import kio.util.toSignedHex
 
 abstract class Operand
 
-class RegOperand(val reg: Reg) : Operand() {
+// TODO verify passed arguments + unit tests
+class RegOperand(val reg: Reg, val name: String = reg.name, val bitsStart: Int = 0, val bitsSize: Int = reg.bitsSize) :
+    Operand() {
     override fun toString(): String {
-        return reg.name
+        return name
     }
 }
 
+// TODO rename ot I32Operand?
 class ImmOperand(val value: Int, val hintUnsigned: Boolean = false) : Operand() {
     fun toHintedUnsigned(): ImmOperand {
         return ImmOperand(value, true)
@@ -42,5 +45,11 @@ class ImmOperand(val value: Int, val hintUnsigned: Boolean = false) : Operand() 
         } else {
             value.toSignedHex()
         }
+    }
+}
+
+class FloatOperand(val value: Float) : Operand() {
+    override fun toString(): String {
+        return value.toString()
     }
 }

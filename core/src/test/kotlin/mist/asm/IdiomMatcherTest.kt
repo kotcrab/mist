@@ -34,7 +34,7 @@ class IdiomMatcherTest {
     }
 
     @Test
-    fun `respects max offset`() {
+    fun `respects max instruction offset`() {
         val matcher = IdiomMatcher<MipsInstr, Unit, Int>(2, {}, { _, _ -> 0x42 }, arrayOf(
             { instr, _ -> instr.matches(Nop) },
             { instr, _ -> instr.matches(Nop) }

@@ -26,7 +26,7 @@ import mist.asm.mips.MipsOpcode.*
 
 class MipsSwitchIdioms {
     val atRegIdiom = IdiomMatcher<MipsInstr, SwitchAtRegIdiomState, SwitchDescriptor>(
-        maxOffset = 12,
+        maxInstrOffset = 12,
         stateProvider = { SwitchAtRegIdiomState() },
         resultTransform = { relInstrs, state ->
             SwitchDescriptor(
@@ -65,7 +65,7 @@ class MipsSwitchIdioms {
     )
 
     val a0RegIdiom = IdiomMatcher<MipsInstr, SwitchA0RegIdiomState, SwitchDescriptor>(
-        maxOffset = 12,
+        maxInstrOffset = 12,
         stateProvider = { SwitchA0RegIdiomState() },
         resultTransform = { relInstrs, state ->
             SwitchDescriptor(

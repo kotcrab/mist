@@ -23,7 +23,7 @@ import mist.asm.Reg
 
 /** @author Kotcrab */
 
-sealed class FpuReg(name: String, id: Int) : Reg(name, id) {
+sealed class FpuReg(name: String, id: Int, bitsSize: Int = 32) : Reg(name, id, bitsSize) {
     companion object {
         // warning: "by lazy" here is workaround for KT-8970
         private val fpuRegs by lazy {
