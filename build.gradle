@@ -22,7 +22,7 @@ allprojects {
     ext {
         gdxVersion = '1.9.9'
         visUiVersion = '1.4.2'
-        ktxVersion = '1.9.9-SNAPSHOT'
+        ktxVersion = '1.9.9-b1'
     }
 
     repositories {

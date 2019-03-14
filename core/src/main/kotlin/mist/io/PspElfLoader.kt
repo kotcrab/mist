@@ -75,7 +75,7 @@ class PspElfLoader(private val elf: ElfFile, private val log: DecompLog) : BinLo
             if (sect.type == ElfSectHeaderType.REL || sect.type == ElfSectHeaderType.RELA) {
                 log.panic(tag, "expected relocation segment to be of PSP specific type but got SHL_REL or SHT_RELA")
             }
-            if (sect.type != ElfSectHeaderType.PSP_RELLOC) return@forEach
+            if (sect.type != ElfSectHeaderType.PSP_RELOC) return@forEach
             if (sect.entSize != 0x8) {
                 log.panic(tag, "expected relocation entry size to be 0x8")
             }
@@ -88,45 +88,62 @@ class PspElfLoader(private val elf: ElfFile, private val log: DecompLog) : BinLo
             val relocations = mutableListOf<Relocation>()
             repeat(entryCount) {
                 val addr = elfBytes.readInt()
-                val relloc = elfBytes.readInt()
-                val type = relloc and 0xFF
-                val offsetIdx = relloc shr 8 and 0xFF
-                val relocateToIdx = relloc shr 16 and 0xFF
+                val reloc = elfBytes.readInt()
+                val type = reloc and 0xFF
+                val offsetIdx = reloc shr 8 and 0xFF
+                val relocateToIdx = reloc shr 16 and 0xFF
                 relocations.add(
                     Relocation(
                         addr,
                         type,
                         elf.progHeaders[offsetIdx].vAddr,
-                        elf.progHeaders[relocateToIdx].vAddr
+                        elf.progHeaders[relocateToIdx].vAddr // + 0x8804000 // image base load address can be added here
                     )
                 )
             }
-            relocations.forEach { relloc ->
-                var addr = relloc.addr
-                addr += relloc.offset
-                var data = readInt(addr)
-                val relocateTo = relloc.rellocTo
-                when (relloc.type) {
+            relocations.forEachIndexed { relocIdx, reloc ->
+                val addr = reloc.addr + reloc.offset
+                val data = readInt(addr)
+                val relocateTo = reloc.relocTo
+                var newData = 0
+                when (reloc.type) {
                     MipsRelocationType.MIPS_16 -> {
-                        data = relocate(data, 0xFFFF, relocateTo)
+                        newData = relocate(data, 0xFFFF, relocateTo)
                     }
                     MipsRelocationType.MIPS_32 -> {
-                        data += relocateTo
+                        newData += relocateTo
                     }
                     MipsRelocationType.MIPS_26 -> {
-                        data = relocate(data, 0x3FFFFFF, relocateTo shr 2) // j, jal don't include 2 lowest bits
+                        newData = relocate(data, 0x3FFFFFF, relocateTo shr 2) // j, jal don't include 2 lowest bits
                     }
                     MipsRelocationType.MIPS_HI16 -> {
-                        var newHi = (data and 0xFFFF) shl 16
-                        newHi += relocateTo
-                        data = (data and 0xFFFF0000.toInt()) or (newHi shr 16)
+                        var newAddr = data shl 16
+                        var found = false
+                        for (subReloc in relocations.subList(relocIdx + 1, relocations.size)) {
+                            if (subReloc.type == MipsRelocationType.MIPS_LO16) {
+                                val loData = readInt(subReloc.addr + subReloc.offset)
+                                val lo = (loData and 0xFFFF).toShort() // must be treated as signed for next addition
+                                newAddr += lo
+                                newAddr += relocateTo
+                                val newLo = (newAddr and 0xFFFF).toShort() // must be treated as signed for next subtraction
+                                val newHi = (newAddr - newLo) shr 16
+                                newData = (data and 0xFFFF0000.toInt()) or newHi
+                                found = true
+                                break
+                            }
+                        }
+                        if (found == false) {
+                            log.panic(tag, "failed to relocate MIPS_HI16")
+                        }
                     }
                     MipsRelocationType.MIPS_LO16 -> {
-                        data = relocate(data, 0xFFFF, relocateTo)
+                        newData = relocate(data, 0xFFFF, relocateTo)
                     }
-                    else -> log.panic(tag, "unsupported relocation type: ${relloc.type.toHex()}")
+                    else -> log.panic(tag, "unsupported relocation type: ${reloc.type.toHex()}")
                 }
-                writeInt(addr, data)
+                if (newData != 0 && newData != data) {
+                    writeInt(addr, newData)
+                }
             }
         }
     }
@@ -187,7 +204,7 @@ class PspElfLoader(private val elf: ElfFile, private val log: DecompLog) : BinLo
         }
     }
 
-    data class Relocation(val addr: Int, val type: Int, val offset: Int, val rellocTo: Int)
+    data class Relocation(val addr: Int, val type: Int, val offset: Int, val relocTo: Int)
 }
 
 private object MipsRelocationType {

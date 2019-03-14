@@ -38,10 +38,9 @@ import com.kotcrab.vis.ui.widget.file.FileChooser
 import com.kotcrab.vis.ui.widget.tabbedpane.Tab
 import com.kotcrab.vis.ui.widget.tabbedpane.TabbedPane
 import com.kotcrab.vis.ui.widget.tabbedpane.TabbedPaneAdapter
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
 import ktx.actors.onChange
-import ktx.async.enableKtxCoroutines
-import ktx.async.ktxAsync
+import ktx.async.KtxAsync
 import ktx.inject.Context
 import ktx.vis.menu
 import ktx.vis.menuBar
@@ -73,7 +72,7 @@ fun main(args: Array<String>) {
     c.setWindowedMode(1280, 720)
     c.setWindowListener(object : Lwjgl3WindowAdapter() {
         override fun closeRequested(): Boolean {
-            GlobalScope.ktxAsync { app.requestExit() }
+            KtxAsync.async { app.requestExit() }
             return false
         }
     })
@@ -99,7 +98,6 @@ class App(val projectDir: File) : ApplicationListener {
     override fun create() {
         VisUI.load()
         FileChooser.setDefaultPrefsName("com.kotcrab.mist.filechooserprefs")
-        enableKtxCoroutines()
         assets = Assets()
         appStage = Stage(ScreenViewport())
         root = VisTable()

@@ -240,7 +240,7 @@ object ElfSectHeaderType {
     const val SYMTAB_SHNDX = 0x12
     const val NUM = 0x13
     const val LOOS = 0x60000000
-    const val PSP_RELLOC = 0x700000A0
+    const val PSP_RELOC = 0x700000A0
 }
 
 object ElfSectHeaderFlags {
