@@ -48,7 +48,7 @@ class AllegrexDisassembler(strict: Boolean = true) : MipsDisassembler(AllegrexPr
             funct == 0b100_000 && ifStrict(ZeroShift) -> MipsInstr(vAddr, Add, rd, rs, rt)
             funct == 0b100_001 && ifStrict(ZeroShift) -> MipsInstr(vAddr, Addu, rd, rs, rt)
             funct == 0b100_100 && ifStrict(ZeroShift) -> MipsInstr(vAddr, And, rd, rs, rt)
-            funct == 0b001_101 -> MipsInstr(vAddr, Break, ImmOperand(instr ushr 6 and 0xFFFF))
+            funct == 0b001_101 -> MipsInstr(vAddr, Break, ImmOperand(instr ushr 6 and 0x1FFFFF))
             funct == 0b011_010 && ifStrict(ZeroRd, ZeroShift) -> MipsInstr(vAddr, Div, rs, rt)
             funct == 0b011_011 && ifStrict(ZeroRd, ZeroShift) -> MipsInstr(vAddr, Divu, rs, rt)
             funct == 0b001_001 && ifStrict(ZeroRt, ZeroShift) -> MipsInstr(vAddr, Jalr, rd, rs)
@@ -90,7 +90,7 @@ class AllegrexDisassembler(strict: Boolean = true) : MipsDisassembler(AllegrexPr
             funct == 0b001_111 && ifStrict(ZeroRs, ZeroRt, ZeroRd) -> {
                 MipsInstr(vAddr, Sync, ImmOperand(shift))
             }
-            funct == 0b001_100 -> MipsInstr(vAddr, Syscall, ImmOperand(instr ushr 6 and 0xFFFF))
+            funct == 0b001_100 -> MipsInstr(vAddr, Syscall, ImmOperand(instr ushr 6 and 0x1FFFFF))
             funct == 0b110_100 -> MipsInstr(vAddr, Teq, rs, rt, ImmOperand(rd.reg.id shl 5 or shift))
             funct == 0b110_000 -> MipsInstr(vAddr, Tge, rs, rt, ImmOperand(rd.reg.id shl 5 or shift))
             funct == 0b110_001 -> MipsInstr(vAddr, Tgeu, rs, rt, ImmOperand(rd.reg.id shl 5 or shift))
