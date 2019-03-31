@@ -30,8 +30,6 @@ import mist.asm.mips.allegrex.VfpuOpcode.*
 
 /** @author Kotcrab */
 
-//TODO VFPU instructions and other missing instructions from MIPS32
-
 class AllegrexDisassembler(strict: Boolean = true) : MipsDisassembler(AllegrexProcessor, strict) {
     override fun disasmSpecialInstr(vAddr: Int, instr: Int, instrCount: Int): MipsInstr {
         val rs = RegOperand(GprReg.forId(instr ushr 21 and 0x1F))
@@ -106,7 +104,6 @@ class AllegrexDisassembler(strict: Boolean = true) : MipsDisassembler(AllegrexPr
             funct == 0b011_100 && ifStrict(ZeroShift, ZeroRd) -> MipsInstr(vAddr, Madd, rs, rt)
             funct == 0b011_101 && ifStrict(ZeroShift, ZeroRd) -> MipsInstr(vAddr, Maddu, rs, rt)
             funct == 0b101_110 && ifStrict(ZeroShift, ZeroRd) -> MipsInstr(vAddr, Msub, rs, rt)
-            funct == 0b101_111 && ifStrict(ZeroShift, ZeroRd) -> MipsInstr(vAddr, Msubu, rs, rt)
             funct == 0b101_111 && ifStrict(ZeroShift, ZeroRd) -> MipsInstr(vAddr, Msubu, rs, rt)
             else -> handleUnknownInstr(vAddr, instrCount)
         }
@@ -335,9 +332,9 @@ class AllegrexDisassembler(strict: Boolean = true) : MipsDisassembler(AllegrexPr
 //        val vs = RegOperand(VfpuReg.forId(instr ushr 8 and 0x7F))
 //        val vt = RegOperand(VfpuReg.forId(instr ushr 16 and 0x7F))
         val rt = RegOperand(GprReg.forId(instr ushr 16 and 0x1F))
-        return when {
-            // TODO vfpu unit tests
-            op == 0b00011 -> {
+        // TODO vfpu unit tests
+        return when (op) {
+            0b00011 -> {
                 val c = instr ushr 7 and 0b1
                 if (c == 0) {
                     MipsInstr(vAddr, Mfv, rt, vd)
@@ -345,7 +342,7 @@ class AllegrexDisassembler(strict: Boolean = true) : MipsDisassembler(AllegrexPr
                     MipsInstr(vAddr, Mfvc, rt, vdc)
                 }
             }
-            op == 0b00111 -> {
+            0b00111 -> {
                 val c = instr ushr 7 and 0b1
                 if (c == 0) {
                     MipsInstr(vAddr, Mtv, rt, vd)
@@ -353,7 +350,7 @@ class AllegrexDisassembler(strict: Boolean = true) : MipsDisassembler(AllegrexPr
                     MipsInstr(vAddr, Mtvc, rt, vdc)
                 }
             }
-            op == 0b01000 -> {
+            0b01000 -> {
                 val branchImm = (instr and 0xFFFF).toShort().toInt()
                 val branchTarget = ImmOperand(vAddr + 0x4 + branchImm * 0x4)
                 val ndtf = instr ushr 16 and 0b11
@@ -494,16 +491,16 @@ class AllegrexDisassembler(strict: Boolean = true) : MipsDisassembler(AllegrexPr
         val vtM = RegOperand(vt, vt.mName)
         val vsM = RegOperand(vs, vs.mName)
         val vdM = RegOperand(vd, vd.mName)
-        val vtE = RegOperand(vt, vt.eName)
+//        val vtE = RegOperand(vt, vt.eName)
         val vsE = RegOperand(vs, vs.eName)
-        val vdE = RegOperand(vd, vd.eName)
+//        val vdE = RegOperand(vd, vd.eName)
 
         val vtTM = RegOperand(vt, vt.tName.replace("C", "M").replace("R", "E"))
         val vsTM = RegOperand(vs, vs.tName.replace("C", "M").replace("R", "E"))
         val vdTM = RegOperand(vd, vd.tName.replace("C", "M").replace("R", "E"))
-        val vtTE = RegOperand(vt, vt.teName.replace("C", "M").replace("R", "E"))
+//        val vtTE = RegOperand(vt, vt.teName.replace("C", "M").replace("R", "E"))
         val vsTE = RegOperand(vs, vs.teName.replace("C", "M").replace("R", "E"))
-        val vdTE = RegOperand(vd, vd.teName.replace("C", "M").replace("R", "E"))
+//        val vdTE = RegOperand(vd, vd.teName.replace("C", "M").replace("R", "E"))
 
         return when {
             op == 0b011_000 && op3 == 0b000 && c1 == 0 && c0 == 0 -> MipsInstr(vAddr, VaddS, vdS, vsS, vtS)
@@ -959,7 +956,7 @@ class AllegrexDisassembler(strict: Boolean = true) : MipsDisassembler(AllegrexPr
             op == 0b110_111 && op3 == 0b110 ->
                 MipsInstr(vAddr, ViimS, vtS, ImmOperand(instr and 0xFFFF))
             op == 0b110_111 && op3 == 0b111 ->
-                MipsInstr(vAddr, VfimS, vtS, FloatOperand(toFloat(instr and 0xFFFF)))
+                MipsInstr(vAddr, VfimS, vtS, FloatOperand(vfpuToFloat(instr and 0xFFFF)))
 
             op == 0b111_100 && op3 == 0 && c1 == 0 && c0 == 0 -> MipsInstr(vAddr, VmmulS, vdM, vsE, vtM)
             op == 0b111_100 && op3 == 0 && c1 == 0 && c0 == 1 -> MipsInstr(vAddr, VmmulP, vdM, vsE, vtM)
@@ -1032,36 +1029,28 @@ class AllegrexDisassembler(strict: Boolean = true) : MipsDisassembler(AllegrexPr
         }
     }
 
-    // TODO move
-    private fun toFloat(hbits: Int): Float {
-        var mant = hbits and 0x03ff            // 10 bits mantissa
-        var exp = hbits and 0x7c00            // 5 bits exponent
-        if (exp == 0x7c00)
-        // NaN/Inf
-            exp = 0x3fc00                    // -> NaN/Inf
-        else if (exp != 0)
-        // normalized value
-        {
-            exp += 0x1c000                   // exp - 15 + 127
-            if (mant == 0 && exp > 0x1c400)
-            // smooth transition
-                return java.lang.Float.intBitsToFloat(
-                    hbits and 0x8000 shl 16
-                            or (exp shl 13)
-                )
-        } else if (mant != 0)
-        // && exp==0 -> subnormal
-        {
-            exp = 0x1c400                    // make it normal
+    private fun vfpuToFloat(hbits: Int): Float {
+        var mant = hbits and 0x03ff // 10 bits mantissa
+        var exp = hbits and 0x7c00 // 5 bits exponent
+
+        if (exp == 0x7c00) { // NaN/Inf
+            exp = 0x3fc00 // -> NaN/Inf
+        } else if (exp != 0) { // normalized value
+            exp += 0x1c000 // exp - 15 + 127
+            if (mant == 0 && exp > 0x1c400) {
+                // smooth transition
+                return java.lang.Float.intBitsToFloat(hbits and 0x8000 shl 16 or (exp shl 13))
+            }
+        } else if (mant != 0) { // && exp==0 -> subnormal
+            exp = 0x1c400 // make it normal
             do {
-                mant = mant shl 1                   // mantissa * 2
-                exp -= 0x400                 // decrease exp by 1
+                mant = mant shl 1 // mantissa * 2
+                exp -= 0x400 // decrease exp by 1
             } while ((mant and 0x400) == 0) // while not normal
-            mant = mant and 0x3ff                    // discard subnormal bit
-        }                                     // else +/-0 -> +/-0
-        return java.lang.Float.intBitsToFloat(          // combine all parts
-            (((hbits and 0x8000) shl 16          // sign  << ( 31 - 15 )
-                    ) or ((exp or mant) shl 13))
-        )         // value << ( 23 - 10 )
+            mant = mant and 0x3ff // discard subnormal bit
+        }
+        // combine all parts
+        // (sign  << ( 31 - 15 )) or (value << ( 23 - 10 ))
+        return java.lang.Float.intBitsToFloat((((hbits and 0x8000) shl 16) or ((exp or mant) shl 13)))
     }
 }

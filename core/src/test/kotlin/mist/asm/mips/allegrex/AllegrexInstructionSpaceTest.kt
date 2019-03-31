@@ -18,6 +18,8 @@
 
 package mist.asm.mips.allegrex
 
+import kio.util.execute
+import kio.util.nullStreamHandler
 import kio.util.toHex
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -35,10 +37,8 @@ import java.util.*
 /** @author Kotcrab */
 
 fun main(args: Array<String>) {
-    if (args.isEmpty() || File(args[0]).exists() == false) {
-        println("Specify directory which contains instruction space data as first argument")
-    }
-    AllegrexInstructionSpaceTest(File(args[0]))
+    if (args.size != 3) println("Usage: [7zipExe] [compressedInstrSpace] [tmpDir]")
+    AllegrexInstructionSpaceTest(File(args[0]), File(args[1]), File(args[2]))
 }
 
 /**
@@ -47,29 +47,38 @@ fun main(args: Array<String>) {
  * on disk, because it's very large (>120 GB) it can't be provided. This test is expected only to be used in development
  * to discover missing and incorrect instructions and then add standard unit tests based on the results.
  */
-private class AllegrexInstructionSpaceTest(instrDataDir: File) {
+private class AllegrexInstructionSpaceTest(val sevenZipExe: File, val instrDataArchive: File, val tmpDir: File) {
     private val disasm = AllegrexDisassembler(strict = false)
     private val def = FunctionDef("Test", 0x8804000, 4)
     private val invalidInstr = "__invalid"
-    private val singleThreaded = false
+    private val singleThreaded = true
     private val ignoreRepeatedOpcodes = true
     private val ignoredOpcodes = Collections.synchronizedSet(mutableSetOf<String>())
 
     init {
-        val threads = if (singleThreaded) 1 else Runtime.getRuntime().availableProcessors()
+        val threads = if (singleThreaded) 1 else Runtime.getRuntime().availableProcessors() - 1
         val ctx = newFixedThreadPoolContext(threads, "TestPool")
-        val jobs = instrDataDir.listFiles()
-            .filter { file -> file.extension == "txt" }
-            .filter { file -> file.nameWithoutExtension != "104" } // 0x68 is emuhack space, ignoring it
-            .sortedBy { file -> file.nameWithoutExtension.toInt() }
-            .map { file -> GlobalScope.launch(ctx) { processFile(file) } }
+
+        val startFrom = 178
+        val jobs = IntRange(startFrom, 255)
+            .filter { it != 104 } // 0x68 is emuhack space, ignoring it
+            .map { "$it.txt" }
+            .map { GlobalScope.launch(ctx) { processFile(it) } }
+
         runBlocking {
             jobs.forEach { it.join() }
         }
     }
 
-    private fun processFile(file: File) {
-        println("Processing ${file.name}...")
+    private fun processFile(fileName: String) {
+        println("Processing $fileName...")
+        val file = File(tmpDir, fileName)
+        file.delete()
+        execute(
+            sevenZipExe,
+            args = arrayOf("e", instrDataArchive, "-o${tmpDir.absolutePath}", fileName),
+            streamHandler = nullStreamHandler()
+        )
         file.forEachLine { asm ->
             val parts = asm
                 .trimEnd()
@@ -82,6 +91,7 @@ private class AllegrexInstructionSpaceTest(instrDataDir: File) {
                 .replace("BADVTFM", invalidInstr)
                 .replace("syscall \t", "syscall ")
                 .split("; ", limit = 2)
+
             val encodedInstr = parts[0].toLong(16).toInt()
             val expectedInstr = parts[1]
             val instrParts = expectedInstr.split(" ", limit = 2)
@@ -118,6 +128,8 @@ private class AllegrexInstructionSpaceTest(instrDataDir: File) {
                 expectedOperands = parsedOperands
             )
         }
+        println("Completed $fileName...")
+        file.delete()
     }
 
     private fun processAsmInstruction(encodedInstr: Int, expectedOpcode: String, expectedOperands: List<String>) {
@@ -160,10 +172,11 @@ private class AllegrexInstructionSpaceTest(instrDataDir: File) {
             // seems to be decoded incorrectly by the emulator (code field is not read / argument order flipped)
             if (expectedOpcode in arrayOf("teq", "tge", "tgeu", "tlt", "tltu", "tne")) return
             if (expectedOpcode in arrayOf("teqi", "tgei", "tgeiu", "tlti", "tltiu", "tnei")) return
+            // opcodes' operands not decoded by the emulator and mist decoding is not 100% precise
+            if (expectedOpcode in arrayOf("mfc0", "mtc0", "mfic", "mtic", "rdhwr", "rdpgpr", "wrpgpr")) return
             // opcodes' operands not decoded by the emulator
-            if (expectedOpcode in arrayOf("ll", "sc", "synci", "mfc0", "mtc0", "rdpgpr", "mfmc0", "wrpgpr")) return
+            if (expectedOpcode in arrayOf("ll", "sc", "synci", "halt")) return
             if (expectedOpcode in arrayOf("tlbp", "tlbr", "tlbwi", "tlbwr", "eret", "deret", "wait")) return
-            if (expectedOpcode in arrayOf("halt", "mfic", "mtic", "rdhwr")) return
             if (expectedOpcode in arrayOf("vsbz", "vlgb")) return
             // first operand is probably wrong (https://github.com/hrydgard/ppsspp/blob/7acb051cae389eec51299d7d50c61fe6f8b44b70/Core/MIPS/MIPSDisVFPU.cpp#L348)
             if (expectedOpcode in arrayOf("vcrs.t")) return
