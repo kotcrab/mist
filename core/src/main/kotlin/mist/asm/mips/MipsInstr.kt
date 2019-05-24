@@ -61,8 +61,11 @@ class MipsInstr : Instr {
 
     override fun toString(): String {
         return when {
-            operands.size == 3 && (hasFlag(MemoryRead) || hasFlag(MemoryWrite) || opcode is MipsOpcode.Synci) -> {
+            operands.size == 3 && (hasFlag(MemoryRead) || hasFlag(MemoryWrite)) -> {
                 "${addr.toHex()}: ${opcode.mnemonic} ${operands[0]}, ${operands[2]}(${operands[1]})"
+            }
+            opcode is MipsOpcode.Synci -> {
+                "${addr.toHex()}: ${opcode.mnemonic} ${operands[1]}(${operands[0]})"
             }
             operands.isEmpty() -> "${addr.toHex()}: ${opcode.mnemonic}"
             else -> "${addr.toHex()}: ${opcode.mnemonic} ${operands.joinToString()}"

@@ -236,9 +236,6 @@ class AllegrexDisassemblerTest {
     fun testSrlv() = testInstr({ srlv(a0, s0, t0) }, { verify(Srlv, GprReg.A0, GprReg.S0, GprReg.T0) })
 
     @Test
-    fun testSrlv0xC6() = testEncodedInstr(0x000000C6) { verify(Srlv, GprReg.Zero, GprReg.Zero, GprReg.Zero) }
-
-    @Test
     fun testSra() = testInstr({ sra(a0, s0, 0x10) }, { verify(Sra, GprReg.A0, GprReg.S0, 0x10) })
 
     @Test
@@ -266,16 +263,16 @@ class AllegrexDisassemblerTest {
     fun testSync() = testInstr({ sync(0x10) }, { verify(Sync, 0x10) })
 
     @Test
-    fun testSyscall() = testInstr({ syscall(0xCD) }, { verify(Syscall, 0xCD) })
+    fun testSyscall() = testInstr({ syscall(0xCD) }, { verify(Syscall) })
 
     @Test
-    fun testTeq() = testInstr({ teq(a0, s0, 0xCD) }, { verify(Teq, GprReg.A0, GprReg.S0, 0xCD) })
+    fun testTeq() = testInstr({ teq(a0, s0, 0xCD) }, { verify(Teq, GprReg.A0, GprReg.S0) })
 
     @Test
     fun testTeqi() = testInstr({ teqi(a0, 0xCD) }, { verify(Teqi, GprReg.A0, 0xCD) })
 
     @Test
-    fun testTge() = testInstr({ tge(a0, s0, 0xCD) }, { verify(Tge, GprReg.A0, GprReg.S0, 0xCD) })
+    fun testTge() = testInstr({ tge(a0, s0, 0xCD) }, { verify(Tge, GprReg.A0, GprReg.S0) })
 
     @Test
     fun testTgei() = testInstr({ tgei(a0, 0xCD) }, { verify(Tgei, GprReg.A0, 0xCD) })
@@ -284,10 +281,10 @@ class AllegrexDisassemblerTest {
     fun testTgeiu() = testInstr({ tgeiu(a0, 0xCD) }, { verify(Tgeiu, GprReg.A0, 0xCD) })
 
     @Test
-    fun testTgeu() = testInstr({ tgeu(a0, s0, 0xCD) }, { verify(Tgeu, GprReg.A0, GprReg.S0, 0xCD) })
+    fun testTgeu() = testInstr({ tgeu(a0, s0, 0xCD) }, { verify(Tgeu, GprReg.A0, GprReg.S0) })
 
     @Test
-    fun testTlt() = testInstr({ tlt(a0, s0, 0xCD) }, { verify(Tlt, GprReg.A0, GprReg.S0, 0xCD) })
+    fun testTlt() = testInstr({ tlt(a0, s0, 0xCD) }, { verify(Tlt, GprReg.A0, GprReg.S0) })
 
     @Test
     fun testTlti() = testInstr({ tlti(a0, 0xCD) }, { verify(Tlti, GprReg.A0, 0xCD) })
@@ -296,10 +293,10 @@ class AllegrexDisassemblerTest {
     fun testTltiu() = testInstr({ tltiu(a0, 0xCD) }, { verify(Tltiu, GprReg.A0, 0xCD) })
 
     @Test
-    fun testTltu() = testInstr({ tltu(a0, s0, 0xCD) }, { verify(Tltu, GprReg.A0, GprReg.S0, 0xCD) })
+    fun testTltu() = testInstr({ tltu(a0, s0, 0xCD) }, { verify(Tltu, GprReg.A0, GprReg.S0) })
 
     @Test
-    fun testTne() = testInstr({ tne(a0, s0, 0xCD) }, { verify(Tne, GprReg.A0, GprReg.S0, 0xCD) })
+    fun testTne() = testInstr({ tne(a0, s0, 0xCD) }, { verify(Tne, GprReg.A0, GprReg.S0) })
 
     @Test
     fun testTnei() = testInstr({ tnei(a0, 0xCD) }, { verify(Tnei, GprReg.A0, 0xCD) })
