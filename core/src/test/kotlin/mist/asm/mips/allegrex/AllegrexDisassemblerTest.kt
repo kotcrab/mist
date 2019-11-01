@@ -461,10 +461,10 @@ class AllegrexDisassemblerTest {
     fun testEi() = testEncodedInstr(0x41706020) { verify(Ei, GprReg.S0) }
 
     @Test
-    fun testMfc0() = testEncodedInstr(0x40104001) { verify(Mfc0, GprReg.S0, GprReg.T0, 1) }
+    fun testMfc0() = testEncodedInstr(0x40104000) { verify(Mfc0, GprReg.S0, GprReg.T0) }
 
     @Test
-    fun testMtc0() = testEncodedInstr(0x40904001) { verify(Mtc0, GprReg.S0, GprReg.T0, 1) }
+    fun testMtc0() = testEncodedInstr(0x40904000) { verify(Mtc0, GprReg.S0, GprReg.T0) }
 
     @Test
     fun testRdpgpr() = testEncodedInstr(0x41504000) { verify(Rdpgpr, GprReg.S0, GprReg.T0) }
@@ -491,7 +491,7 @@ class AllegrexDisassemblerTest {
     fun testEret() = testEncodedInstr(0x42000018) { verify(Eret) }
 
     @Test
-    fun testWait() = testEncodedInstr(0x42000020) { verify(Wait) }
+    fun testWait() = testEncodedInstr(0x42003360) { verify(Wait, 0xCD) }
 
     private fun testLabel() = Label().apply { address = labelExpected }
 

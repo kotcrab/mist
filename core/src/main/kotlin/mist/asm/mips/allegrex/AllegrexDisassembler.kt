@@ -207,11 +207,11 @@ class AllegrexDisassembler(strict: Boolean = true) : MipsDisassembler(AllegrexPr
                     && ifStrict { instr and 0x1F == 0 } && ifStrict { instr ushr 6 and 0x1F == 0 } -> {
                 MipsInstr(vAddr, Ei, rt)
             }
-            op == 0b00_000 && ifStrict { instr ushr 3 and 0xFF == 0 } -> {
-                MipsInstr(vAddr, Mfc0, rt, rd, ImmOperand(instr and 0b111))
+            op == 0b00_000 && ifStrict { instr and 0x7FF == 0 } -> {
+                MipsInstr(vAddr, Mfc0, rt, rd)
             }
-            op == 0b00_100 && ifStrict { instr ushr 3 and 0xFF == 0 } -> {
-                MipsInstr(vAddr, Mtc0, rt, rd, ImmOperand(instr and 0b111))
+            op == 0b00_100 && ifStrict { instr and 0x7FF == 0 } -> {
+                MipsInstr(vAddr, Mtc0, rt, rd)
             }
             co == 1 && tlop == 0b001_000 && ifStrict { instr ushr 6 and 0x7FFFF == 0 } -> MipsInstr(vAddr, Tlbp)
             co == 1 && tlop == 0b000_001 && ifStrict { instr ushr 6 and 0x7FFFF == 0 } -> MipsInstr(vAddr, Tlbr)
@@ -219,7 +219,7 @@ class AllegrexDisassembler(strict: Boolean = true) : MipsDisassembler(AllegrexPr
             co == 1 && tlop == 0b000_110 && ifStrict { instr ushr 6 and 0x7FFFF == 0 } -> MipsInstr(vAddr, Tlbwr)
             co == 1 && tlop == 0b011_111 && ifStrict { instr ushr 6 and 0x7FFFF == 0 } -> MipsInstr(vAddr, Deret)
             co == 1 && tlop == 0b011_000 && ifStrict { instr ushr 6 and 0x7FFFF == 0 } -> MipsInstr(vAddr, Eret)
-            co == 1 && tlop == 0b100_000 && ifStrict { instr ushr 6 and 0x7FFFF == 0 } -> MipsInstr(vAddr, Wait)
+            co == 1 && tlop == 0b100_000 -> MipsInstr(vAddr, Wait, ImmOperand(instr ushr 6 and 0x7FFFF))
             op == 0b01_010 && ifStrict { instr and 0xFFF == 0 } -> MipsInstr(vAddr, Rdpgpr, rt, rd)
             op == 0b01_110 && ifStrict { instr and 0xFFF == 0 } -> MipsInstr(vAddr, Wrpgpr, rt, rd)
             else -> handleUnknownInstr(vAddr, instrCount)
