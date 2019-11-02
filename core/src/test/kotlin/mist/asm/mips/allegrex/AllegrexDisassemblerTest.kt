@@ -491,7 +491,7 @@ class AllegrexDisassemblerTest {
     fun testEret() = testEncodedInstr(0x42000018) { verify(Eret) }
 
     @Test
-    fun testWait() = testEncodedInstr(0x42003360) { verify(Wait, 0xCD) }
+    fun testWait() = testEncodedInstr(0x42003360) { verify(Wait) }
 
     private fun testLabel() = Label().apply { address = labelExpected }
 

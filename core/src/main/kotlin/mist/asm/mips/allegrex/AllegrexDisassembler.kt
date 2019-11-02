@@ -219,9 +219,9 @@ class AllegrexDisassembler(strict: Boolean = true) : MipsDisassembler(AllegrexPr
             co == 1 && tlop == 0b000_110 && ifStrict { instr ushr 6 and 0x7FFFF == 0 } -> MipsInstr(vAddr, Tlbwr)
             co == 1 && tlop == 0b011_111 && ifStrict { instr ushr 6 and 0x7FFFF == 0 } -> MipsInstr(vAddr, Deret)
             co == 1 && tlop == 0b011_000 && ifStrict { instr ushr 6 and 0x7FFFF == 0 } -> MipsInstr(vAddr, Eret)
-            co == 1 && tlop == 0b100_000 -> MipsInstr(vAddr, Wait, ImmOperand(instr ushr 6 and 0x7FFFF))
-            op == 0b01_010 && ifStrict { instr and 0xFFF == 0 } -> MipsInstr(vAddr, Rdpgpr, rt, rd)
-            op == 0b01_110 && ifStrict { instr and 0xFFF == 0 } -> MipsInstr(vAddr, Wrpgpr, rt, rd)
+            co == 1 && tlop == 0b100_000 -> MipsInstr(vAddr, Wait)
+            op == 0b01_010 && ifStrict { instr and 0x7FF == 0 } -> MipsInstr(vAddr, Rdpgpr, rt, rd)
+            op == 0b01_110 && ifStrict { instr and 0x7FF == 0 } -> MipsInstr(vAddr, Wrpgpr, rt, rd)
             else -> handleUnknownInstr(vAddr, instrCount)
         }
     }
