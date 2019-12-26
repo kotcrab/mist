@@ -467,10 +467,10 @@ class AllegrexDisassemblerTest {
     fun testMtc0() = testEncodedInstr(0x40904000) { verify(Mtc0, GprReg.S0, GprReg.T0) }
 
     @Test
-    fun testRdpgpr() = testEncodedInstr(0x41504000) { verify(Rdpgpr, GprReg.S0, GprReg.T0) }
+    fun testRdpgpr() = testEncodedInstr(0x41504000) { verify(Rdpgpr, GprReg.T0, GprReg.S0) }
 
     @Test
-    fun testWrpgpr() = testEncodedInstr(0x41D04000) { verify(Wrpgpr, GprReg.S0, GprReg.T0) }
+    fun testWrpgpr() = testEncodedInstr(0x41D04000) { verify(Wrpgpr, GprReg.T0, GprReg.S0) }
 
     @Test
     fun testTlbp() = testEncodedInstr(0x42000008) { verify(Tlbp) }

@@ -1101,7 +1101,9 @@ abstract class MipsOpcode(
     )
 
     object Cache : MipsOpcode(
-        "cache", processors = arrayOf(*mipsModern(), AllegrexProcessor),
+        "cache",
+        processors = arrayOf(*mipsModern(), AllegrexProcessor),
+        flags = arrayOf(MemoryRead),
         use = arrayOf(Operand1Ref)
     )
 

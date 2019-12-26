@@ -220,8 +220,8 @@ class AllegrexDisassembler(strict: Boolean = true) : MipsDisassembler(AllegrexPr
             co == 1 && tlop == 0b011_111 && ifStrict { instr ushr 6 and 0x7FFFF == 0 } -> MipsInstr(vAddr, Deret)
             co == 1 && tlop == 0b011_000 && ifStrict { instr ushr 6 and 0x7FFFF == 0 } -> MipsInstr(vAddr, Eret)
             co == 1 && tlop == 0b100_000 -> MipsInstr(vAddr, Wait)
-            op == 0b01_010 && ifStrict { instr and 0x7FF == 0 } -> MipsInstr(vAddr, Rdpgpr, rt, rd)
-            op == 0b01_110 && ifStrict { instr and 0x7FF == 0 } -> MipsInstr(vAddr, Wrpgpr, rt, rd)
+            op == 0b01_010 && ifStrict { instr and 0x7FF == 0 } -> MipsInstr(vAddr, Rdpgpr, rd, rt)
+            op == 0b01_110 && ifStrict { instr and 0x7FF == 0 } -> MipsInstr(vAddr, Wrpgpr, rd, rt)
             else -> handleUnknownInstr(vAddr, instrCount)
         }
     }
@@ -264,14 +264,10 @@ class AllegrexDisassembler(strict: Boolean = true) : MipsDisassembler(AllegrexPr
             }
             fmt == MipsDefines.FMT_S -> {
                 when {
-                    funct == 0b000_101 && ifStrict(ZeroFt) -> MipsInstr(vAddr, FpuAbsS, fd, fs)
+                    funct == 0b000_101 -> MipsInstr(vAddr, FpuAbsS, fd, fs)
                     funct == 0b000_000 -> MipsInstr(vAddr, FpuAddS, fd, fs, ft)
                     funct and 0b110_000 == 0b110_000 && ifStrict { funct ushr 6 and 0b11 == 0 } -> {
-                        val cc = RegOperand(FpuReg.ccForId(instr ushr 8 and 0b111))
                         val cond = funct and 0b1111
-                        if (strict && cc.reg !is FpuReg.Cc0) {
-                            throw DisassemblerException("Allegrex can't use non 0 condition code (cc)")
-                        }
                         when (cond) {
                             0b0000 -> MipsInstr(vAddr, FpuCFS, fs, ft)
                             0b0001 -> MipsInstr(vAddr, FpuCUnS, fs, ft)
@@ -296,10 +292,10 @@ class AllegrexDisassembler(strict: Boolean = true) : MipsDisassembler(AllegrexPr
                     funct == 0b100_100 && ifStrict(ZeroFt) -> MipsInstr(vAddr, FpuCvtWS, fd, fs)
                     funct == 0b000_011 -> MipsInstr(vAddr, FpuDivS, fd, fs, ft)
                     funct == 0b001_111 && ifStrict(ZeroFt) -> MipsInstr(vAddr, FpuFloorWS, fd, fs)
-                    funct == 0b000_110 && ifStrict(ZeroFt) -> MipsInstr(vAddr, FpuMovS, fd, fs)
+                    funct == 0b000_110 -> MipsInstr(vAddr, FpuMovS, fd, fs)
                     funct == 0b010_010 -> MipsInstr(vAddr, FpuMovzS, fd, fs, rt)
                     funct == 0b000_010 -> MipsInstr(vAddr, FpuMulS, fd, fs, ft)
-                    funct == 0b000_111 && ifStrict(ZeroFt) -> MipsInstr(vAddr, FpuNegS, fd, fs)
+                    funct == 0b000_111 -> MipsInstr(vAddr, FpuNegS, fd, fs)
                     funct == 0b010_101 && ifStrict(ZeroFt) -> MipsInstr(vAddr, FpuRecipS, fd, fs)
                     funct == 0b001_100 && ifStrict(ZeroFt) -> MipsInstr(vAddr, FpuRoundWS, fd, fs)
                     funct == 0b010_110 && ifStrict(ZeroFt) -> MipsInstr(vAddr, FpuRsqrtS, fd, fs)
