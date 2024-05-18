@@ -52,7 +52,7 @@ class EnumEditPanel(val enum: ShlEnum, val onCommit: () -> Unit) : VisTable(true
 
         fun initElemAddition() {
             clear()
-            val maxId = enum.members.maxBy { it.value }?.value ?: -1
+            val maxId = enum.members.maxByOrNull { it.value }?.value ?: -1
             initContents(ShlEnumMembers("member${enum.members.size}", maxId + 1), false)
         }
 
