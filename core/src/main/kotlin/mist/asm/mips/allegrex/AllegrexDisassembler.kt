@@ -386,8 +386,10 @@ class AllegrexDisassembler(strict: Boolean = true) : MipsDisassembler(AllegrexPr
             opcode == 0b010_110 && ifStrict(ZeroRt) -> MipsInstr(vAddr, Blezl, rs, branchImm)
             opcode == 0b000_101 -> MipsInstr(vAddr, Bne, rs, rt, branchImm)
             opcode == 0b010_101 -> MipsInstr(vAddr, Bnel, rs, rt, branchImm)
-            opcode == 0b000_010 -> MipsInstr(vAddr, J, ImmOperand(instr and 0x3FFFFFF shl 2))
-            opcode == 0b000_011 -> MipsInstr(vAddr, Jal, ImmOperand(instr and 0x3FFFFFF shl 2))
+            opcode == 0b000_010 ->
+                MipsInstr(vAddr, J, ImmOperand((vAddr and 0xf0000000.toInt()) + (instr and 0x3FFFFFF shl 2), hintUnsigned = true))
+            opcode == 0b000_011 ->
+                MipsInstr(vAddr, Jal, ImmOperand((vAddr and 0xf0000000.toInt()) + (instr and 0x3FFFFFF shl 2), hintUnsigned = true))
             opcode == 0b100_000 -> MipsInstr(vAddr, Lb, rt, rs, imm)
             opcode == 0b100_100 -> MipsInstr(vAddr, Lbu, rt, rs, imm)
             opcode == 0b100_001 -> MipsInstr(vAddr, Lh, rt, rs, imm)

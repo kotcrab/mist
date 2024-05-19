@@ -36,20 +36,7 @@ abstract class MipsDisassembler(private val srcProcessor: MipsProcessor, protect
         val decoded = mutableListOf<MipsInstr>()
         repeat(funcDef.len / 4) { instrCount ->
             val vAddr = funcDef.offset + instrCount * 4
-            val instr = loader.readInt(vAddr)
-            val opcode = instr ushr 26
-            when {
-                instr == 0 -> decoded.add(MipsInstr(vAddr, Nop))
-                opcode == MipsDefines.SPECIAL -> decoded.add(disasmSpecialInstr(vAddr, instr, instrCount))
-                opcode == MipsDefines.SPECIAL2 -> decoded.add(disasmSpecial2Instr(vAddr, instr, instrCount))
-                opcode == MipsDefines.SPECIAL3 -> decoded.add(disasmSpecial3Instr(vAddr, instr, instrCount))
-                opcode == MipsDefines.REGIMM -> decoded.add(disasmRegimmInstr(vAddr, instr, instrCount))
-                opcode == MipsDefines.COP0 -> decoded.add(disasmCop0Instr(vAddr, instr, instrCount))
-                opcode == MipsDefines.COP1 -> decoded.add(disasmCop1Instr(vAddr, instr, instrCount))
-                opcode == MipsDefines.COP2 -> decoded.add(disasmCop2Instr(vAddr, instr, instrCount))
-                opcode == MipsDefines.COP3_COP1X -> decoded.add(disasmCop3Instr(vAddr, instr, instrCount))
-                else -> decoded.add(disasmOpcodeInstr(vAddr, instr, instrCount, opcode))
-            }
+            decoded.add(disassembleInstruction(loader, vAddr, instrCount))
         }
         val illegalOpcodes = decoded.filterNot { it.hasProcessor(srcProcessor) }
         if (illegalOpcodes.isNotEmpty()) {
@@ -57,6 +44,27 @@ abstract class MipsDisassembler(private val srcProcessor: MipsProcessor, protect
             throw DisassemblerException("generated disassembly uses opcodes not supported by specified processor: $illegalMnemonics")
         }
         return Disassembly(funcDef, decoded)
+    }
+
+    final override fun disassembleInstruction(loader: BinLoader, at: Int): MipsInstr {
+        return disassembleInstruction(loader, at, 1)
+    }
+
+    private fun disassembleInstruction(loader: BinLoader, vAddr: Int, instrCount: Int): MipsInstr {
+        val instr = loader.readInt(vAddr)
+        val opcode = instr ushr 26
+        return when {
+            instr == 0 -> MipsInstr(vAddr, Nop)
+            opcode == MipsDefines.SPECIAL -> disasmSpecialInstr(vAddr, instr, instrCount)
+            opcode == MipsDefines.SPECIAL2 -> disasmSpecial2Instr(vAddr, instr, instrCount)
+            opcode == MipsDefines.SPECIAL3 -> disasmSpecial3Instr(vAddr, instr, instrCount)
+            opcode == MipsDefines.REGIMM -> disasmRegimmInstr(vAddr, instr, instrCount)
+            opcode == MipsDefines.COP0 -> disasmCop0Instr(vAddr, instr, instrCount)
+            opcode == MipsDefines.COP1 -> disasmCop1Instr(vAddr, instr, instrCount)
+            opcode == MipsDefines.COP2 -> disasmCop2Instr(vAddr, instr, instrCount)
+            opcode == MipsDefines.COP3_COP1X -> disasmCop3Instr(vAddr, instr, instrCount)
+            else -> disasmOpcodeInstr(vAddr, instr, instrCount, opcode)
+        }
     }
 
     protected open fun disasmSpecialInstr(vAddr: Int, instr: Int, instrCount: Int): MipsInstr =
