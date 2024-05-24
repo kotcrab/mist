@@ -1,2 +1,2 @@
-include 'core', 'ui-gdx'
+include 'core', 'simulator', 'ui-gdx'
 rootProject.name = "mist"
