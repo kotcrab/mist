@@ -18,6 +18,7 @@
 
 package mist.asm
 
+import kmips.Instruction
 import mist.asm.mips.MipsInstr
 import mist.asm.mips.MipsOpcode.Addiu
 import mist.asm.mips.MipsOpcode.Nop
@@ -29,7 +30,7 @@ import org.junit.jupiter.api.Test
 class IdiomMatcherTest {
     @Test
     fun `return provided object when empty matcher matched empty list`() {
-        val emptyMatcher = IdiomMatcher(0, {}, { _, _ -> 0x42 }, emptyArray())
+        val emptyMatcher = IdiomMatcher<MipsInstr, Unit, Int>(0, {}, { _, _ -> 0x42 }, emptyArray())
         assertThat(emptyMatcher.matches(emptyList(), 0)).isEqualTo(0x42)
     }
 
@@ -51,7 +52,7 @@ class IdiomMatcherTest {
     @Test
     fun `recreates state for each run`() {
         var stateCallCount = 0
-        val emptyMatcher = IdiomMatcher(0, { stateCallCount += 1 }, { _, _ -> 0x42 }, emptyArray())
+        val emptyMatcher = IdiomMatcher<MipsInstr, Unit, Int>(0, { stateCallCount += 1 }, { _, _ -> 0x42 }, emptyArray())
         emptyMatcher.matches(emptyList(), 0)
         emptyMatcher.matches(emptyList(), 0)
         emptyMatcher.matches(emptyList(), 0)

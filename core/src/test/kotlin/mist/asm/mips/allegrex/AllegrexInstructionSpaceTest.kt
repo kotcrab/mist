@@ -76,7 +76,7 @@ private class AllegrexInstructionSpaceTest(val sevenZipExe: File, val instrDataA
         file.delete()
         execute(
             sevenZipExe,
-            args = arrayOf("e", instrDataArchive, "-o${tmpDir.absolutePath}", fileName),
+            args = listOf("e", instrDataArchive, "-o${tmpDir.absolutePath}", fileName),
             streamHandler = nullStreamHandler()
         )
         file.forEachLine { asm ->
