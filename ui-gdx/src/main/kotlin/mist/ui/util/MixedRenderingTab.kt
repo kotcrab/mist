@@ -21,9 +21,9 @@ package mist.ui.util
 /** @author Kotcrab */
 
 interface MixedRenderingTab {
-    fun update()
+  fun update()
 
-    fun render()
+  fun render()
 
-    fun resize(width: Int, height: Int)
+  fun resize(width: Int, height: Int)
 }

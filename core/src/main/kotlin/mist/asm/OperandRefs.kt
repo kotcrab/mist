@@ -43,17 +43,17 @@ object Operand9Ref : OperandIdxRef(9)
 object Operand10Ref : OperandIdxRef(10)
 
 open class OperandIdxRef(val idx: Int) : OperandRef {
-    override fun getReg(instr: Instr): Reg {
-        return (instr.operands[idx] as RegOperand).reg
-    }
+  override fun getReg(instr: Instr): Reg {
+    return (instr.operands[idx] as RegOperand).reg
+  }
 }
 
 data class OperandRegRef(val reg: Reg) : OperandRef {
-    override fun getReg(instr: Instr): Reg {
-        return reg
-    }
+  override fun getReg(instr: Instr): Reg {
+    return reg
+  }
 }
 
 interface OperandRef {
-    fun getReg(instr: Instr): Reg
+  fun getReg(instr: Instr): Reg
 }

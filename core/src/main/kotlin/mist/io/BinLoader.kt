@@ -23,6 +23,6 @@ import java.nio.charset.Charset
 /** @author Kotcrab */
 
 interface BinLoader {
-    fun readInt(at: Int): Int
-    fun readString(at: Int, charset: Charset = Charsets.US_ASCII): String
+  fun readInt(at: Int): Int
+  fun readString(at: Int, charset: Charset = Charsets.US_ASCII): String
 }

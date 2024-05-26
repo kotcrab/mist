@@ -23,7 +23,7 @@ import mist.io.BinLoader
 /** @author Kotcrab */
 
 interface Disassembler<Instruction : Instr> {
-    fun disassemble(loader: BinLoader, funcDef: FunctionDef): Disassembly<Instruction>
+  fun disassemble(loader: BinLoader, funcDef: FunctionDef): Disassembly<Instruction>
 
-    fun disassembleInstruction(loader: BinLoader, at: Int): Instruction
+  fun disassembleInstruction(loader: BinLoader, at: Int): Instruction
 }

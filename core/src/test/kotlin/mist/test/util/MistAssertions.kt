@@ -25,5 +25,5 @@ import org.assertj.core.api.ThrowableTypeAssert
 /** @author Kotcrab */
 
 fun assertThatDisassemblerException(): ThrowableTypeAssert<DisassemblerException> {
-    return Assertions.assertThatExceptionOfType<DisassemblerException>(DisassemblerException::class.java)
+  return Assertions.assertThatExceptionOfType<DisassemblerException>(DisassemblerException::class.java)
 }

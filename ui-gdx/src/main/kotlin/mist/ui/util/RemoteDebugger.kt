@@ -24,12 +24,12 @@ import mist.util.logTag
 
 /** @author Kotcrab */
 class RemoteDebugger(val log: DecompLog) {
-    private val tag = logTag()
+  private val tag = logTag()
 
-    //    private var remoteDebugger: PpssppClientV2? = null
-    private val listeners = mutableListOf<RemoteDebuggerListener>()
+  //    private var remoteDebugger: PpssppClientV2? = null
+  private val listeners = mutableListOf<RemoteDebuggerListener>()
 
-    fun connect() {
+  fun connect() {
 //        if (remoteDebugger != null) return
 //        remoteDebugger = PpssppClientV2()
 //        launch(KtxAsync) {
@@ -41,22 +41,22 @@ class RemoteDebugger(val log: DecompLog) {
 //            remoteDebugger!!.connect()
 //            log.info(tag, "remote debugger connected")
 //        }
-    }
+  }
 
-    fun disonnect() {
+  fun disonnect() {
 //        if (remoteDebugger == null) return
 //        log.info(tag, "remote debugger disconnected")
 //        remoteDebugger!!.close()
 //        remoteDebugger = null
-    }
+  }
 
-    fun addListener(listener: RemoteDebuggerListener) {
-        listeners.add(listener)
-    }
+  fun addListener(listener: RemoteDebuggerListener) {
+    listeners.add(listener)
+  }
 
-    fun remoteListener(listener: RemoteDebuggerListener) {
-        listeners.remove(listener)
-    }
+  fun remoteListener(listener: RemoteDebuggerListener) {
+    listeners.remove(listener)
+  }
 
 //    fun getClient(): PpssppClientV2? {
 //        return remoteDebugger
@@ -64,5 +64,5 @@ class RemoteDebugger(val log: DecompLog) {
 }
 
 interface RemoteDebuggerListener {
-    fun handleMessage(msg: PpssppMessage)
+  fun handleMessage(msg: PpssppMessage)
 }

@@ -21,9 +21,9 @@ package mist.ui.util
 /** @author Kotcrab */
 
 interface WindowListener {
-    fun finished()
+  fun finished()
 
-    fun canceled() {
+  fun canceled() {
 
-    }
+  }
 }

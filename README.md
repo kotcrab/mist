@@ -16,6 +16,7 @@ As of now the tool is in a prototype / proof of concept state and not intended f
 
 Currently the disassembly is automatically lifted into higher level representation and only basic
 stack frame analysis is done. Further optimizations have to be invoked manually, those include:
+
 - propagation of constants and variables
 - renaming variables
 - converting memory access to struct access

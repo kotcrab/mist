@@ -21,10 +21,10 @@ package mist.asm
 /** @author Kotcrab */
 
 abstract class Opcode(
-    val mnemonic: String,
-    val description: String = "",
-    val processors: Array<out Processor>,
-    val flags: Array<out OpcodeFlag> = emptyArray(),
-    val use: Array<out OperandRef> = emptyArray(),
-    val modify: Array<out OperandRef> = emptyArray()
+  val mnemonic: String,
+  val description: String = "",
+  val processors: Array<out Processor>,
+  val flags: Array<out OpcodeFlag> = emptyArray(),
+  val use: Array<out OperandRef> = emptyArray(),
+  val modify: Array<out OperandRef> = emptyArray()
 )
