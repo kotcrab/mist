@@ -38,137 +38,137 @@ import mist.ui.util.StaticMutableListAdapter
 /** @author Kotcrab */
 
 class FunctionEditWindow(
-    context: Context,
-    private val funcsPanel: FuncsPanel,
-    private val listener: FuncsWindowListener,
-    private val func: ShlFunctionDef
+  context: Context,
+  private val funcsPanel: FuncsPanel,
+  private val listener: FuncsWindowListener,
+  private val func: ShlFunctionDef
 ) : VisWindow("Function Edit") {
-    private val projectIO: ProjectIO = context.inject()
-    private val appStage: Stage = context.inject()
-    private val argAdapter = ArgumentAdapter(appStage, func, func.arguments)
+  private val projectIO: ProjectIO = context.inject()
+  private val appStage: Stage = context.inject()
+  private val argAdapter = ArgumentAdapter(appStage, func, func.arguments)
 
-    private lateinit var nameTextField: VisTextField
-    private lateinit var returnTypeField: VisTextField
-    private lateinit var reversedCheck: VisCheckBox
+  private lateinit var nameTextField: VisTextField
+  private lateinit var returnTypeField: VisTextField
+  private lateinit var reversedCheck: VisCheckBox
 
-    init {
-        isModal = true
-        TableUtils.setSpacingDefaults(this)
-        addCloseButton()
-        closeOnEscape()
-        add(table {
-            left()
-            defaults().left()
-            table {
-                label("Function: ")
-                nameTextField = textField(func.name).cell(growX = true)
-            }.cell(growX = true, row = true)
-            label("Offset: ${func.offset.toWHex()}, length: ${func.len.toWHex()}").cell(row = true)
-            horizontalGroup {
-                label("Return type: ")
-                returnTypeField = textField(func.returnType)
-            }.cell(row = true)
-            reversedCheck = checkBox("Reversed").cell(row = true)
-            reversedCheck.isChecked = func.reversed
-            label("Arguments:").cell(row = true)
-            listView(argAdapter) {
-                it.grow().row()
-            }
-            textButton("Add argument") {
-                onChange { showArgArgumentDialog() }
-            }
-        }).grow().pad(3f)
-        setSize(500f, 300f)
-        centerWindow()
+  init {
+    isModal = true
+    TableUtils.setSpacingDefaults(this)
+    addCloseButton()
+    closeOnEscape()
+    add(table {
+      left()
+      defaults().left()
+      table {
+        label("Function: ")
+        nameTextField = textField(func.name).cell(growX = true)
+      }.cell(growX = true, row = true)
+      label("Offset: ${func.offset.toWHex()}, length: ${func.len.toWHex()}").cell(row = true)
+      horizontalGroup {
+        label("Return type: ")
+        returnTypeField = textField(func.returnType)
+      }.cell(row = true)
+      reversedCheck = checkBox("Reversed").cell(row = true)
+      reversedCheck.isChecked = func.reversed
+      label("Arguments:").cell(row = true)
+      listView(argAdapter) {
+        it.grow().row()
+      }
+      textButton("Add argument") {
+        onChange { showArgArgumentDialog() }
+      }
+    }).grow().pad(3f)
+    setSize(500f, 300f)
+    centerWindow()
+  }
+
+  private fun showArgArgumentDialog() {
+    val defaultArg = ShlArgumentDef("void*", "arg", "a0")
+    stage.addActor(createFuncArgEditWindow(func, defaultArg, false, { newArg ->
+      func.arguments.add(newArg)
+      argAdapter.itemsChanged()
+    }).fadeIn())
+  }
+
+  override fun close() {
+    if (returnTypeField.isEmpty) {
+      showErrorDialog("Return type can't be empty")
+      return
     }
-
-    private fun showArgArgumentDialog() {
-        val defaultArg = ShlArgumentDef("void*", "arg", "a0")
-        stage.addActor(createFuncArgEditWindow(func, defaultArg, false, { newArg ->
-            func.arguments.add(newArg)
-            argAdapter.itemsChanged()
-        }).fadeIn())
+    if (nameTextField.isEmpty) {
+      showErrorDialog("Function name can't be empty")
+      return
     }
+    if (func.name != nameTextField.text && projectIO.getFuncDefByName(nameTextField.text) != null) {
+      showErrorDialog("Function name must be unique")
+      return
+    }
+    func.name = nameTextField.text
+    func.returnType = returnTypeField.text
+    func.reversed = reversedCheck.isChecked
+    closeDialog()
+  }
 
-    override fun close() {
-        if (returnTypeField.isEmpty) {
-            showErrorDialog("Return type can't be empty")
-            return
+  private fun showErrorDialog(msg: String) {
+    val dialog = Dialogs.showOptionDialog(
+      appStage,
+      "Error",
+      msg,
+      Dialogs.OptionDialogType.YES_CANCEL,
+      object : OptionDialogAdapter() {
+        override fun yes() {
+          closeDialog()
         }
-        if (nameTextField.isEmpty) {
-            showErrorDialog("Function name can't be empty")
-            return
-        }
-        if (func.name != nameTextField.text && projectIO.getFuncDefByName(nameTextField.text) != null) {
-            showErrorDialog("Function name must be unique")
-            return
-        }
-        func.name = nameTextField.text
-        func.returnType = returnTypeField.text
-        func.reversed = reversedCheck.isChecked
-        closeDialog()
-    }
+      })
+    dialog.setYesButtonText("Discard edits")
+    dialog.setCancelButtonText("Continue editing")
+  }
 
-    private fun showErrorDialog(msg: String) {
-        val dialog = Dialogs.showOptionDialog(
-            appStage,
-            "Error",
-            msg,
-            Dialogs.OptionDialogType.YES_CANCEL,
-            object : OptionDialogAdapter() {
-                override fun yes() {
-                    closeDialog()
-                }
-            })
-        dialog.setYesButtonText("Discard edits")
-        dialog.setCancelButtonText("Continue editing")
-    }
-
-    private fun closeDialog() {
-        super.close()
-        listener.onFuncEditWindowClose()
-        funcsPanel.refreshList()
-    }
+  private fun closeDialog() {
+    super.close()
+    listener.onFuncEditWindowClose()
+    funcsPanel.refreshList()
+  }
 }
 
 private class ArgumentAdapter(appStage: Stage, func: ShlFunctionDef, val list: MutableList<ShlArgumentDef>) :
-    StaticMutableListAdapter<ShlArgumentDef>(list) {
+  StaticMutableListAdapter<ShlArgumentDef>(list) {
 
-    private val menu: PopupMenu
+  private val menu: PopupMenu
 
-    init {
-        selectionMode = SelectionMode.SINGLE
-        menu = popupMenu {
-            menuItem("Edit") {
-                onChange {
-                    val currentArg = selection.first()
-                    appStage.addActor(createFuncArgEditWindow(func, currentArg, true, { newArg ->
-                        list.remove(currentArg)
-                        list.add(newArg)
-                        itemsChanged()
-                    }).fadeIn())
-                }
-            }
-            menuItem("Delete") {
-                onChange {
-                    list.remove(selection.first())
-                    itemsChanged()
-                }
-            }
+  init {
+    selectionMode = SelectionMode.SINGLE
+    menu = popupMenu {
+      menuItem("Edit") {
+        onChange {
+          val currentArg = selection.first()
+          appStage.addActor(createFuncArgEditWindow(func, currentArg, true, { newArg ->
+            list.remove(currentArg)
+            list.add(newArg)
+            itemsChanged()
+          }).fadeIn())
         }
-    }
-
-    override fun itemsChanged() {
-        sort { o1, o2 -> o1.register.compareTo(o2.register) }
-        super.itemsChanged()
-    }
-
-    override fun createView(def: ShlArgumentDef): VisTable {
-        return table {
-            touchable = Touchable.enabled
-            left()
-            label("${def.type} ${def.name} = ${def.register}")
-            addListener(menu.defaultInputListener)
+      }
+      menuItem("Delete") {
+        onChange {
+          list.remove(selection.first())
+          itemsChanged()
         }
+      }
     }
+  }
+
+  override fun itemsChanged() {
+    sort { o1, o2 -> o1.register.compareTo(o2.register) }
+    super.itemsChanged()
+  }
+
+  override fun createView(def: ShlArgumentDef): VisTable {
+    return table {
+      touchable = Touchable.enabled
+      left()
+      label("${def.type} ${def.name} = ${def.register}")
+      addListener(menu.defaultInputListener)
+    }
+  }
 }

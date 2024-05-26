@@ -27,16 +27,16 @@ import mist.ui.util.RemoteDebugger
 import mist.util.logTag
 
 class MemoryViewerWindow(val context: Context, val debugger: RemoteDebugger) : VisWindow("Memory") {
-    private val tag = logTag()
-    private val assets: Assets = context.inject()
+  private val tag = logTag()
+  private val assets: Assets = context.inject()
 
-    private val labelStyle = Label.LabelStyle(assets.consolasSmallFont, Color.WHITE.cpy())
+  private val labelStyle = Label.LabelStyle(assets.consolasSmallFont, Color.WHITE.cpy())
 
-    init {
-        isModal = true
-        isResizable = true
-        addCloseButton()
-        closeOnEscape()
+  init {
+    isModal = true
+    isResizable = true
+    addCloseButton()
+    closeOnEscape()
 
 //        launch(KtxAsync) {
 //            val memory = debugger.getClient()!!.getMemory(0x8804000, 1024).mem
@@ -64,7 +64,7 @@ class MemoryViewerWindow(val context: Context, val debugger: RemoteDebugger) : V
 //
 //            add(scrollPane).grow().pad(3f)
 //        }
-        setSize(800f, 400f)
-        centerWindow()
-    }
+    setSize(800f, 400f)
+    centerWindow()
+  }
 }

@@ -26,95 +26,95 @@ import ktx.inject.Context
 import mist.io.FlowNodeDto
 
 class FlowNode(
-    context: Context, nodeStage: Stage,
-    val id: Int, nodeFuncName: String, val fileOffset: Int, color: Color,
-    xPos: Float, yPos: Float
+  context: Context, nodeStage: Stage,
+  val id: Int, nodeFuncName: String, val fileOffset: Int, color: Color,
+  xPos: Float, yPos: Float
 ) : VisualNode(context, color, xPos, yPos) {
-    val inEdges = mutableListOf<FlowNode>()
-    val outEdges = mutableListOf<FlowNode>()
-    var apiName = ""
-        set(value) {
-            field = value
-            updateBounds()
-        }
-    var reversed: Boolean = false
-        set(value) {
-            field = value
-            updateBounds()
-        }
-
-    var funcName = nodeFuncName
-        set(value) {
-            field = value
-            updateBounds()
-        }
-
-    private val titleLabel = VisLabel(funcName, labelStyle)
-    private val extraInfoLabel = VisLabel("", labelStyle)
-
-    init {
-        table.left()
-        table.defaults().left()
-        table.add(titleLabel).center().pad(3f).row()
-        table.add(extraInfoLabel).pad(3f).row()
-        titleLabel.setFontScale(0.7f)
-        extraInfoLabel.setFontScale(0.6f)
-        nodeStage.addActor(table)
-        updateBounds()
+  val inEdges = mutableListOf<FlowNode>()
+  val outEdges = mutableListOf<FlowNode>()
+  var apiName = ""
+    set(value) {
+      field = value
+      updateBounds()
+    }
+  var reversed: Boolean = false
+    set(value) {
+      field = value
+      updateBounds()
     }
 
-    fun updateLabels() {
-        updateBounds()
+  var funcName = nodeFuncName
+    set(value) {
+      field = value
+      updateBounds()
     }
 
-    override fun updateBounds() {
-        if (apiName.isBlank()) {
-            titleLabel.setText("${if (reversed) "(R) " else ""}$funcName")
-        } else {
-            titleLabel.setText("${if (reversed) "(R) " else ""}$apiName::$funcName")
-        }
-        updateExtraInfo()
-        val width = table.prefWidth
-        val height = table.prefHeight
-        bounds.setSize(width, height)
-        table.setPosition(bounds.x, bounds.y + bounds.height / 2)
-        inConBounds.set(bounds.x, bounds.y + 5f, 6f, 12f)
-        outConBounds.set(bounds.x + bounds.width - 6f, bounds.y + 5f, 6f, 12f)
-    }
+  private val titleLabel = VisLabel(funcName, labelStyle)
+  private val extraInfoLabel = VisLabel("", labelStyle)
 
-    private fun updateExtraInfo() {
-        val externalCallsTo = inEdges.count { it.apiName != apiName }
-        var extraText = if (externalCallsTo > 0) {
-            "Ext. calls to this: $externalCallsTo"
-        } else {
-            ""
-        }
-        val externalCalls =
-            outEdges.filter { it.apiName != apiName }.joinToString(separator = "\n", transform = { it.titleLabel.text })
-        if (externalCalls.isNotBlank()) {
-            if (extraText.isNotBlank()) extraText += "\n"
-            extraText += "Ext. calls from this:\n"
-            extraText += externalCalls
-        }
-        extraInfoLabel.setText(extraText)
-    }
+  init {
+    table.left()
+    table.defaults().left()
+    table.add(titleLabel).center().pad(3f).row()
+    table.add(extraInfoLabel).pad(3f).row()
+    titleLabel.setFontScale(0.7f)
+    extraInfoLabel.setFontScale(0.6f)
+    nodeStage.addActor(table)
+    updateBounds()
+  }
 
-    override fun renderExtraOutline(shapeRenderer: ShapeRenderer) {
-        // line under title text
-        shapeRenderer.line(
-            bounds.x,
-            (bounds.y + bounds.height - 30),
-            (bounds.x + bounds.width),
-            (bounds.y + bounds.height - 30)
-        )
-    }
+  fun updateLabels() {
+    updateBounds()
+  }
 
-    fun addNode(otherNode: FlowNode) {
-        outEdges.add(otherNode)
-        otherNode.inEdges.add(this)
+  override fun updateBounds() {
+    if (apiName.isBlank()) {
+      titleLabel.setText("${if (reversed) "(R) " else ""}$funcName")
+    } else {
+      titleLabel.setText("${if (reversed) "(R) " else ""}$apiName::$funcName")
     }
+    updateExtraInfo()
+    val width = table.prefWidth
+    val height = table.prefHeight
+    bounds.setSize(width, height)
+    table.setPosition(bounds.x, bounds.y + bounds.height / 2)
+    inConBounds.set(bounds.x, bounds.y + 5f, 6f, 12f)
+    outConBounds.set(bounds.x + bounds.width - 6f, bounds.y + 5f, 6f, 12f)
+  }
 
-    fun toDto(): FlowNodeDto {
-        return FlowNodeDto(id, fileOffset, apiName, Color.rgba8888(color), getX(), getY(), outEdges.map { it.id })
+  private fun updateExtraInfo() {
+    val externalCallsTo = inEdges.count { it.apiName != apiName }
+    var extraText = if (externalCallsTo > 0) {
+      "Ext. calls to this: $externalCallsTo"
+    } else {
+      ""
     }
+    val externalCalls =
+      outEdges.filter { it.apiName != apiName }.joinToString(separator = "\n", transform = { it.titleLabel.text })
+    if (externalCalls.isNotBlank()) {
+      if (extraText.isNotBlank()) extraText += "\n"
+      extraText += "Ext. calls from this:\n"
+      extraText += externalCalls
+    }
+    extraInfoLabel.setText(extraText)
+  }
+
+  override fun renderExtraOutline(shapeRenderer: ShapeRenderer) {
+    // line under title text
+    shapeRenderer.line(
+      bounds.x,
+      (bounds.y + bounds.height - 30),
+      (bounds.x + bounds.width),
+      (bounds.y + bounds.height - 30)
+    )
+  }
+
+  fun addNode(otherNode: FlowNode) {
+    outEdges.add(otherNode)
+    otherNode.inEdges.add(this)
+  }
+
+  fun toDto(): FlowNodeDto {
+    return FlowNodeDto(id, fileOffset, apiName, Color.rgba8888(color), getX(), getY(), outEdges.map { it.id })
+  }
 }

@@ -36,175 +36,174 @@ import mist.shl.ShlType.*
 import mist.ui.util.StaticListAdapter
 import mist.util.DecompLog
 import mist.util.logTag
-import com.badlogic.gdx.utils.Array as GdxArray
 
 /** @author Kotcrab */
 class TypesTab(context: Context, val commit: () -> Unit) : Tab(true, false) {
-    private val tag = logTag()
+  private val tag = logTag()
 
-    private val log: DecompLog = context.inject()
-    private val projectIO: ProjectIO = context.inject()
-    private val appStage: Stage = context.inject()
-    private val types = projectIO.getTypes()
-    private val globals = projectIO.getGlobals()
+  private val log: DecompLog = context.inject()
+  private val projectIO: ProjectIO = context.inject()
+  private val appStage: Stage = context.inject()
+  private val types = projectIO.getTypes()
+  private val globals = projectIO.getGlobals()
 
-    private val categorySelection = TypeCategoryAdapter()
-    private val content: VisTable
-    private lateinit var typesPanel: VisTable
-    private lateinit var typeAdapter: TypeAdapter
-    private lateinit var typeView: ListView<ShlType>
-    private lateinit var typeEditPanel: VisTable
-    private var needsCommit = false
+  private val categorySelection = TypeCategoryAdapter()
+  private val content: VisTable
+  private lateinit var typesPanel: VisTable
+  private lateinit var typeAdapter: TypeAdapter
+  private lateinit var typeView: ListView<ShlType>
+  private lateinit var typeEditPanel: VisTable
+  private var needsCommit = false
 
-    init {
-        content = table {
-            table(true) { cell ->
-                cell.growY().minWidth(250f).pad(3f)
-                defaults().left()
-                left().top()
-                label("Category:")
-                row()
-                listView(categorySelection) { listCell ->
-                    listCell.growX()
-                }
-                row()
-                addSeparator()
-                label("Types:")
-                row()
-                typesPanel = table {
-                    it.grow()
-                }
-            }
-            addSeparator(true)
-            typeEditPanel = table(true) {
-                it.grow()
-            }
+  init {
+    content = table {
+      table(true) { cell ->
+        cell.growY().minWidth(250f).pad(3f)
+        defaults().left()
+        left().top()
+        label("Category:")
+        row()
+        listView(categorySelection) { listCell ->
+          listCell.growX()
         }
-        categorySelection.selectionManager.apply {
-            listener = object : ListSelectionAdapter<TypeCategory, VisTable>() {
-                override fun selected(item: TypeCategory, view: VisTable) {
-                    switchTypeView(item)
-                }
-            }
-            select(TypeCategory.Structs)
+        row()
+        addSeparator()
+        label("Types:")
+        row()
+        typesPanel = table {
+          it.grow()
         }
+      }
+      addSeparator(true)
+      typeEditPanel = table(true) {
+        it.grow()
+      }
     }
-
-    override fun save(): Boolean {
-        projectIO.saveProject()
-        isDirty = false
-        return true
-    }
-
-    override fun dispose() {
-        log.info(tag, "dispose $tag")
-        super.dispose()
-    }
-
-    override fun getContentTable(): Table {
-        return content
-    }
-
-    override fun getTabTitle(): String {
-        return "Types"
-    }
-
-    private fun switchTypeView(item: TypeCategory) {
-        log.trace(tag, "switch to '$item' category")
-        typesPanel.clear()
-
-        if (item == TypeCategory.Globals) {
-            typesPanel.add(VisLabel("Edit globals on the right panel"))
-            typeEditPanel.clear()
-            typeEditPanel.add(GlobalsEditPanel(types, globals, { dirty() })).grow()
-            return
+    categorySelection.selectionManager.apply {
+      listener = object : ListSelectionAdapter<TypeCategory, VisTable>() {
+        override fun selected(item: TypeCategory, view: VisTable) {
+          switchTypeView(item)
         }
+      }
+      select(TypeCategory.Structs)
+    }
+  }
 
-        switchTypeEdit(null)
-        val (adapter, type) = when (item) {
-            TypesTab.TypeCategory.Primitives -> {
-                Pair(TypeAdapter(types.getPrimitives()), ShlPrimitive(0, "", 0x4))
-            }
-            TypesTab.TypeCategory.Enums -> {
-                Pair(TypeAdapter(types.getEnums()), ShlEnum(0, "", 0x4))
-            }
-            TypesTab.TypeCategory.Structs -> {
-                Pair(TypeAdapter(types.getStructs()), ShlStruct(0, ""))
-            }
-            TypesTab.TypeCategory.Globals -> error("this type should have been already handled")
-        }
-        typeAdapter = adapter
-        typeView = ListView(typeAdapter)
-        typesPanel.add(typeView.mainTable).grow().row()
-        val addButton = VisTextButton("Add")
-        addButton.onChange {
-            appStage.addActor(TypeEditWindow(types, false, type, { typesChanged() }).fadeIn())
-        }
-        typesPanel.add(addButton).growX()
-        typeAdapter.selectionManager.listener = object : ListSelectionAdapter<ShlType, VisTable>() {
-            override fun selected(item: ShlType, view: VisTable) {
-                switchTypeEdit(item)
-            }
-        }
+  override fun save(): Boolean {
+    projectIO.saveProject()
+    isDirty = false
+    return true
+  }
+
+  override fun dispose() {
+    log.info(tag, "dispose $tag")
+    super.dispose()
+  }
+
+  override fun getContentTable(): Table {
+    return content
+  }
+
+  override fun getTabTitle(): String {
+    return "Types"
+  }
+
+  private fun switchTypeView(item: TypeCategory) {
+    log.trace(tag, "switch to '$item' category")
+    typesPanel.clear()
+
+    if (item == TypeCategory.Globals) {
+      typesPanel.add(VisLabel("Edit globals on the right panel"))
+      typeEditPanel.clear()
+      typeEditPanel.add(GlobalsEditPanel(types, globals, { dirty() })).grow()
+      return
     }
 
-    private fun switchTypeEdit(type: ShlType?) {
-        typeEditPanel.clear()
-        when (type) {
-            null -> {
-                typeEditPanel.add(VisLabel("Select type to edit it"))
-            }
-            is ShlType.ShlPrimitive -> {
-                typeEditPanel.add(VisLabel("Primitives do not have extra properties"))
-            }
-            is ShlType.ShlEnum -> {
-                typeEditPanel.add(EnumEditPanel(type, { dirty() })).grow()
-            }
-            is ShlType.ShlStruct -> {
-                typeEditPanel.add(StructEditPanel(types, type, { dirty() })).grow()
-            }
-        }
+    switchTypeEdit(null)
+    val (adapter, type) = when (item) {
+      TypesTab.TypeCategory.Primitives -> {
+        Pair(TypeAdapter(types.getPrimitives()), ShlPrimitive(0, "", 0x4))
+      }
+      TypesTab.TypeCategory.Enums -> {
+        Pair(TypeAdapter(types.getEnums()), ShlEnum(0, "", 0x4))
+      }
+      TypesTab.TypeCategory.Structs -> {
+        Pair(TypeAdapter(types.getStructs()), ShlStruct(0, ""))
+      }
+      TypesTab.TypeCategory.Globals -> error("this type should have been already handled")
     }
+    typeAdapter = adapter
+    typeView = ListView(typeAdapter)
+    typesPanel.add(typeView.mainTable).grow().row()
+    val addButton = VisTextButton("Add")
+    addButton.onChange {
+      appStage.addActor(TypeEditWindow(types, false, type, { typesChanged() }).fadeIn())
+    }
+    typesPanel.add(addButton).growX()
+    typeAdapter.selectionManager.listener = object : ListSelectionAdapter<ShlType, VisTable>() {
+      override fun selected(item: ShlType, view: VisTable) {
+        switchTypeEdit(item)
+      }
+    }
+  }
 
-    private fun typesChanged() {
-        typeAdapter.itemsChanged()
-        dirty()
+  private fun switchTypeEdit(type: ShlType?) {
+    typeEditPanel.clear()
+    when (type) {
+      null -> {
+        typeEditPanel.add(VisLabel("Select type to edit it"))
+      }
+      is ShlType.ShlPrimitive -> {
+        typeEditPanel.add(VisLabel("Primitives do not have extra properties"))
+      }
+      is ShlType.ShlEnum -> {
+        typeEditPanel.add(EnumEditPanel(type, { dirty() })).grow()
+      }
+      is ShlType.ShlStruct -> {
+        typeEditPanel.add(StructEditPanel(types, type, { dirty() })).grow()
+      }
     }
+  }
 
-    override fun dirty() {
-        super.dirty()
-        needsCommit = true
-    }
+  private fun typesChanged() {
+    typeAdapter.itemsChanged()
+    dirty()
+  }
 
-    override fun onHide() {
-        super.onHide()
-        if (needsCommit) {
-            commit()
-            needsCommit = false
-        }
-    }
+  override fun dirty() {
+    super.dirty()
+    needsCommit = true
+  }
 
-    private class TypeAdapter(types: List<ShlType>) : StaticListAdapter<ShlType>(types) {
-        override fun createView(type: ShlType): VisTable {
-            return table {
-                touchable = Touchable.enabled
-                left()
-                label(type.toString())
-            }
-        }
+  override fun onHide() {
+    super.onHide()
+    if (needsCommit) {
+      commit()
+      needsCommit = false
     }
+  }
 
-    private class TypeCategoryAdapter : StaticListAdapter<TypeCategory>(TypeCategory.values().toList()) {
-        override fun createView(type: TypeCategory): VisTable {
-            return table {
-                touchable = Touchable.enabled
-                left()
-                label(type.toString())
-            }
-        }
+  private class TypeAdapter(types: List<ShlType>) : StaticListAdapter<ShlType>(types) {
+    override fun createView(type: ShlType): VisTable {
+      return table {
+        touchable = Touchable.enabled
+        left()
+        label(type.toString())
+      }
     }
+  }
 
-    enum class TypeCategory {
-        Primitives, Enums, Structs, Globals
+  private class TypeCategoryAdapter : StaticListAdapter<TypeCategory>(TypeCategory.values().toList()) {
+    override fun createView(type: TypeCategory): VisTable {
+      return table {
+        touchable = Touchable.enabled
+        left()
+        label(type.toString())
+      }
     }
+  }
+
+  enum class TypeCategory {
+    Primitives, Enums, Structs, Globals
+  }
 }

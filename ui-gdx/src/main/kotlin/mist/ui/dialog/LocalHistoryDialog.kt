@@ -36,70 +36,70 @@ import java.time.format.DateTimeFormatter
 /** @author Kotcrab */
 
 class LocalHistoryDialog(
-    private val entryReader: LocalHistory.EntryReader,
-    private val listener: WindowResultListener<LocalHistoryEntry>
+  private val entryReader: LocalHistory.EntryReader,
+  private val listener: WindowResultListener<LocalHistoryEntry>
 ) : VisWindow("Local History") {
+  init {
+    isModal = true
+    isResizable = true
+    addCloseButton()
+    closeOnEscape()
+
+    add(table(true) {
+      defaults().left()
+      val adapter = EntryAdapter(entryReader.asSequence().toMutableList())
+      listView(adapter) { listViewCell ->
+        listViewCell.grow()
+      }
+      table(true) { buttonsCell ->
+        buttonsCell.growY()
+        top()
+        defaults().growX()
+        textButton("Revert") { _ ->
+          onChange {
+            val selection = adapter.selection
+            if (selection.size > 0) {
+              fadeOut()
+              listener.finished(selection.first())
+            } else {
+              Dialogs.showOKDialog(stage, "Message", "Select revision before reverting")
+            }
+          }
+        }
+        row()
+        textButton("Cancel") {
+          onChange {
+            fadeOut()
+            listener.canceled()
+          }
+        }
+      }
+      adapter.itemsChanged()
+    }).grow()
+    setSize(440f, 600f)
+    centerWindow()
+  }
+
+  override fun close() {
+    super.close()
+    listener.canceled()
+  }
+
+  private inner class EntryAdapter(list: MutableList<LocalHistoryEntry>) :
+    StaticMutableListAdapter<LocalHistoryEntry>(list) {
     init {
-        isModal = true
-        isResizable = true
-        addCloseButton()
-        closeOnEscape()
-
-        add(table(true) {
-            defaults().left()
-            val adapter = EntryAdapter(entryReader.asSequence().toMutableList())
-            listView(adapter) { listViewCell ->
-                listViewCell.grow()
-            }
-            table(true) { buttonsCell ->
-                buttonsCell.growY()
-                top()
-                defaults().growX()
-                textButton("Revert") { _ ->
-                    onChange {
-                        val selection = adapter.selection
-                        if (selection.size > 0) {
-                            fadeOut()
-                            listener.finished(selection.first())
-                        } else {
-                            Dialogs.showOKDialog(stage, "Message", "Select revision before reverting")
-                        }
-                    }
-                }
-                row()
-                textButton("Cancel") {
-                    onChange {
-                        fadeOut()
-                        listener.canceled()
-                    }
-                }
-            }
-            adapter.itemsChanged()
-        }).grow()
-        setSize(440f, 600f)
-        centerWindow()
+      selectionMode = SelectionMode.SINGLE
+      itemsSorter = Comparator { o1, o2 -> o2.epochSecond.compareTo(o1.epochSecond) }
     }
 
-    override fun close() {
-        super.close()
-        listener.canceled()
+    override fun createView(entry: LocalHistoryEntry): VisTable {
+      return table {
+        left()
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+        val localDate =
+          LocalDateTime.ofInstant(Instant.ofEpochSecond(entry.epochSecond), Clock.systemDefaultZone().zone)
+        label(localDate.format(formatter))
+      }
     }
-
-    private inner class EntryAdapter(list: MutableList<LocalHistoryEntry>) :
-        StaticMutableListAdapter<LocalHistoryEntry>(list) {
-        init {
-            selectionMode = SelectionMode.SINGLE
-            itemsSorter = Comparator { o1, o2 -> o2.epochSecond.compareTo(o1.epochSecond) }
-        }
-
-        override fun createView(entry: LocalHistoryEntry): VisTable {
-            return table {
-                left()
-                val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-                val localDate =
-                    LocalDateTime.ofInstant(Instant.ofEpochSecond(entry.epochSecond), Clock.systemDefaultZone().zone)
-                label(localDate.format(formatter))
-            }
-        }
-    }
+  }
 }

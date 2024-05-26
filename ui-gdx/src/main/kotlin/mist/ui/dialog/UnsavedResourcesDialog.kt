@@ -31,83 +31,83 @@ import kotlin.coroutines.resume
 /** @author Kotcrab */
 
 class UnsavedTabsDialog(private val tabbedPane: TabbedPane, private val cont: Continuation<Result>) :
-    VisWindow("Unsaved resources") {
-    private val adapter = TabAdapter()
+  VisWindow("Unsaved resources") {
+  private val adapter = TabAdapter()
 
+  init {
+    isModal = true
+    isResizable = true
+    addCloseButton()
+    closeOnEscape()
+    ui {
+      defaults().left()
+      listView(adapter) { listCell ->
+        listCell.grow()
+      }
+      table(true) { buttonsCell ->
+        buttonsCell.growY()
+        top()
+        defaults().growX()
+        textButton("Save") { onChange(::onSave) }
+        row()
+        textButton("Save All") { onChange(::onSaveAll) }
+        row()
+        textButton("Discard all") { onChange(::onDiscardAll) }
+        row()
+        textButton("Cancel") { onChange(::onCancel) }
+      }
+    }
+    adapter.itemsChanged()
+    setSize(530f, 320f)
+    centerWindow()
+  }
+
+  private fun onSave() {
+    adapter.selection.forEach { it.save() }
+    adapter.itemsChanged()
+  }
+
+  private fun onSaveAll() {
+    tabbedPane.tabs.filter { it.isDirty }.forEach { it.save() }
+    remove()
+    cont.resume(Result.Finished)
+  }
+
+  private fun onDiscardAll() {
+    tabbedPane.tabs.filter { it.isDirty }.forEach { tabbedPane.remove(it, true) }
+    remove()
+    cont.resume(Result.Finished)
+  }
+
+  private fun onCancel() {
+    fadeOut()
+    cont.resume(Result.Canceled)
+  }
+
+  override fun close() {
+    super.close()
+    cont.resume(Result.Canceled)
+  }
+
+  private inner class TabAdapter(val filteredList: MutableList<Tab> = mutableListOf()) :
+    StaticMutableListAdapter<Tab>(filteredList) {
     init {
-        isModal = true
-        isResizable = true
-        addCloseButton()
-        closeOnEscape()
-        ui {
-            defaults().left()
-            listView(adapter) { listCell ->
-                listCell.grow()
-            }
-            table(true) { buttonsCell ->
-                buttonsCell.growY()
-                top()
-                defaults().growX()
-                textButton("Save") { onChange(::onSave) }
-                row()
-                textButton("Save All") { onChange(::onSaveAll) }
-                row()
-                textButton("Discard all") { onChange(::onDiscardAll) }
-                row()
-                textButton("Cancel") { onChange(::onCancel) }
-            }
-        }
-        adapter.itemsChanged()
-        setSize(530f, 320f)
-        centerWindow()
+      selectionMode = SelectionMode.SINGLE
     }
 
-    private fun onSave() {
-        adapter.selection.forEach { it.save() }
-        adapter.itemsChanged()
+    override fun itemsChanged() {
+      filteredList.clear()
+      filteredList.addAll(tabbedPane.tabs.filter { it.isDirty })
+      super.itemsChanged()
     }
 
-    private fun onSaveAll() {
-        tabbedPane.tabs.filter { it.isDirty }.forEach { it.save() }
-        remove()
-        cont.resume(Result.Finished)
+    override fun createView(tab: Tab) = table {
+      left()
+      label(tab.tabTitle)
     }
+  }
 
-    private fun onDiscardAll() {
-        tabbedPane.tabs.filter { it.isDirty }.forEach { tabbedPane.remove(it, true) }
-        remove()
-        cont.resume(Result.Finished)
-    }
-
-    private fun onCancel() {
-        fadeOut()
-        cont.resume(Result.Canceled)
-    }
-
-    override fun close() {
-        super.close()
-        cont.resume(Result.Canceled)
-    }
-
-    private inner class TabAdapter(val filteredList: MutableList<Tab> = mutableListOf()) :
-        StaticMutableListAdapter<Tab>(filteredList) {
-        init {
-            selectionMode = SelectionMode.SINGLE
-        }
-
-        override fun itemsChanged() {
-            filteredList.clear()
-            filteredList.addAll(tabbedPane.tabs.filter { it.isDirty })
-            super.itemsChanged()
-        }
-
-        override fun createView(tab: Tab) = table {
-            left()
-            label(tab.tabTitle)
-        }
-    }
-
-    enum class Result {
-        Canceled, Finished
-    }
+  enum class Result {
+    Canceled, Finished
+  }
 }

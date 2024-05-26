@@ -25,11 +25,11 @@ import java.nio.charset.Charset
 /** @author Kotcrab */
 
 class MemBinLoader(bytes: ByteArray) : BinLoader {
-    private val input = KioInputStream(bytes)
+  private val input = KioInputStream(bytes)
 
-    override fun readInt(at: Int): Int = input.readInt(at)
-    override fun readString(at: Int, charset: Charset): String = input.run {
-        setPos(at)
-        readNullTerminatedString(charset)
-    }
+  override fun readInt(at: Int): Int = input.readInt(at)
+  override fun readString(at: Int, charset: Charset): String = input.run {
+    setPos(at)
+    readNullTerminatedString(charset)
+  }
 }

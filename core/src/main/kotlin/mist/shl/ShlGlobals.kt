@@ -23,69 +23,70 @@ import kio.util.swap
 /** @author Kotcrab */
 
 class ShlGlobals {
-    private val globals = mutableListOf<ShlGlobal>()
-    @Transient
-    private var accessMap = mutableMapOf<Int, ShlGlobal>()
+  private val globals = mutableListOf<ShlGlobal>()
 
-    fun addGlobal(address: Int, name: String, refTid: Int, pointer: Boolean, comment: String) {
-        checkAccessMap()
-        val global = ShlGlobal(address, name, refTid, pointer, comment)
-        globals.add(global)
-        insertGlobal(global)
-    }
+  @Transient
+  private var accessMap = mutableMapOf<Int, ShlGlobal>()
 
-    fun editGlobal(
-        oldGlobal: ShlGlobal,
-        newAddress: Int,
-        newName: String,
-        newRefTid: Int,
-        newPointer: Boolean,
-        newComment: String
-    ) {
-        val prevIdx = globals.indexOf(oldGlobal)
-        delete(oldGlobal)
-        val newGlobal = ShlGlobal(newAddress, newName, newRefTid, newPointer, newComment)
-        globals.add(prevIdx, newGlobal)
-        insertGlobal(newGlobal)
-    }
+  fun addGlobal(address: Int, name: String, refTid: Int, pointer: Boolean, comment: String) {
+    checkAccessMap()
+    val global = ShlGlobal(address, name, refTid, pointer, comment)
+    globals.add(global)
+    insertGlobal(global)
+  }
 
-    fun getGlobals(): List<ShlGlobal> {
-        return globals
-    }
+  fun editGlobal(
+    oldGlobal: ShlGlobal,
+    newAddress: Int,
+    newName: String,
+    newRefTid: Int,
+    newPointer: Boolean,
+    newComment: String
+  ) {
+    val prevIdx = globals.indexOf(oldGlobal)
+    delete(oldGlobal)
+    val newGlobal = ShlGlobal(newAddress, newName, newRefTid, newPointer, newComment)
+    globals.add(prevIdx, newGlobal)
+    insertGlobal(newGlobal)
+  }
 
-    fun getGlobalByAddress(address: Int): ShlGlobal? {
-        checkAccessMap()
-        return accessMap[address]
-    }
+  fun getGlobals(): List<ShlGlobal> {
+    return globals
+  }
 
-    private fun checkAccessMap() {
-        if (accessMap.isNotEmpty()) return
-        // perform initial init of access map after deserialization
-        globals.forEach { insertGlobal(it) }
-    }
+  fun getGlobalByAddress(address: Int): ShlGlobal? {
+    checkAccessMap()
+    return accessMap[address]
+  }
 
-    private fun insertGlobal(global: ShlGlobal) {
-        accessMap[global.address] = global
-    }
+  private fun checkAccessMap() {
+    if (accessMap.isNotEmpty()) return
+    // perform initial init of access map after deserialization
+    globals.forEach { insertGlobal(it) }
+  }
 
-    fun moveUp(global: ShlGlobal) {
-        val newIndex = globals.indexOf(global) - 1
-        if (newIndex >= 0) {
-            globals.swap(newIndex, newIndex + 1)
-        }
-    }
+  private fun insertGlobal(global: ShlGlobal) {
+    accessMap[global.address] = global
+  }
 
-    fun moveDown(global: ShlGlobal) {
-        val newIndex = globals.indexOf(global) + 1
-        if (newIndex < globals.size) {
-            globals.swap(newIndex, newIndex - 1)
-        }
+  fun moveUp(global: ShlGlobal) {
+    val newIndex = globals.indexOf(global) - 1
+    if (newIndex >= 0) {
+      globals.swap(newIndex, newIndex + 1)
     }
+  }
 
-    fun delete(global: ShlGlobal) {
-        accessMap.remove(global.address)
-        globals.remove(global)
+  fun moveDown(global: ShlGlobal) {
+    val newIndex = globals.indexOf(global) + 1
+    if (newIndex < globals.size) {
+      globals.swap(newIndex, newIndex - 1)
     }
+  }
+
+  fun delete(global: ShlGlobal) {
+    accessMap.remove(global.address)
+    globals.remove(global)
+  }
 }
 
 class ShlGlobal(val address: Int, var name: String, var refTid: Int, var pointer: Boolean, var comment: String)

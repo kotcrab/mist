@@ -37,120 +37,118 @@ import ktx.vis.table
 import mist.io.ProjectIO
 import mist.shl.ShlFunctionDef
 import mist.ui.util.BaseMutableListAdapter
-import java.util.*
-import com.badlogic.gdx.utils.Array as GdxArray
 
 /** @author Kotcrab */
 
 class FuncsPanel(
-    private val context: Context,
-    private val listener: FuncsWindowListener
+  private val context: Context,
+  private val listener: FuncsWindowListener
 ) : VisTable(true) {
-    private val appStage: Stage = context.inject()
-    private val projectIO: ProjectIO = context.inject()
-    private val userPrefs = projectIO.getUserPrefs()
+  private val appStage: Stage = context.inject()
+  private val projectIO: ProjectIO = context.inject()
+  private val userPrefs = projectIO.getUserPrefs()
 
-    private val funcsList: List<ShlFunctionDef> = projectIO.getFuncs()
-    private val listAdapter = FilteredFunctionAdapter()
+  private val funcsList: List<ShlFunctionDef> = projectIO.getFuncs()
+  private val listAdapter = FilteredFunctionAdapter()
+
+  init {
+    touchable = Touchable.enabled
+    background = VisUI.getSkin().getDrawable("window-bg")
+
+    pad(3f)
+    val listView = ListView(listAdapter)
+    listView.scrollPane.setSmoothScrolling(false)
+    add(VisLabel("Functions")).left().growX().row()
+    add(listView.mainTable).grow().row()
+    add(table(true) {
+      label("Search")
+      textField {
+        it.growX().minWidth(10f)
+        onChange {
+          userPrefs.lastFuncSearch = text
+          listAdapter.filterList(text)
+        }
+        programmaticChangeEvents = true
+        text = userPrefs.lastFuncSearch
+      }
+    }).growX()
+  }
+
+  fun refreshList() {
+    listAdapter.itemsDataChanged()
+  }
+
+  fun showEditFuncWindow(def: ShlFunctionDef) {
+    appStage.addActor(FunctionEditWindow(context, this@FuncsPanel, this@FuncsPanel.listener, def).fadeIn())
+  }
+
+  inner class FilteredFunctionAdapter(
+    private val filteredList: ArrayList<ShlFunctionDef>
+    = funcsList.toCollection(arrayListOf())
+  ) : BaseMutableListAdapter<ShlFunctionDef>(filteredList) {
+    private val reversedBg = (VisUI.getSkin().getDrawable("white") as TextureRegionDrawable)
+      .tint(Color(27f / 255f, 161f / 255f, 226 / 255f, 0.20f))
+    private val menu: PopupMenu
 
     init {
+      selectionMode = SelectionMode.SINGLE
+      menu = popupMenu {
+        menuItem("Edit") {
+          onChange {
+            showEditFuncWindow(selection.first())
+          }
+        }
+      }
+    }
+
+    fun filterList(filterText: String) {
+      filteredList.clear()
+      funcsList.filter {
+        if (filterText == "") true else it.name.contains(filterText, true)
+      }.toCollection(filteredList)
+      itemsChanged()
+    }
+
+    override fun setListView(view: ListView<ShlFunctionDef>?, viewListener: ListView<*>.ListAdapterListener?) {
+      super.setListView(view, viewListener)
+      filterList("")
+    }
+
+    override fun createView(def: ShlFunctionDef): VisTable {
+      return table {
         touchable = Touchable.enabled
-        background = VisUI.getSkin().getDrawable("window-bg")
-
-        pad(3f)
-        val listView = ListView(listAdapter)
-        listView.scrollPane.setSmoothScrolling(false)
-        add(VisLabel("Functions")).left().growX().row()
-        add(listView.mainTable).grow().row()
-        add(table(true) {
-            label("Search")
-            textField {
-                it.growX().minWidth(10f)
-                onChange {
-                    userPrefs.lastFuncSearch = text
-                    listAdapter.filterList(text)
-                }
-                programmaticChangeEvents = true
-                text = userPrefs.lastFuncSearch
+        table {
+          it.grow()
+          left()
+          if (def.reversed) background(reversedBg)
+          label("${def.returnType} ${def.name}")
+        }
+        addListener(menu.defaultInputListener)
+        addListener(object : ClickListener() {
+          override fun clicked(event: InputEvent?, x: Float, y: Float) {
+            if (tapCount == 2) {
+              listener.onFuncDoubleClick(def)
             }
-        }).growX()
+          }
+        })
+      }
     }
 
-    fun refreshList() {
-        listAdapter.itemsDataChanged()
+    override fun updateView(view: VisTable, def: ShlFunctionDef) {
+      val table = view.children[0] as VisTable
+      val label = table.children[0] as VisLabel
+      if (def.reversed) {
+        table.background = reversedBg
+      } else {
+        table.background = null
+      }
+      label.setText("${def.returnType} ${def.name}")
     }
-
-    fun showEditFuncWindow(def: ShlFunctionDef) {
-        appStage.addActor(FunctionEditWindow(context, this@FuncsPanel, this@FuncsPanel.listener, def).fadeIn())
-    }
-
-    inner class FilteredFunctionAdapter(
-        private val filteredList: ArrayList<ShlFunctionDef>
-        = funcsList.toCollection(arrayListOf())
-    ) : BaseMutableListAdapter<ShlFunctionDef>(filteredList) {
-        private val reversedBg = (VisUI.getSkin().getDrawable("white") as TextureRegionDrawable)
-            .tint(Color(27f / 255f, 161f / 255f, 226 / 255f, 0.20f))
-        private val menu: PopupMenu
-
-        init {
-            selectionMode = SelectionMode.SINGLE
-            menu = popupMenu {
-                menuItem("Edit") {
-                    onChange {
-                        showEditFuncWindow(selection.first())
-                    }
-                }
-            }
-        }
-
-        fun filterList(filterText: String) {
-            filteredList.clear()
-            funcsList.filter {
-                if (filterText == "") true else it.name.contains(filterText, true)
-            }.toCollection(filteredList)
-            itemsChanged()
-        }
-
-        override fun setListView(view: ListView<ShlFunctionDef>?, viewListener: ListView<*>.ListAdapterListener?) {
-            super.setListView(view, viewListener)
-            filterList("")
-        }
-
-        override fun createView(def: ShlFunctionDef): VisTable {
-            return table {
-                touchable = Touchable.enabled
-                table {
-                    it.grow()
-                    left()
-                    if (def.reversed) background(reversedBg)
-                    label("${def.returnType} ${def.name}")
-                }
-                addListener(menu.defaultInputListener)
-                addListener(object : ClickListener() {
-                    override fun clicked(event: InputEvent?, x: Float, y: Float) {
-                        if (tapCount == 2) {
-                            listener.onFuncDoubleClick(def)
-                        }
-                    }
-                })
-            }
-        }
-
-        override fun updateView(view: VisTable, def: ShlFunctionDef) {
-            val table = view.children[0] as VisTable
-            val label = table.children[0] as VisLabel
-            if (def.reversed) {
-                table.background = reversedBg
-            } else {
-                table.background = null
-            }
-            label.setText("${def.returnType} ${def.name}")
-        }
-    }
+  }
 }
 
 interface FuncsWindowListener {
-    fun onFuncEditWindowClose()
+  fun onFuncEditWindowClose()
 
-    fun onFuncDoubleClick(def: ShlFunctionDef)
+  fun onFuncDoubleClick(def: ShlFunctionDef)
 }
