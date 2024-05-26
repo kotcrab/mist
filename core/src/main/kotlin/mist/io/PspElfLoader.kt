@@ -126,7 +126,7 @@ class PspElfLoader(private val elf: ElfFile, private val log: DecompLog) : BinLo
                                 newAddr += lo
                                 newAddr += relocateTo
                                 val newLo = (newAddr and 0xFFFF).toShort() // must be treated as signed for next subtraction
-                                val newHi = (newAddr - newLo) shr 16
+                                val newHi = (newAddr - newLo) ushr 16
                                 newData = (data and 0xFFFF0000.toInt()) or newHi
                                 found = true
                                 break
