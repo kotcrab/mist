@@ -4,8 +4,6 @@ import kio.util.child
 import kio.util.execute
 import mist.ghidra.GhidraClient
 import mist.simulator.Trace
-import mist.simulator.sumCoverages
-import mist.simulator.toCoverageSummary
 import java.io.File
 
 class TestRunner(

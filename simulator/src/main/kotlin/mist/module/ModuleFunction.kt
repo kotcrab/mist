@@ -1,7 +1,5 @@
 package mist.module
 
-import mist.simulator.Coverage
-
 data class ModuleFunction(
   val name: String,
   val entryPoint: Int,
