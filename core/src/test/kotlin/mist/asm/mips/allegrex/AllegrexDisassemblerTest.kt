@@ -547,8 +547,8 @@ class AllegrexDisassemblerTest {
       MemBinLoader(ByteBuffer.allocate(4).putInt(instr.swapBytes()).array()),
       FunctionDef("UnitTest", 0, 4)
     )
-    assertThat(result.instr).isNotEmpty()
-    checkResult(result.instr[0])
+    assertThat(result.instrs).isNotEmpty()
+    checkResult(result.instrs[0])
   }
 
   private fun testInstr(
@@ -560,7 +560,7 @@ class AllegrexDisassemblerTest {
       MemBinLoader(bytes),
       FunctionDef("UnitTest", 0, bytes.size)
     )
-    assertThat(result.instr).isNotEmpty()
-    checkResult(result.instr[0])
+    assertThat(result.instrs).isNotEmpty()
+    checkResult(result.instrs[0])
   }
 }

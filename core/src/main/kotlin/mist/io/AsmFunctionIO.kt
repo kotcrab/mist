@@ -54,7 +54,7 @@ class AsmFunctionIO(private val projectIO: ProjectIO, private val def: ShlFuncti
   private fun initialDisassemble(): LoadedFunc {
     log.info(tag, "performing initial disassembly")
     val disassembly = AllegrexDisassembler().disassemble(projectIO.getElfLoader(), def.toLLDef())
-    val graph = MipsGraph(projectIO.getElfLoader(), disassembly.instr, log)
+    val graph = MipsGraph(projectIO.getElfLoader(), disassembly.instrs, log)
     graph.generateGraph()
     val stack = MipsStackAnalysis(graph, log)
     stack.analyze()

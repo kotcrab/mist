@@ -59,7 +59,7 @@ class MipsGraph(
   val branchDelaySlotInstrs = mutableMapOf<Int, MipsInstr>()
 
   fun generateGraph() {
-    require(nodes.isEmpty()) { "Graph already generated" }
+    check(nodes.isEmpty()) { "Graph already generated" }
     fillControlFlowCtx()
     createNodes()
     connectNodes()

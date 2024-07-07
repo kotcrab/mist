@@ -30,6 +30,8 @@ class PspElfLoader(private val elf: ElfFile, private val log: DecompLog) : BinLo
   private val tag = logTag()
   private val fragments = mutableMapOf<IntRange, MemoryFragment>()
 
+  val memoryRanges: List<IntRange>
+
   init {
     preLoadCheck()
     val elfBytes = KioInputStream(elf.bytes)
@@ -37,6 +39,7 @@ class PspElfLoader(private val elf: ElfFile, private val log: DecompLog) : BinLo
     if (elf.header.type != ElfType.EXEC) {
       applyRelocations(elfBytes)
     }
+    memoryRanges = fragments.keys.toList()
   }
 
   private fun preLoadCheck() {
@@ -59,7 +62,7 @@ class PspElfLoader(private val elf: ElfFile, private val log: DecompLog) : BinLo
           tag, "load program header at ${prog.vAddr.toHex()}, memSize: ${prog.memSize.toHex()}, " +
             "fileSize: ${prog.fileSize.toHex()}"
         )
-        val vRange = IntRange(prog.vAddr, prog.vAddr + prog.memSize)
+        val vRange = IntRange(prog.vAddr, prog.vAddr + prog.memSize - 1)
         val vBytes = ByteArray(prog.memSize)
         elfBytes.setPos(prog.offset)
         val bytes = elfBytes.readBytes(prog.fileSize)
@@ -152,10 +155,19 @@ class PspElfLoader(private val elf: ElfFile, private val log: DecompLog) : BinLo
     return (data and mask.inv()) or (((data and mask) + relocateTo) and mask)
   }
 
+  fun readByte(at: Int): Int {
+    for ((range, mem) in fragments) {
+      if (at in range) {
+        return mem.readByte(at - range.first)
+      }
+    }
+    log.panic(tag, "${at.toWHex()} not mapped to any elf fragment")
+  }
+
   private fun writeInt(at: Int, newValue: Int) {
     for ((range, mem) in fragments) {
       if (at in range) {
-        mem.writeInt(at, newValue)
+        mem.writeInt(at - range.first, newValue)
         return
       }
     }
@@ -165,7 +177,7 @@ class PspElfLoader(private val elf: ElfFile, private val log: DecompLog) : BinLo
   override fun readInt(at: Int): Int {
     for ((range, mem) in fragments) {
       if (at in range) {
-        return mem.readInt(at)
+        return mem.readInt(at - range.first)
       }
     }
     log.panic(tag, "${at.toWHex()} not mapped to any elf fragment")
@@ -174,14 +186,19 @@ class PspElfLoader(private val elf: ElfFile, private val log: DecompLog) : BinLo
   override fun readString(at: Int, charset: Charset): String {
     for ((range, mem) in fragments) {
       if (at in range) {
-        return mem.readString(at, charset)
+        return mem.readString(at - range.first, charset)
       }
     }
     log.panic(tag, "${at.toWHex()} not mapped to any elf fragment")
   }
 
-  private class MemoryFragment(val bytes: ByteArray) {
+  class MemoryFragment(val bytes: ByteArray) {
     private val bytesReader = KioInputStream(bytes)
+
+    fun readByte(at: Int): Int {
+      if (at > bytes.size) error("read out of bounds: ${at.toWHex()}")
+      return bytes[at].toInt() and 0xFF
+    }
 
     fun writeInt(at: Int, newValue: Int) {
       if (at > bytes.size) error("write out of bounds: ${at.toWHex()}")

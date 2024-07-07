@@ -193,7 +193,7 @@ class MipsGraphTest {
     val bytes = assembleAsByteArray { assemble() }
     val loader = MemBinLoader(bytes)
     val test = AllegrexDisassembler().disassemble(loader, FunctionDef("", 0, if (size == -1) bytes.size else size))
-    val graph = MipsGraph(loader, test.instr, DecompLog())
+    val graph = MipsGraph(loader, test.instrs, DecompLog())
     graph.generateGraph()
     return graph
   }

@@ -146,7 +146,7 @@ private class AllegrexInstructionSpaceTest(val sevenZipExe: File, val instrDataA
 
     val expectedInstrTxt = "$expectedOpcode ${expectedOperands.joinToString()}"
     try {
-      val instr = rewriteInstr(disasm.disassemble(TestBinLoader(encodedInstr), def).instr.first())
+      val instr = rewriteInstr(disasm.disassemble(TestBinLoader(encodedInstr), def).instrs.first())
       val instrTxt = instr.toString()
       val instrInvalidCompare = """
     expected $expectedInstrTxt
