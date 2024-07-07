@@ -22,6 +22,7 @@ allprojects {
     gdxVersion = '1.9.9'
     visUiVersion = '1.4.2'
     ktxVersion = '1.9.9-b1'
+    jacksonVersion = '2.17.1'
   }
 
   repositories {
@@ -74,5 +75,19 @@ project(':ui-gdx') {
     api "io.github.libktx:ktx-async:$ktxVersion"
     api "io.github.libktx:ktx-assets:$ktxVersion"
     api "io.github.libktx:ktx-inject:$ktxVersion"
+  }
+}
+
+project(':symbolic') {
+  dependencies {
+    api project(":core")
+    api "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1"
+    api "io.github.rybalkinsd:kohttp:0.12.0"
+    api "com.fasterxml.jackson.core:jackson-core:$jacksonVersion"
+    api "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
+    api "com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion"
+    api "io.ksmt:ksmt-core:0.5.23"
+    api "io.ksmt:ksmt-bitwuzla:0.5.23"
+    api "com.kotcrab.kmips:kmips:1.7"
   }
 }
