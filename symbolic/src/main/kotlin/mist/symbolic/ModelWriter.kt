@@ -17,14 +17,14 @@ class ModelWriter {
   private fun writeToString(model: KModel): String {
     val sb = StringBuilder()
     model.declarations.forEach { decl ->
-      when (decl.name) {
-        "ram" -> {
+      when {
+        decl.name == "ram" -> {
           val ram = model.interpretation(decl)?.toString()
-          if (ram != "(asArray array!fresh!0)" && ram != "(asArray array!fresh!1)") {
+          if (ram?.startsWith("(asArray array!fresh!") == false) {
             error("RAM doesn't match the expected declaration: $ram")
           }
         }
-        in setOf("array!fresh!0", "array!fresh!1") -> {
+        decl.name.startsWith("array!fresh!") -> {
           val ram: KFuncInterpVarsFree<KBv8Sort> = model.interpretation(decl).cast()
           ram.entries.map { entry ->
             val key: KBitVec32Value = entry.args.first().cast()

@@ -45,12 +45,14 @@ class TraceWriter {
         }
       }
       is TraceElement.JumpOutOfFunctionBody -> "out of body jump at ${element.pc.toWHex()} to ${element.toAddress.toWHex()} from reg ${element.sourceReg}"
-      is TraceElement.MemoryRead -> "read${element.size}${if (element.unsigned) "u" else ""}" +
-        "(${module.lookupAddress((element.address as Expr.Const).value).toAccessString()}) [value=${element.value}]"
-      is TraceElement.MemoryWrite -> "write${element.size}(${
-        module.lookupAddress((element.address as Expr.Const).value).toAccessString()
-      }, ${element.value})"
-      is TraceElement.Sync -> "sync(${element.value})"
+      is TraceElement.MemoryRead -> "read${element.size}${if (element.unsigned) "u" else ""}${element.unaligned?.short ?: ""}" +
+        "(${module.lookupAddress((element.address as Expr.Const).value).toAccessString()}) [value=${element.value}]" +
+        (element.shift?.let { " [shift=$it]" } ?: "")
+      is TraceElement.MemoryWrite -> "write${element.size}${element.unaligned?.short ?: ""}" +
+        "(${module.lookupAddress((element.address as Expr.Const).value).toAccessString()}, ${element.value})" +
+        (element.shift?.let { " [shift=$it]" } ?: "")
+      is TraceElement.Sync -> "sync(${element.value.toWHex()})"
+      is TraceElement.Break -> "break(${element.value.toWHex()})"
       is TraceElement.UseK1 -> "useK1() [value=${element.value}]"
       is TraceElement.ModifyK1 -> "modifyK1(${element.value})"
       is TraceElement.DidNotTerminateWithinLimit -> "--- did not terminate within limit, pc=${element.pc.toWHex()} ---"

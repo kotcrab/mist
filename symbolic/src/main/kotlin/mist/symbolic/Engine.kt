@@ -41,7 +41,9 @@ class Engine(
     const val INITIAL_SP = 0x09FFFE90
     const val DEAD_VALUE = 0xDEADBEEF.toInt()
     val assumedSpRange = (INITIAL_SP - 0x10000)..INITIAL_SP
+
     private val modelWriter = ModelWriter()
+    private val extendedSolverTimeout = 10.seconds
   }
 
   private var concrete = false
@@ -144,7 +146,7 @@ class Engine(
           println("WARN: Execution error at ${oldPc.toWHex()}")
           it.printStackTrace()
         }
-        .getOrThrow()
+        .getOrElse { ExecuteResult.YIELD }
       if (result == ExecuteResult.YIELD) {
         break
       }
@@ -254,7 +256,7 @@ class Engine(
       is MipsOpcode.Lb -> {
         val at = instr.regPlusImm(ctx)
         val value = ctx.memory.readByte(at)
-        ctx.trace { TraceElement.MemoryRead(address, at, 1, value, unsigned = false) }
+        ctx.trace { TraceElement.MemoryRead(address, at, 1, value) }
         ctx.writeGpr(instr.op0AsReg(), value)
       }
       is MipsOpcode.Lbu -> {
@@ -266,7 +268,7 @@ class Engine(
       is MipsOpcode.Lh -> {
         val at = instr.regPlusImm(ctx)
         val value = ctx.memory.readHalf(at)
-        ctx.trace { TraceElement.MemoryRead(address, at, 2, value, unsigned = false) }
+        ctx.trace { TraceElement.MemoryRead(address, at, 2, value) }
         ctx.writeGpr(instr.op0AsReg(), value)
       }
       is MipsOpcode.Lhu -> {
@@ -278,8 +280,66 @@ class Engine(
       is MipsOpcode.Lw -> {
         val at = instr.regPlusImm(ctx)
         val value = ctx.memory.readWord(at)
-        ctx.trace { TraceElement.MemoryRead(address, at, 4, value, unsigned = false) }
+        ctx.trace { TraceElement.MemoryRead(address, at, 4, value) }
         ctx.writeGpr(instr.op0AsReg(), value)
+      }
+      is MipsOpcode.Lwl -> {
+        val at = instr.regPlusImm(ctx)
+        val shift = Expr.Binary.of(BinaryOp.And, at, Expr.Const.of(0b11))
+        val effectiveAt = Expr.Binary.of(BinaryOp.Sub, at, shift)
+        val prevValue = Expr.Binary.of(
+          BinaryOp.And,
+          instr.op0AsExpr(ctx),
+          Expr.Binary.of(
+            BinaryOp.Srl,
+            Expr.Const.of(0xffffffff.toInt()),
+            Expr.Binary.of(
+              BinaryOp.Sll,
+              Expr.Binary.of(BinaryOp.Add, shift, Expr.Const.of(1)),
+              Expr.Const.of(3)
+            )
+          )
+        )
+        val loadValue = Expr.Binary.of(
+          BinaryOp.Sll,
+          ctx.memory.readWord(effectiveAt),
+          Expr.Binary.of(
+            BinaryOp.Sll,
+            Expr.Binary.of(BinaryOp.Sub, Expr.Const.of(3), shift),
+            Expr.Const.of(3)
+          )
+        )
+        ctx.trace {
+          TraceElement.MemoryRead(address, effectiveAt, 4, loadValue, unaligned = TraceElement.UnalignedMemoryAccess.Left, shift = shift)
+        }
+        ctx.writeGpr(instr.op0AsReg(), Expr.Binary.of(BinaryOp.Or, prevValue, loadValue))
+      }
+      is MipsOpcode.Lwr -> {
+        val at = instr.regPlusImm(ctx)
+        val shift = Expr.Binary.of(BinaryOp.And, at, Expr.Const.of(0b11))
+        val effectiveAt = Expr.Binary.of(BinaryOp.Sub, at, shift)
+        val prevValue = Expr.Binary.of(
+          BinaryOp.And,
+          instr.op0AsExpr(ctx),
+          Expr.Binary.of(
+            BinaryOp.Sll,
+            Expr.Const.of(0xffffffff.toInt()),
+            Expr.Binary.of(
+              BinaryOp.Sll,
+              Expr.Binary.of(BinaryOp.Sub, Expr.Const.of(4), shift),
+              Expr.Const.of(3)
+            )
+          )
+        )
+        val loadValue = Expr.Binary.of(
+          BinaryOp.Srl,
+          ctx.memory.readWord(effectiveAt),
+          Expr.Binary.of(BinaryOp.Sll, shift, Expr.Const.of(3))
+        )
+        ctx.trace {
+          TraceElement.MemoryRead(address, effectiveAt, 4, loadValue, unaligned = TraceElement.UnalignedMemoryAccess.Right, shift = shift)
+        }
+        ctx.writeGpr(instr.op0AsReg(), Expr.Binary.of(BinaryOp.Or, prevValue, loadValue))
       }
 
       // Memory stores
@@ -300,6 +360,64 @@ class Engine(
         val value = ctx.readGpr(instr.op0AsReg())
         ctx.trace { TraceElement.MemoryWrite(address, at, 4, value) }
         ctx.memory.writeWord(at, value)
+      }
+      is MipsOpcode.Swl -> {
+        val at = instr.regPlusImm(ctx)
+        val shift = Expr.Binary.of(BinaryOp.And, at, Expr.Const.of(0b11))
+        val effectiveAt = Expr.Binary.of(BinaryOp.Sub, at, shift)
+        val prevValue = Expr.Binary.of(
+          BinaryOp.And,
+          ctx.memory.readWord(effectiveAt),
+          Expr.Binary.of(
+            BinaryOp.Sll,
+            Expr.Const.of(0xffffffff.toInt()),
+            Expr.Binary.of(
+              BinaryOp.Sll,
+              Expr.Binary.of(BinaryOp.Add, shift, Expr.Const.of(1)),
+              Expr.Const.of(3)
+            )
+          )
+        )
+        val storeValue = Expr.Binary.of(
+          BinaryOp.Srl,
+          instr.op0AsExpr(ctx),
+          Expr.Binary.of(
+            BinaryOp.Sll,
+            Expr.Binary.of(BinaryOp.Sub, Expr.Const.of(3), shift),
+            Expr.Const.of(3)
+          )
+        )
+        ctx.trace {
+          TraceElement.MemoryWrite(address, effectiveAt, 4, storeValue, unaligned = TraceElement.UnalignedMemoryAccess.Left, shift = shift)
+        }
+        ctx.memory.writeWord(effectiveAt, Expr.Binary.of(BinaryOp.Or, prevValue, storeValue))
+      }
+      is MipsOpcode.Swr -> {
+        val at = instr.regPlusImm(ctx)
+        val shift = Expr.Binary.of(BinaryOp.And, at, Expr.Const.of(0b11))
+        val effectiveAt = Expr.Binary.of(BinaryOp.Sub, at, shift)
+        val prevValue = Expr.Binary.of(
+          BinaryOp.And,
+          ctx.memory.readWord(effectiveAt),
+          Expr.Binary.of(
+            BinaryOp.Srl,
+            Expr.Const.of(0xffffffff.toInt()),
+            Expr.Binary.of(
+              BinaryOp.Sll,
+              Expr.Binary.of(BinaryOp.Sub, Expr.Const.of(4), shift),
+              Expr.Const.of(3)
+            )
+          )
+        )
+        val storeValue = Expr.Binary.of(
+          BinaryOp.Sll,
+          ctx.memory.readWord(effectiveAt),
+          Expr.Binary.of(BinaryOp.Sll, shift, Expr.Const.of(3))
+        )
+        ctx.trace {
+          TraceElement.MemoryWrite(address, effectiveAt, 4, storeValue, unaligned = TraceElement.UnalignedMemoryAccess.Right, shift = shift)
+        }
+        ctx.memory.writeWord(effectiveAt, Expr.Binary.of(BinaryOp.Or, prevValue, storeValue))
       }
 
       // Branches
@@ -361,6 +479,11 @@ class Engine(
       }
       is MipsOpcode.Sync -> {
         ctx.trace { TraceElement.Sync(address, instr.op0AsImm()) }
+      }
+      is MipsOpcode.Break -> {
+        ctx.trace { TraceElement.Break(address, instr.op0AsImm()) }
+        handleFinishedCtx(ctx, instr)
+        return ExecuteResult.YIELD
       }
 
       else -> error("Unimplemented opcode: $instr")
@@ -557,14 +680,13 @@ class Engine(
 
   private suspend fun handleJumpRegister(ctx: Context, address: Int, instr: MipsInstr): ExecuteResult {
     executeInstruction(ctx, address + 4, inDelaySlot = true)
-    val solveTimeout = 10.seconds
     val reg = instr.op0AsReg()
     val regExpr = ctx.readGpr(reg)
 
     if (regExpr is Expr.Const) {
       ctx.pc = regExpr.value
     } else {
-      val status = ctx.checkSolver(solveTimeout)
+      val status = ctx.checkSolver(extendedSolverTimeout)
       if (status != KSolverStatus.SAT) {
         stats.failedJumpResolution.getAndIncrement()
         println("WARN: Solver failed for jump instruction: $instr ($reg=${regExpr} status=$status), dropping path")
@@ -598,18 +720,23 @@ class Engine(
     }
 
     if (ctx.pc == RETURN_TOKEN && reg == GprReg.Ra) {
-      if (!concrete) {
-        // Solve in case it was concrete jump during symbolic execution
-        ctx.checkSolver(solveTimeout)
-      }
-      val pathId = stats.finishedPaths.getAndIncrement()
-      handleFinishedCtx(ctx, pathId)
+      handleFinishedCtx(ctx, instr)
       return ExecuteResult.YIELD
     }
     return ExecuteResult.CONTINUE
   }
 
-  private fun handleFinishedCtx(ctx: Context, pathId: Int) {
+  private fun handleFinishedCtx(ctx: Context, instr: MipsInstr) {
+    if (!concrete) {
+      // Solve in case it was for example concrete jump during symbolic execution
+      val status = ctx.checkSolver(extendedSolverTimeout)
+      if (status != KSolverStatus.SAT) {
+        stats.failedFinishedCtxSolve.getAndIncrement()
+        println("WARN: Solver failed for finished context: $instr (status=$status), dropping path")
+        return
+      }
+    }
+    val pathId = stats.finishedPaths.getAndIncrement()
     allExecutedAddresses.addAll(ctx.executedAddresses)
     if (modelsOutDir != null) {
       modelWriter.writeToFile(ctx.solverModel().detach(), modelsOutDir.child("%06d.txt".format(pathId)))

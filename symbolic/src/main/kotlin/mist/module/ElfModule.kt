@@ -58,8 +58,12 @@ class ElfModule(
   }
 
   private fun parseSymbolsSection(lines: List<String>, section: String): List<Symbol> {
+    val fromIndex = lines.indexOfFirst { it.startsWith("$section ") }
+    if (fromIndex == -1) {
+      return emptyList()
+    }
     val sectionLines = lines.subList(
-      fromIndex = lines.indexOfFirst { it.startsWith("$section ") },
+      fromIndex = fromIndex,
       toIndex = lines.size
     )
       .let {

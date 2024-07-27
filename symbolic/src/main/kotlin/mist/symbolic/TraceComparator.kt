@@ -98,6 +98,12 @@ class TraceComparator(private val traceWriter: TraceWriter) {
           messages.add(syncPointMismatchMessage)
         }
       }
+      is TraceElement.Break -> {
+        actualElement as TraceElement.Break
+        if (expectedElement.value != actualElement.value) {
+          messages.add(syncPointMismatchMessage)
+        }
+      }
       is TraceElement.DidNotTerminateWithinLimit, is TraceElement.ExecutionStart, is TraceElement.JumpOutOfFunctionBody -> {
         // Nothing to compare here
       }
@@ -125,20 +131,21 @@ class TraceComparator(private val traceWriter: TraceWriter) {
         messages.add(Message(read.pc, null, "No matching read for: ${read.toString(expectedModule)}"))
         return@forEach
       }
+      val compareMessage = "${read.toString(expectedModule)} != ${actualRead.toString(actualModule)}"
       if (read.unsigned != actualRead.unsigned) {
-        messages.add(
-          Message(
-            read.pc,
-            actualRead.pc,
-            "Unsigned/signed read mismatch: ${read.toString(expectedModule)} != ${actualRead.toString(actualModule)}"
-          )
-        )
+        messages.add(Message(read.pc, actualRead.pc, "Unsigned/signed read mismatch: $compareMessage"))
+      }
+      if (read.unaligned != actualRead.unaligned) {
+        messages.add(Message(read.pc, actualRead.pc, "Read unaligned mismatch: $compareMessage"))
+      }
+      if (read.shift != null && actualRead.shift != null && !compareExpr(read.shift, actualRead.shift)) {
+        messages.add(Message(read.pc, actualRead.pc, "Read shift mismatch: $compareMessage"))
       }
       if (read.size != actualRead.size) {
-        messages.add(Message(read.pc, actualRead.pc, "Read size mismatch: ${read.toString(expectedModule)} != ${actualRead.toString(actualModule)}"))
+        messages.add(Message(read.pc, actualRead.pc, "Read size mismatch: $compareMessage"))
       }
       if (!compareExpr(read.value, actualRead.value)) {
-        messages.add(Message(read.pc, actualRead.pc, "Read value mismatch: ${read.toString(expectedModule)} != ${actualRead.toString(actualModule)}"))
+        messages.add(Message(read.pc, actualRead.pc, "Read value mismatch: $compareMessage"))
       }
     }
     val remainingActualWrites = actualSummary.writes.toMutableList()
@@ -152,19 +159,18 @@ class TraceComparator(private val traceWriter: TraceWriter) {
         return@forEach
       }
       val actualWrite = remainingActualWrites.removeAt(actualWriteIndex)
+      val compareMessage = "${write.toString(expectedModule)} != ${actualWrite.toString(actualModule)}"
+      if (write.unaligned != actualWrite.unaligned) {
+        messages.add(Message(write.pc, actualWrite.pc, "Written unaligned mismatch: $compareMessage"))
+      }
+      if (write.shift != null && actualWrite.shift != null && !compareExpr(write.shift, actualWrite.shift)) {
+        messages.add(Message(write.pc, actualWrite.pc, "Write shift mismatch: $compareMessage"))
+      }
       if (write.size != actualWrite.size) {
-        messages.add(
-          Message(
-            write.pc, actualWrite.pc, "Written size mismatch: ${write.toString(expectedModule)} != ${actualWrite.toString(actualModule)}"
-          )
-        )
+        messages.add(Message(write.pc, actualWrite.pc, "Written size mismatch: $compareMessage"))
       }
       if (!compareExpr(write.value, actualWrite.value)) {
-        messages.add(
-          Message(
-            write.pc, actualWrite.pc, "Written value mismatch: ${write.toString(expectedModule)} != ${actualWrite.toString(actualModule)}"
-          )
-        )
+        messages.add(Message(write.pc, actualWrite.pc, "Written value mismatch: $compareMessage"))
       }
     }
     remainingActualWrites.forEach { write ->
