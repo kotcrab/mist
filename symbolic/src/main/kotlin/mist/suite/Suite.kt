@@ -4,6 +4,7 @@ import kio.util.child
 import mist.asm.mips.allegrex.AllegrexDisassembler
 import mist.ghidra.GhidraClient
 import mist.module.*
+import mist.suite.SuiteConfig.ContextInitScope
 import mist.symbolic.BvExpr
 import mist.symbolic.Context
 import mist.symbolic.Expr
@@ -17,16 +18,28 @@ fun suiteConfig(moduleName: String, configure: SuiteConfig.() -> Unit): SuiteCon
 }
 
 class SuiteConfig(val moduleName: String) {
-  val additionalFunctionsToTest = mutableSetOf<String>()
+  val additionalFunctionsToExecute = mutableSetOf<String>()
+  var executeAllImplementationFunctions = false
+    private set
+  val functionsToSkipExecution = mutableSetOf<String>()
   val globals = mutableSetOf<String>()
   var functionLibraryProvider: (ModuleMemory) -> FunctionLibrary = { FunctionLibrary() }
     private set
   var commonContextConfigure: ContextInitScope.() -> Unit = { }
     private set
+  val testConfigs = mutableMapOf<String, SuiteTestConfig>()
   val functionArgsIgnoredForCompare = mutableMapOf<String, List<Int>>()
 
-  fun alsoTest(name: String) {
-    additionalFunctionsToTest.add(name)
+  fun alsoExecute(functionName: String) {
+    additionalFunctionsToExecute.add(functionName)
+  }
+
+  fun alsoExecuteAllImplementationFunctions() {
+    executeAllImplementationFunctions = true
+  }
+
+  fun skipExecuting(functionName: String) {
+    functionsToSkipExecution.add(functionName)
   }
 
   fun global(name: String) {
@@ -39,6 +52,12 @@ class SuiteConfig(val moduleName: String) {
 
   fun configureContext(configure: ContextInitScope.() -> Unit) {
     commonContextConfigure = configure
+  }
+
+  fun test(functionName: String, configure: SuiteTestConfig.() -> Unit) {
+    val config = SuiteTestConfig()
+    config.configure()
+    testConfigs[functionName] = config
   }
 
   fun ignoreComparingArgsOf(functionName: String, vararg args: Int) {
@@ -55,13 +74,31 @@ class SuiteConfig(val moduleName: String) {
 
     fun writeSymbolField(path: String, value: BvExpr) {
       val (address, size) = module.lookupGlobalMember(path)
+      writeMemory(address, size, value)
+    }
+
+    fun writeSymbol(name: String, value: BvExpr) {
+      val (address, size) = module.lookupGlobal(name)
+      writeMemory(address, size, value)
+    }
+
+    private fun writeMemory(address: Int, size: Int, value: BvExpr) {
       when (size) {
         1 -> ctx.memory.writeByte(Expr.Const.of(address), value)
         2 -> ctx.memory.writeHalf(Expr.Const.of(address), value)
         4 -> ctx.memory.writeWord(Expr.Const.of(address), value)
-        else -> error("Can't write field, not a standard size: $size")
+        else -> error("Can't write to memory, not a standard size: $size")
       }
     }
+  }
+}
+
+class SuiteTestConfig {
+  var testContextConfigure: ContextInitScope.() -> Unit = { }
+    private set
+
+  fun configureContext(configure: ContextInitScope.() -> Unit) {
+    testContextConfigure = configure
   }
 }
 

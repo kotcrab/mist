@@ -54,12 +54,19 @@ class SymbolicFunctionHandler(
   name: String,
   symbolicExecutionLimit: Int = Integer.MAX_VALUE,
   val constValue: Int = Engine.DEAD_VALUE,
+  private val constraints: Context.() -> List<BvExpr> = { emptyList() },
 ) : ResultFunctionHandler(name, {
   val executionNumber = functionStates.getAndIncrement(name)
   if (executionNumber >= symbolicExecutionLimit) {
     Expr.Const.of(constValue)
   } else {
-    Expr.Symbolic.of("fun:v0:$executionNumber:$name")
+    val symbolicVariable = Expr.Symbolic.of("fun:v0:$executionNumber:$name")
+    constraints()
+      .takeIf { it.isNotEmpty() }
+      ?.map { constraint -> Expr.Condition.of(ConditionOp.Eq, symbolicVariable, constraint) }
+      ?.reduce { acc, condition -> Expr.Or.of(acc, condition) }
+      ?.let { assume(it) }
+    symbolicVariable
   }
 })
 

@@ -79,7 +79,10 @@ class CompareFromModels(
   private fun executeFunction(modelFile: File, module: Module): Trace {
     val function = module.getFunctionOrThrow(modelFile.parentFile.name)
     val ctx = Context()
-    suiteConfig.commonContextConfigure.invoke(SuiteConfig.ContextInitScope(module, ctx))
+    val testConfig = suiteConfig.testConfigs[function.name]
+    val contextInitScope = SuiteConfig.ContextInitScope(module, ctx)
+    suiteConfig.commonContextConfigure.invoke(contextInitScope)
+    testConfig?.testContextConfigure?.invoke(contextInitScope)
     ctx.pc = function.entryPoint
     ctx.memory.ignoreIllegalAccess = true
     val moduleMemory = module.createModuleMemory()
@@ -101,6 +104,10 @@ class CompareFromModels(
     val suiteOutDir = outDir.child(suiteConfig.moduleName).also {
       it.deleteRecursively()
       it.mkdir()
+    }
+    if (completedCases.isEmpty()) {
+      println("Nothing to write, either all traces matched or no tests were run")
+      return
     }
 
     execute("git", listOf("init"), workingDirectory = suiteOutDir)

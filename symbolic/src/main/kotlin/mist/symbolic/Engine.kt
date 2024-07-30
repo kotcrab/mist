@@ -632,6 +632,7 @@ class Engine(
     val toAddress = instr.op0AsImm()
     val function = module.getFunctionByAddress(toAddress)
     ctx.trace {
+      // TODO proper support for 64 bit args
       val argumentsCount = function?.let { moduleTypes.getFunctionArgsCount(it.name) }
       val arguments = (0..<(argumentsCount ?: 7)).map {
         when (it) {

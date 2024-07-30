@@ -7,7 +7,7 @@ class BranchCounters(
   private val branches: MutableMap<Int, MutableMap<Int, Counter>> = mutableMapOf(),
 ) {
   fun getCounter(fromAddress: Int, toAddress: Int): Counter {
-    return branches.getOrPut(fromAddress) { ConcurrentHashMap() }
+    return branches.getOrPut(fromAddress) { mutableMapOf() }
       .getOrPut(toAddress) { Counter(0) }
   }
 

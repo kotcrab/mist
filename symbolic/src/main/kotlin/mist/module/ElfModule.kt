@@ -33,7 +33,7 @@ class ElfModule(
   fun registerGlobal(name: String, type: GhidraType) {
     val symbol = symbols.globals.find { it.name == name }
       ?: error("No such symbol: $name")
-    registerGlobal(ModuleSymbol(symbol.name, symbol.address.toLong()), type)
+    registerGlobal(ModuleSymbol(symbol.name, symbol.address.toLong(), symbol.length), type)
   }
 
   private fun symbolsToModuleFunctions(symbols: Symbols, exports: List<ModuleExport>): Map<Int, ModuleFunction> {

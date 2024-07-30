@@ -20,6 +20,8 @@ sealed interface Expr {
 
   fun newSolverExpr(solver: Solver): KExpr<*>
 
+  fun getComponents(): List<Expr>
+
   class Const private constructor(val value: Int) : BvExpr {
     companion object {
       fun of(value: Int): Const {
@@ -29,6 +31,10 @@ sealed interface Expr {
 
     override fun newSolverExpr(solver: Solver) = solver.make {
       mkBv(value)
+    }
+
+    override fun getComponents(): List<Expr> {
+      return emptyList()
     }
 
     override fun toString(): String {
@@ -47,6 +53,10 @@ sealed interface Expr {
       mkConst(name, bv32Sort)
     }
 
+    override fun getComponents(): List<Expr> {
+      return emptyList()
+    }
+
     override fun toString(): String {
       return name
     }
@@ -63,6 +73,10 @@ sealed interface Expr {
       mkArraySelect(solver.memoryExpressionAt(captureIndex), solver.cachedSolverExpr(address).cast())
     }
 
+    override fun getComponents(): List<Expr> {
+      return listOf(address)
+    }
+
     override fun toString(): String {
       return "Select(address=$address, captureIndex=$captureIndex)"
     }
@@ -76,6 +90,10 @@ sealed interface Expr {
     }
 
     override fun newSolverExpr(solver: Solver) = error("Not implemented for Store")
+
+    override fun getComponents(): List<Expr> {
+      return listOf(address, value)
+    }
 
     override fun toString(): String {
       return "Store(address=$address, value=$value)"
@@ -91,6 +109,10 @@ sealed interface Expr {
 
     override fun newSolverExpr(solver: Solver) = solver.make {
       mkBvConcatExpr(solver.cachedSolverExpr(msb), solver.cachedSolverExpr(lsb))
+    }
+
+    override fun getComponents(): List<Expr> {
+      return listOf(msb, lsb)
     }
 
     override fun toString(): String {
@@ -116,6 +138,10 @@ sealed interface Expr {
       mkBvExtractExpr(high, low, solver.cachedSolverExpr(value))
     }
 
+    override fun getComponents(): List<Expr> {
+      return listOf(value)
+    }
+
     override fun toString(): String {
       return "Extract(value=$value, high=$high, low=$low)"
     }
@@ -136,6 +162,10 @@ sealed interface Expr {
 
     override fun newSolverExpr(solver: Solver) = solver.make {
       mkBvZeroExtensionExpr(32 - (high - low + 1), mkBvExtractExpr(high, low, solver.cachedSolverExpr(value)))
+    }
+
+    override fun getComponents(): List<Expr> {
+      return listOf(value)
     }
 
     override fun toString(): String {
@@ -163,6 +193,10 @@ sealed interface Expr {
         mkBvAndExpr(solver.cachedSolverExpr(destination).cast(), mkBv(rtMask)),
         mkBvShiftLeftExpr(mkBvAndExpr(solver.cachedSolverExpr(source).cast(), mkBv(rsMask)), mkBv(pos)),
       )
+    }
+
+    override fun getComponents(): List<Expr> {
+      return listOf(destination, source)
     }
 
     override fun toString(): String {
@@ -239,6 +273,10 @@ sealed interface Expr {
       }
     }
 
+    override fun getComponents(): List<Expr> {
+      return listOf(left, right)
+    }
+
     override fun toString(): String {
       return "Binary(op=$op, left=$left, right=$right)"
     }
@@ -276,6 +314,10 @@ sealed interface Expr {
       }
     }
 
+    override fun getComponents(): List<Expr> {
+      return listOf(value)
+    }
+
     override fun toString(): String {
       return "Unary(op=$op, value=$value)"
     }
@@ -300,6 +342,10 @@ sealed interface Expr {
       val t: KExpr<KBv32Sort> = solver.cachedSolverExpr(trueValue).cast()
       val f: KExpr<KBv32Sort> = solver.cachedSolverExpr(falseValue).cast()
       mkIte(solver.cachedSolverExpr(condition), t, f)
+    }
+
+    override fun getComponents(): List<Expr> {
+      return listOf(condition, trueValue, falseValue)
     }
 
     override fun toString(): String {
@@ -340,8 +386,64 @@ sealed interface Expr {
       }
     }
 
+    override fun getComponents(): List<Expr> {
+      return listOf(left, right)
+    }
+
     override fun toString(): String {
       return "Condition(op=$op, left=$left, right=$right)"
+    }
+  }
+
+  class And private constructor(val left: BoolExpr, val right: BoolExpr) : BoolExpr {
+    companion object {
+      fun of(left: BoolExpr, right: BoolExpr): BoolExpr {
+        return if (left is Bool && right is Bool) {
+          Bool.of(left.value and right.value)
+        } else {
+          And(left, right)
+        }
+      }
+    }
+
+    override fun newSolverExpr(solver: Solver) = solver.make {
+      val l: KExpr<KBoolSort> = solver.cachedSolverExpr(left).cast()
+      val r: KExpr<KBoolSort> = solver.cachedSolverExpr(right).cast()
+      mkAnd(l, r)
+    }
+
+    override fun getComponents(): List<Expr> {
+      return listOf(left, right)
+    }
+
+    override fun toString(): String {
+      return "And(left=$left, right=$right)"
+    }
+  }
+
+  class Or private constructor(val left: BoolExpr, val right: BoolExpr) : BoolExpr {
+    companion object {
+      fun of(left: BoolExpr, right: BoolExpr): BoolExpr {
+        return if (left is Bool && right is Bool) {
+          Bool.of(left.value or right.value)
+        } else {
+          Or(left, right)
+        }
+      }
+    }
+
+    override fun newSolverExpr(solver: Solver) = solver.make {
+      val l: KExpr<KBoolSort> = solver.cachedSolverExpr(left).cast()
+      val r: KExpr<KBoolSort> = solver.cachedSolverExpr(right).cast()
+      mkOr(l, r)
+    }
+
+    override fun getComponents(): List<Expr> {
+      return listOf(left, right)
+    }
+
+    override fun toString(): String {
+      return "Or(left=$left, right=$right)"
     }
   }
 
@@ -360,6 +462,10 @@ sealed interface Expr {
       mkNot(solver.cachedSolverExpr(value))
     }
 
+    override fun getComponents(): List<Expr> {
+      return listOf(value)
+    }
+
     override fun toString(): String {
       return "Not(value=$value)"
     }
@@ -374,6 +480,10 @@ sealed interface Expr {
 
     override fun newSolverExpr(solver: Solver) = solver.make {
       if (value) mkTrue() else mkFalse()
+    }
+
+    override fun getComponents(): List<Expr> {
+      return emptyList()
     }
 
     fun negated(): Bool {

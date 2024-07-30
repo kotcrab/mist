@@ -19,10 +19,10 @@ abstract class Module(
     typedGlobals.add(symbol to types)
   }
 
-  fun lookupGlobalAddress(name: String): Int {
+  fun lookupGlobal(name: String): Pair<Int, Int> {
     val (symbol, _) = typedGlobals.find { (symbol, _) -> symbol.name == name }
       ?: error("No such typed global: $name")
-    return symbol.address.toInt()
+    return symbol.address.toInt() to symbol.length
   }
 
   fun lookupGlobalMember(path: String): Pair<Int, Int> {

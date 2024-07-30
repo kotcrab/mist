@@ -47,13 +47,14 @@ class GhidraModule(
       ?: error("No such symbol: $name")
     val dataType = moduleTypes.get(symbol.dataTypePathName!!)
       ?: error("No such data type: ${symbol.dataTypePathName}")
-    val moduleSymbol = ModuleSymbol(symbol.name, symbol.address)
+    val moduleSymbol = ModuleSymbol(symbol.name, symbol.address, dataType.length)
     registerGlobal(moduleSymbol, dataType)
     return moduleSymbol to dataType
   }
 
   private fun classifyFunction(disassembler: Disassembler<MipsInstr>, loader: BinLoader, function: GhidraFunction): ModuleFunction.Type {
     val firstInstruction = disassembler.disassembleInstruction(loader, function.entryPoint.toInt())
+    val secondInstruction by lazy { disassembler.disassembleInstruction(loader, function.entryPoint.toInt() + 4) }
     return when {
       exportedFunctions.any {
         val endsWithNid = !function.name.startsWith("FUN_", ignoreCase = true) &&
@@ -62,7 +63,7 @@ class GhidraModule(
       } -> {
         ModuleFunction.Type.EXPORT
       }
-      firstInstruction.opcode == MipsOpcode.Jr && firstInstruction.op0AsReg() == GprReg.Ra -> {
+      firstInstruction.opcode == MipsOpcode.Jr && firstInstruction.op0AsReg() == GprReg.Ra && secondInstruction.opcode == MipsOpcode.Nop -> {
         ModuleFunction.Type.IMPORT
       }
       else -> {

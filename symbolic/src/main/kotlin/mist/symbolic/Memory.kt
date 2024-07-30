@@ -12,7 +12,7 @@ class Memory private constructor(
   private var currentBufferAlloc: Int = BUFFER_ALLOC_START
 ) {
   companion object {
-    private const val BUFFER_ALLOC_START = 0x8800000
+    private const val BUFFER_ALLOC_START = 0x08800000
     private val hwRanges = setOf(0xBC, 0xBD, 0xBE)
   }
 
@@ -40,10 +40,12 @@ class Memory private constructor(
     writesSinceLastBranch = 0
   }
 
-  fun allocate(size: Int, initByte: Int = 0xCD): Int {
+  fun allocate(size: Int, initByte: Int? = null): Int {
     val buffer = currentBufferAlloc
     repeat(size) {
-      writeByte(Expr.Const.of(buffer + it), Expr.Const.of(initByte))
+      if (initByte != null) {
+        writeByte(Expr.Const.of(buffer + it), Expr.Const.of(initByte))
+      }
     }
     currentBufferAlloc += size
     val pad = 0x10

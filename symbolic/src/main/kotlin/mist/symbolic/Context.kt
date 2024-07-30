@@ -94,10 +94,8 @@ class Context private constructor(
   }
 
   fun assume(expr: BoolExpr) {
-    if (solver != null) {
-      error("Assumptions should be added before solver is created")
-    }
     assumptions.add(expr)
+    solver?.assert(expr)
   }
 
   fun addPathDecision(path: PathDecision) {
@@ -119,6 +117,15 @@ class Context private constructor(
 
   fun solverEval(expr: BvExpr, isComplete: Boolean): KExpr<out KBvSort> {
     return getOrCreateSolverContext().eval(expr, isComplete)
+  }
+
+  fun solverDumpEvalComponents(expr: BvExpr, isComplete: Boolean, indent: String = "") {
+    println("$indent> $expr = ${solverEval(expr, isComplete)}")
+    expr.getComponents().forEach {
+      if (it is BvExpr && it !is Expr.Const) {
+        solverDumpEvalComponents(it, isComplete, "$indent ")
+      }
+    }
   }
 
   inline fun <T> useSolver(block: () -> T): T {

@@ -29,6 +29,9 @@ class ModelWriter {
           ram.entries.map { entry ->
             val key: KBitVec32Value = entry.args.first().cast()
             val value: KBitVec8Value = entry.value.cast()
+            if (key.intValue in Engine.assumedSpRange) {
+              println("WARN: Model sets value in the stack range: ${key.intValue.toWHex()}")
+            }
             sb.appendLine("ram:${key.intValue.toWHex()}=${value.byteValue.toWHex()}")
           }
         }

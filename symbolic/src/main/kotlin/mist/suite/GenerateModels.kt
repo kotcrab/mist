@@ -19,7 +19,12 @@ class GenerateModels(
   private val executedAddresses = mutableSetOf<Int>()
 
   private val functionsToExecute = module.functions.values
-    .filter { it.type == ModuleFunction.Type.EXPORT || it.name in suiteConfig.additionalFunctionsToTest }
+    .filter {
+      it.type == ModuleFunction.Type.EXPORT ||
+        (it.type == ModuleFunction.Type.IMPLEMENTATION && suiteConfig.executeAllImplementationFunctions) ||
+        it.name in suiteConfig.additionalFunctionsToExecute
+    }
+    .filterNot { it.name in suiteConfig.functionsToSkipExecution }
 
   fun execute() {
     modelsOutDir.mkdir()
@@ -29,7 +34,7 @@ class GenerateModels(
 
   private fun executeFunctions() {
     functionsToExecute.onEachIndexed { index, function ->
-      println("Running ${index + 1}/${functionsToExecute.size} ${function.name}...")
+      println("\n\nRunning ${index + 1}/${functionsToExecute.size} ${function.name}...")
       executedAddresses.addAll(
         executeEngine(function)
       )
@@ -50,7 +55,10 @@ class GenerateModels(
 
   private fun executeEngine(function: ModuleFunction): Set<Int> {
     val ctx = Context.presetSymbolic()
-    suiteConfig.commonContextConfigure.invoke(SuiteConfig.ContextInitScope(module, ctx))
+    val testConfig = suiteConfig.testConfigs[function.name]
+    val contextInitScope = SuiteConfig.ContextInitScope(module, ctx)
+    suiteConfig.commonContextConfigure.invoke(contextInitScope)
+    testConfig?.testContextConfigure?.invoke(contextInitScope)
     ctx.pc = function.entryPoint
     val moduleMemory = module.createModuleMemory()
     val moduleFunctionLibrary = suiteConfig.functionLibraryProvider.invoke(moduleMemory)
