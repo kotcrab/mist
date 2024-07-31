@@ -46,7 +46,7 @@ fun sceSymbolicFunctionLibrary(moduleMemory: ModuleMemory): FunctionLibrary {
         Expr.Const.of(functionStates.getAndAdd("__time", 10))
       },
 
-      SymbolicFunctionHandler("sceKernelWaitEventFlag", symbolicExecutionLimit = 1, constValue = -1),
+      SymbolicFunctionHandler("sceKernelWaitEventFlag", symbolicExecutionLimit = 1, constValueV0 = -1),
       ResultFunctionHandler("sceKernelSetEventFlag"),
       ResultFunctionHandler("sceKernelCreateEventFlag") { Expr.Const.of(0x1234) },
       ResultFunctionHandler("sceKernelClearEventFlag"),

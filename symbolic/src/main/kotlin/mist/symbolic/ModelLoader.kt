@@ -5,16 +5,26 @@ import java.io.File
 
 class ModelLoader {
   fun loadFromFile(file: File, ctx: Context, functionLibrary: FunctionLibrary): FunctionLibrary {
-    val functionReplays = mutableMapOf<String, MutableMap<Int, BvExpr>>()
+    val functionReplaysV0 = mutableMapOf<String, MutableMap<Int, BvExpr>>()
+    val functionReplaysV1 = mutableMapOf<String, MutableMap<Int, BvExpr>>()
     file.forEachLine { line ->
       val lineParts = line.split("=")
       val parts = lineParts[0].split(":")
       val value = Expr.Const.of(Integer.parseUnsignedInt(lineParts[1], 16))
       when {
-        parts[0] == "fun" && parts[1] == "v0" -> {
-          val executionNumber = parts[2].toInt()
-          val name = parts[3]
-          functionReplays.getOrPut(name) { mutableMapOf() }[executionNumber] = value
+        parts[0] == "fun" -> {
+          when {
+            parts[1] == "v0" -> {
+              val executionNumber = parts[2].toInt()
+              val name = parts[3]
+              functionReplaysV0.getOrPut(name) { mutableMapOf() }[executionNumber] = value
+            }
+            parts[1] == "v1" -> {
+              val executionNumber = parts[2].toInt()
+              val name = parts[3]
+              functionReplaysV1.getOrPut(name) { mutableMapOf() }[executionNumber] = value
+            }
+          }
         }
         parts[0] == "ram" -> {
           val address = Expr.Const.of(Integer.parseUnsignedInt(parts[1], 16))
@@ -35,7 +45,11 @@ class ModelLoader {
     }
     return functionLibrary.transform { name, functionHandler ->
       if (functionHandler is SymbolicFunctionHandler) {
-        ReplaySymbolicFunctionHandler(functionReplays.getOrElse(name) { emptyMap() }, functionHandler)
+        ReplaySymbolicFunctionHandler(
+          functionReplaysV0.getOrElse(name) { emptyMap() },
+          functionReplaysV1.getOrElse(name) { emptyMap() },
+          functionHandler
+        )
       } else {
         functionHandler
       }
