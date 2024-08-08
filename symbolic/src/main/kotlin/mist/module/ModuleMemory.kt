@@ -7,12 +7,14 @@ import mist.io.BinLoader
 import java.nio.charset.Charset
 
 class ModuleMemory(
-  var currentBufferAlloc: Int = 0x89000000.toInt()
+  var currentBufferAlloc: Int = INITIAL_BUFFER_ALLOC
 ) {
   companion object {
     private const val CHUNK_COUNT = 0xFF
     private const val CHUNK_ID_SHIFT = 24
     private const val CHUNK_MASK = 0xFFFFFF
+
+    const val INITIAL_BUFFER_ALLOC = 0x89000000.toInt()
   }
 
   val loader: BinLoader = ModuleMemoryBinLoader(this)

@@ -233,10 +233,10 @@ sealed interface Expr {
             BinaryOp.MultHi -> ((l.toLong() * r.toLong()) ushr 32).toInt()
             BinaryOp.MultuLo -> (l.toUnsignedLong() * r.toUnsignedLong()).toInt()
             BinaryOp.MultuHi -> ((l.toUnsignedLong() * r.toUnsignedLong()) ushr 32).toInt()
-            BinaryOp.Div -> l / r
-            BinaryOp.Divu -> (l.toUInt() / r.toUInt()).toInt()
-            BinaryOp.Mod -> l % r
-            BinaryOp.Modu -> (l.toUInt() % r.toUInt()).toInt()
+            BinaryOp.Div -> if (r == 0) 0x77777777 else l / r
+            BinaryOp.Divu -> if (r == 0) 0x77777777 else (l.toUInt() / r.toUInt()).toInt()
+            BinaryOp.Mod -> if (r == 0) 0x77777777 else l % r
+            BinaryOp.Modu -> if (r == 0) 0x77777777 else (l.toUInt() % r.toUInt()).toInt()
           }
           Const.of(newValue)
         } else {

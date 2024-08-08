@@ -10,5 +10,6 @@ data class EngineStats(
   var unknownSolverResults: AtomicInteger = AtomicInteger(0),
   var failedJumpResolution: AtomicInteger = AtomicInteger(0),
   var failedFinishedCtxSolve: AtomicInteger = AtomicInteger(0),
+  var breaks: AtomicInteger = AtomicInteger(0),
   var executionErrors: AtomicInteger = AtomicInteger(0),
 )

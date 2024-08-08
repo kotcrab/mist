@@ -142,9 +142,13 @@ class Engine(
         executeInstruction(ctx, oldPc, inDelaySlot = false)
       }
         .onFailure {
-          stats.executionErrors.getAndIncrement()
-          println("WARN: Execution error at ${oldPc.toWHex()}")
-          it.printStackTrace()
+          if (it is BreakException) {
+            stats.breaks.getAndIncrement()
+          } else {
+            stats.executionErrors.getAndIncrement()
+            println("WARN: Execution error at ${oldPc.toWHex()}")
+            it.printStackTrace()
+          }
         }
         .getOrElse { ExecuteResult.YIELD }
       if (result == ExecuteResult.YIELD) {
@@ -483,7 +487,7 @@ class Engine(
       is MipsOpcode.Break -> {
         ctx.trace { TraceElement.Break(address, instr.op0AsImm()) }
         handleFinishedCtx(ctx, instr)
-        return ExecuteResult.YIELD
+        throw BreakException()
       }
 
       else -> error("Unimplemented opcode: $instr")
@@ -770,4 +774,6 @@ class Engine(
     YIELD,
     CONTINUE,
   }
+
+  private class BreakException() : Exception()
 }
