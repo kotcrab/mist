@@ -3,13 +3,16 @@
 package mist.symbolic
 
 import kio.util.toWHex
+import mist.ghidra.model.GhidraType
+import mist.module.ModuleSymbol
 
 class Memory private constructor(
   val captures: MutableList<List<Expr.Store>>,
   private val stores: MutableList<Expr.Store>,
   var hwWordsReadsSinceLastBranch: Int = 0,
   var writesSinceLastBranch: Int = 0,
-  private var currentBufferAlloc: Int = BUFFER_ALLOC_START
+  private var currentBufferAlloc: Int = BUFFER_ALLOC_START,
+  val typedAllocations: MutableList<Pair<ModuleSymbol, GhidraType>> = mutableListOf()
 ) {
   companion object {
     private const val BUFFER_ALLOC_START = 0x08800000
@@ -21,9 +24,10 @@ class Memory private constructor(
   var concrete = false
   var ignoreIllegalAccess = false
 
-  val onReadWordHooks = mutableMapOf<Int, () -> BvExpr?>()
-  val onReadHalfHooks = mutableMapOf<Int, () -> BvExpr?>()
-  val onReadByteHooks = mutableMapOf<Int, () -> BvExpr?>()
+  private val onReadWordHooks = mutableMapOf<Int, () -> BvExpr?>()
+  private val onReadHalfHooks = mutableMapOf<Int, () -> BvExpr?>()
+  private val onReadByteHooks = mutableMapOf<Int, () -> BvExpr?>()
+
 
   fun copyOf(): Memory {
     return Memory(
@@ -31,13 +35,20 @@ class Memory private constructor(
       stores = stores.toMutableList(),
       hwWordsReadsSinceLastBranch = hwWordsReadsSinceLastBranch,
       writesSinceLastBranch = writesSinceLastBranch,
-      currentBufferAlloc = currentBufferAlloc
+      currentBufferAlloc = currentBufferAlloc,
+      typedAllocations = typedAllocations.toMutableList(),
     )
   }
 
   fun resetBranchAccessTracking() {
     hwWordsReadsSinceLastBranch = 0
     writesSinceLastBranch = 0
+  }
+
+  fun allocate(type: GhidraType, name: String, initByte: Int? = null): Int {
+    val buffer = allocate(type.length, initByte)
+    typedAllocations.add(ModuleSymbol(name, buffer.toLong(), type.length) to type)
+    return buffer
   }
 
   fun allocate(size: Int, initByte: Int? = null): Int {
@@ -178,7 +189,7 @@ class Memory private constructor(
     return Expr.Select.of(at, captures.size - 1)
   }
 
-  private fun captureStores() {
+  fun captureStores() {
     if (stores.size > 0) {
       captures.add(stores.toList())
       stores.clear()

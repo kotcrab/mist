@@ -46,7 +46,7 @@ class Engine(
     private val extendedSolverTimeout = 10.seconds
   }
 
-  private var concrete = false
+  private var mode = EngineMode.SYMBOLIC_FORKING
   private val stats = EngineStats()
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -60,13 +60,18 @@ class Engine(
   private val nextLogAtMillis = ThreadLocal.withInitial { System.currentTimeMillis() }
 
   fun executeConcrete(ctx: Context): Trace {
-    concrete = true
+    mode = EngineMode.CONCRETE
     ctx.memory.concrete = true
     executionLoop(ctx)
-    return Trace(ctx.traceElements, allExecutedAddresses)
+    return Trace(ctx.traceElements, allExecutedAddresses, ctx.memory.typedAllocations)
   }
 
   fun executeSymbolic(ctx: Context): Set<Int> {
+    mode = EngineMode.SYMBOLIC_FORKING
+    if (ctx.specificBranches.isNotEmpty()) {
+      mode = EngineMode.SYMBOLIC_SPECIFIC
+    }
+    ctx.memory.concrete = false
     executionLoop(ctx)
     return allExecutedAddresses
   }
@@ -127,6 +132,9 @@ class Engine(
         ctx.trace { TraceElement.DidNotTerminateWithinLimit(ctx.pc) }
         break
       }
+      if (ctx.breakRaised) { // break happened in delay slot
+        break
+      }
 
       if (System.currentTimeMillis() > nextLogAtMillis.get()) {
         println(
@@ -142,13 +150,9 @@ class Engine(
         executeInstruction(ctx, oldPc, inDelaySlot = false)
       }
         .onFailure {
-          if (it is BreakException) {
-            stats.breaks.getAndIncrement()
-          } else {
-            stats.executionErrors.getAndIncrement()
-            println("WARN: Execution error at ${oldPc.toWHex()}")
-            it.printStackTrace()
-          }
+          stats.executionErrors.getAndIncrement()
+          println("WARN: Execution error at ${oldPc.toWHex()}")
+          it.printStackTrace()
         }
         .getOrElse { ExecuteResult.YIELD }
       if (result == ExecuteResult.YIELD) {
@@ -487,7 +491,8 @@ class Engine(
       is MipsOpcode.Break -> {
         ctx.trace { TraceElement.Break(address, instr.op0AsImm()) }
         handleFinishedCtx(ctx, instr)
-        throw BreakException()
+        ctx.breakRaised = true
+        return ExecuteResult.YIELD
       }
 
       else -> error("Unimplemented opcode: $instr")
@@ -506,19 +511,50 @@ class Engine(
 
   private suspend fun handleBranch(ctx: Context, address: Int, instr: MipsInstr, condition: BoolExpr): ExecuteResult {
     val branchTakenPc = if (instr.operands[1] is ImmOperand) instr.op1AsImm() else instr.op2AsImm()
+    val expectedBranchTaken = if (mode == EngineMode.SYMBOLIC_SPECIFIC) ctx.specificBranches.removeAt(0) else null
+
     if (condition is Expr.Bool) {
+      if (expectedBranchTaken != null && condition.value != expectedBranchTaken) {
+        error("Branch evaluated to ${condition.value} but context specific branch expected $expectedBranchTaken")
+      }
       return handleConcreteBranch(ctx, instr, address, condition, branchTakenPc)
     }
 
-    val copyCtx = ctx.copyOf()
-    // Branch taken
-    executeInstruction(copyCtx, address + 4, inDelaySlot = true)
-    handleSymbolicBranch(copyCtx, address, condition, branchTakenPc, pendingBranch = true)
-    // Branch not taken
+    if (expectedBranchTaken != null) {
+      return if (expectedBranchTaken) {
+        handleSymbolicBranchTaken(ctx, address, condition, branchTakenPc, pendingBranch = false)
+      } else {
+        handleSymbolicBranchNotTaken(ctx, instr, address, condition, pendingBranch = false)
+      }
+    }
+
+    // symbolic forking
+    handleSymbolicBranchTaken(ctx.copyOf(), address, condition, branchTakenPc, pendingBranch = true)
+    return handleSymbolicBranchNotTaken(ctx, instr, address, condition, pendingBranch = false)
+  }
+
+  private suspend fun handleSymbolicBranchTaken(
+    ctx: Context,
+    address: Int,
+    condition: BoolExpr,
+    branchTakenPc: Int,
+    pendingBranch: Boolean
+  ): ExecuteResult {
+    executeInstruction(ctx, address + 4, inDelaySlot = true)
+    return handleSymbolicBranch(ctx, address, condition, branchTakenPc, pendingBranch)
+  }
+
+  private suspend fun handleSymbolicBranchNotTaken(
+    ctx: Context,
+    instr: MipsInstr,
+    address: Int,
+    condition: BoolExpr,
+    pendingBranch: Boolean
+  ): ExecuteResult {
     if (!instr.hasFlag(BranchLikely)) {
       executeInstruction(ctx, address + 4, inDelaySlot = true)
     }
-    return handleSymbolicBranch(ctx, address, Expr.Not.of(condition), address + 8, pendingBranch = false)
+    return handleSymbolicBranch(ctx, address, Expr.Not.of(condition), address + 8, pendingBranch)
   }
 
   private suspend fun handleConcreteBranch(
@@ -577,8 +613,8 @@ class Engine(
     globalBranchedCounter.getAndIncrement()
 
     if (pendingBranch) {
-      if (concrete) {
-        error("Context fork in concrete mode should not happen")
+      if (mode != EngineMode.SYMBOLIC_FORKING) {
+        error("Context fork in $mode mode should not happen")
       }
       pendingCtxs.send(ctx)
       return ExecuteResult.YIELD
@@ -732,7 +768,7 @@ class Engine(
   }
 
   private fun handleFinishedCtx(ctx: Context, instr: MipsInstr) {
-    if (!concrete) {
+    if (mode != EngineMode.CONCRETE) {
       // Solve in case it was for example concrete jump during symbolic execution
       val status = ctx.checkSolver(extendedSolverTimeout)
       if (status != KSolverStatus.SAT) {
@@ -775,5 +811,9 @@ class Engine(
     CONTINUE,
   }
 
-  private class BreakException() : Exception()
+  private enum class EngineMode {
+    SYMBOLIC_FORKING,
+    SYMBOLIC_SPECIFIC,
+    CONCRETE
+  }
 }

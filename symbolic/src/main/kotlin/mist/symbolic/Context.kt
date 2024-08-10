@@ -22,6 +22,8 @@ class Context private constructor(
   var executedInstrs: Int,
   val executedAddresses: MutableSet<Int>,
   val traceElements: MutableList<TraceElement>,
+  val specificBranches: MutableList<Boolean>,
+  var breakRaised: Boolean,
 ) {
   companion object {
     fun presetSymbolic(): Context {
@@ -58,6 +60,8 @@ class Context private constructor(
     executedInstrs = 0,
     executedAddresses = mutableSetOf(),
     traceElements = mutableListOf(),
+    specificBranches = mutableListOf(),
+    breakRaised = false,
   ) {
     gpr[0] = Expr.ZERO
   }
@@ -77,6 +81,8 @@ class Context private constructor(
       executedInstrs = executedInstrs,
       executedAddresses = executedAddresses.toMutableSet(),
       traceElements = traceElements.toMutableList(),
+      specificBranches = specificBranches.toMutableList(),
+      breakRaised = breakRaised,
     )
   }
 
