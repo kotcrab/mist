@@ -1,31 +1,41 @@
 package mist.uofw
 
-import kmips.Label
-import kmips.Reg.*
+import kio.util.child
+import kmipsx.elf.CompileResult
+import kmipsx.elf.pspCodeCompiler
+import kmipsx.util.compiledElf
 import mist.module.ModuleMemory
 import mist.symbolic.*
+import java.io.File
+
+private var sceCompileResult: CompileResult? = null
+
+fun compileSceFunctionLibrary(pspSdkDir: File, srcDir: File) {
+  println("Compiling native code...")
+  val outDir = srcDir.child("tmp").also { it.mkdir() }
+  sceCompileResult = pspCodeCompiler(pspSdkDir)
+    .compile(
+      patchBaseAddress = ModuleMemory.INITIAL_BUFFER_ALLOC,
+      srcFiles = listOf(srcDir.child("native.c")),
+      outDir = outDir,
+      additionalGccFlags = listOf("-std=c99"),
+    )
+}
 
 fun sceSymbolicFunctionLibrary(moduleMemory: ModuleMemory): FunctionLibrary {
+  val compileResult = sceCompileResult
+    ?: error("Native library code was not compiled")
+  if (moduleMemory.currentBufferAlloc != ModuleMemory.INITIAL_BUFFER_ALLOC) {
+    error("Library must be created before allocating module memory")
+  }
   return FunctionLibrary(
     listOf(
-      ProvidedFunctionHandler("memset", moduleMemory) {
-        // a0 ptr, a1 value, a2 num
-        val end = Label()
-
-        beq(a2, zero, end)
-        move(v0, a0)
-
-        addu(a2, a0, a2)
-        val loop = label()
-        sb(a1, 0, a0)
-        addiu(a0, a0, 1)
-        bne(a2, a0, loop)
-        nop()
-
-        label(end)
-        jr(ra)
-        nop()
+      ProvidedFunctionHandler("__compiled_code", moduleMemory) {
+        compiledElf(compileResult)
       },
+
+      SymbolicFunctionHandler("__udivdi3"),
+      SymbolicFunctionHandler("__umoddi3"),
 
       SymbolicFunctionHandler("sceKernelCreateThread"),
       SymbolicFunctionHandler("sceKernelStartThread"),
@@ -55,7 +65,7 @@ fun sceSymbolicFunctionLibrary(moduleMemory: ModuleMemory): FunctionLibrary {
       ResultFunctionHandler("sceKernelDcacheWritebackRange"),
       ResultFunctionHandler("sceKernelDcacheWritebackInvalidateRange"),
 
-      ResultFunctionHandler("sceKernelDmaOpAlloc") { Expr.Const.of(memory.allocate(0x40)) },
+      ResultFunctionHandler("sceKernelDmaOpAlloc") { Expr.Const.of(memory.allocate(0x40, 0xCD)) },
       SymbolicFunctionHandler("sceKernelDmaOpAssign"),
       SymbolicFunctionHandler("sceKernelDmaOpConcatenate"),
       ResultFunctionHandler("sceKernelDmaOpDeQueue"),
@@ -64,6 +74,36 @@ fun sceSymbolicFunctionLibrary(moduleMemory: ModuleMemory): FunctionLibrary {
       SymbolicFunctionHandler("sceKernelDmaOpSetCallback"),
       SymbolicFunctionHandler("sceKernelDmaOpSetupLink"),
       ResultFunctionHandler("sceKernelDmaOpQuit"),
+
+      SymbolicFunctionHandler("sceKernelCreateSema"),
+      SymbolicFunctionHandler("sceKernelDeleteSema"),
+      SymbolicFunctionHandler("sceKernelSignalSema"),
+      SymbolicFunctionHandler("sceKernelWaitSema"),
+
+      SymbolicFunctionHandler("sceKernelCreateHeap"),
+      SymbolicFunctionHandler("sceKernelDeleteHeap"),
+      SymbolicFunctionHandler("sceKernelFreeHeapMemory"),
+      SymbolicFunctionHandler("sceKernelAllocHeapMemory", constraints = {
+        listOf(
+          Expr.Const.of(0),
+          Expr.Const.of(memory.allocate(0x1000, 0xCD))
+        )
+      }),
+
+      SymbolicFunctionHandler("sceIoDevctl"),
+      SymbolicFunctionHandler("sceIoAddDrv"),
+      SymbolicFunctionHandler("sceIoTerminateFd"),
+
+      SymbolicFunctionHandler("sceKernelExtendKernelStack"),
+
+      SymbolicFunctionHandler("sceKernelCreateFpl"),
+      SymbolicFunctionHandler("sceKernelDeleteFpl"),
+      SymbolicFunctionHandler("sceKernelFreeFpl"),
+      SymbolicFunctionHandler("sceKernelTryAllocateFpl"),
+
+      SymbolicFunctionHandler("sceRtcTickAddTicks"),
+      SymbolicFunctionHandler("sceRtcGetTick"),
+      SymbolicFunctionHandler("sceRtcSetTick"),
 
       ResultFunctionHandler("sceDdrFlush"),
 
@@ -88,6 +128,30 @@ fun sceSymbolicFunctionLibrary(moduleMemory: ModuleMemory): FunctionLibrary {
       ResultFunctionHandler("sceSysregAudioClkSelect"),
       ResultFunctionHandler("sceSysregAudioIoDisable"),
       ResultFunctionHandler("sceSysregAudioClkoutIoDisable"),
-    )
+
+      SymbolicFunctionHandler("sceUmd_040A7090"),
+      SymbolicFunctionHandler("sceUmdSetDriveStatus"),
+      SymbolicFunctionHandler("sceUmdMan_driver_65E2B3E0"),
+      SymbolicFunctionHandler("sceUmdManRegisterInsertEjectUMDCallBack"),
+      SymbolicFunctionHandler("sceUmdManUnRegisterInsertEjectUMDCallBack"),
+    ) +
+      listOf(
+        "memcmp",
+        "memcpy",
+        "memset",
+        "strchr",
+        "strcmp",
+        "strlen",
+        "strncmp",
+        "strrchr",
+        "strstr",
+        "strtol",
+        "look_ctype_table",
+      ).map { func ->
+        ProvidedFunctionHandler(func, moduleMemory) {
+          j(compileResult.functions.getValue(func))
+          nop()
+        }
+      }
   )
 }

@@ -87,5 +87,6 @@ project(':symbolic') {
     api "io.ksmt:ksmt-core:0.5.23"
     api "io.ksmt:ksmt-bitwuzla:0.5.23"
     api "com.kotcrab.kmips:kmips:1.7"
+    api "com.github.kotcrab:kmipsx:87feb7a"
   }
 }
