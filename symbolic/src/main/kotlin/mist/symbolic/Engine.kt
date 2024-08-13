@@ -565,9 +565,11 @@ class Engine(
     branchTakenPc: Int
   ): ExecuteResult {
     if (condition.value) {
+      ctx.trace { TraceElement.Branch(address, true) }
       executeInstruction(ctx, address + 4, inDelaySlot = true)
       ctx.pc = branchTakenPc
     } else {
+      ctx.trace { TraceElement.Branch(address, false) }
       if (!instr.hasFlag(BranchLikely)) {
         executeInstruction(ctx, address + 4, inDelaySlot = true)
       }

@@ -21,6 +21,10 @@ class ModuleTypes(
     return ghidraTypes[pathName]
   }
 
+  fun findOrThrow(typeName: String): GhidraType {
+    return ghidraTypes.values.single { it.pathName.endsWith(typeName) }
+  }
+
   fun getFunctionArgsCount(name: String): Int? {
     val overrideArgsCount = functionArgsCountOverrides[name]
     if (overrideArgsCount != null) {

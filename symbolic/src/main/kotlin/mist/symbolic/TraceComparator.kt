@@ -33,6 +33,8 @@ class TraceComparator(private val traceWriter: TraceWriter) {
           functionArgsIgnoredForCompare,
           expectedModule,
           actualModule,
+          expectedTrace,
+          actualTrace,
           expectedElements.removeFirst(),
           actualElements.removeFirst()
         )
@@ -44,7 +46,7 @@ class TraceComparator(private val traceWriter: TraceWriter) {
       currentActualElements.clear()
       collectElementsUntilSyncPoint(expectedElements, currentExpectedElements)
       collectElementsUntilSyncPoint(actualElements, currentActualElements)
-      compareElements(messages, expectedModule, actualModule, currentExpectedElements, currentActualElements)
+      compareElements(messages, expectedModule, actualModule, expectedTrace, actualTrace, currentExpectedElements, currentActualElements)
     }
   }
 
@@ -53,11 +55,13 @@ class TraceComparator(private val traceWriter: TraceWriter) {
     functionArgsIgnoredForCompare: Map<String, List<Int>>,
     expectedModule: Module,
     actualModule: Module,
+    expectedTrace: Trace,
+    actualTrace: Trace,
     expectedElement: TraceElement,
     actualElement: TraceElement
   ): Boolean {
     if (expectedElement !is TraceSyncPoint) {
-      error("Expected element is not a valid sync point: ${expectedElement.toString(expectedModule)}")
+      error("Expected element is not a valid sync point: ${expectedElement.toString(expectedModule, expectedTrace)}")
     }
     if (actualElement !is TraceSyncPoint) {
       error("Actual element is not a valid sync point: $expectedElement")
@@ -65,7 +69,7 @@ class TraceComparator(private val traceWriter: TraceWriter) {
     val syncPointMismatchMessage = Message(
       expectedElement.pc,
       actualElement.pc,
-      "Sync point mismatch: ${expectedElement.toString(expectedModule)} != ${actualElement.toString(actualModule)}"
+      "Sync point mismatch: ${expectedElement.toString(expectedModule, expectedTrace)} != ${actualElement.toString(actualModule, actualTrace)}"
     )
     if (expectedElement::class.java != actualElement::class.java) {
       messages.add(syncPointMismatchMessage)
@@ -86,7 +90,7 @@ class TraceComparator(private val traceWriter: TraceWriter) {
       is TraceElement.FunctionReturn -> {
         actualElement as TraceElement.FunctionReturn
         if ((expectedElement.returnSize != actualElement.returnSize) ||
-          (expectedElement.returnSize == 1 && !compareExpr(expectedElement.v0, actualElement.v0)) ||
+          ((expectedElement.returnSize ?: 0) >= 1 && !compareExpr(expectedElement.v0, actualElement.v0)) ||
           (expectedElement.returnSize == 2 && !compareExpr(expectedElement.v1, actualElement.v1))
         ) {
           messages.add(syncPointMismatchMessage)
@@ -116,6 +120,8 @@ class TraceComparator(private val traceWriter: TraceWriter) {
     messages: MutableList<Message>,
     expectedModule: Module,
     actualModule: Module,
+    expectedTrace: Trace,
+    actualTrace: Trace,
     expectedElements: List<TraceElement>,
     actualElements: List<TraceElement>
   ) {
@@ -128,10 +134,10 @@ class TraceComparator(private val traceWriter: TraceWriter) {
       }
       val actualRead = actualSummary.reads.find { compareExpr(it.address, read.address) }
       if (actualRead == null) {
-        messages.add(Message(read.pc, null, "No matching read for: ${read.toString(expectedModule)}"))
+        messages.add(Message(read.pc, null, "No matching read for: ${read.toString(expectedModule, expectedTrace)}"))
         return@forEach
       }
-      val compareMessage = "${read.toString(expectedModule)} != ${actualRead.toString(actualModule)}"
+      val compareMessage = "${read.toString(expectedModule, expectedTrace)} != ${actualRead.toString(actualModule, actualTrace)}"
       if (read.unsigned != actualRead.unsigned) {
         messages.add(Message(read.pc, actualRead.pc, "Unsigned/signed read mismatch: $compareMessage"))
       }
@@ -155,11 +161,11 @@ class TraceComparator(private val traceWriter: TraceWriter) {
       }
       val actualWriteIndex = remainingActualWrites.indexOfFirst { compareExpr(it.address, write.address) }
       if (actualWriteIndex == -1) {
-        messages.add(Message(write.pc, null, "No matching write for: ${write.toString(expectedModule)}"))
+        messages.add(Message(write.pc, null, "No matching write for: ${write.toString(expectedModule, expectedTrace)}"))
         return@forEach
       }
       val actualWrite = remainingActualWrites.removeAt(actualWriteIndex)
-      val compareMessage = "${write.toString(expectedModule)} != ${actualWrite.toString(actualModule)}"
+      val compareMessage = "${write.toString(expectedModule, expectedTrace)} != ${actualWrite.toString(actualModule, actualTrace)}"
       if (write.unaligned != actualWrite.unaligned) {
         messages.add(Message(write.pc, actualWrite.pc, "Written unaligned mismatch: $compareMessage"))
       }
@@ -177,7 +183,7 @@ class TraceComparator(private val traceWriter: TraceWriter) {
       if (write.address is Expr.Const && write.address.value in Engine.assumedSpRange) {
         return@forEach
       }
-      messages.add(Message(null, write.pc, "Unexpected write: ${write.toString(actualModule)}"))
+      messages.add(Message(null, write.pc, "Unexpected write: ${write.toString(actualModule, actualTrace)}"))
     }
 
     // Simplified, could be improved
@@ -200,6 +206,9 @@ class TraceComparator(private val traceWriter: TraceWriter) {
         is TraceElement.MemoryWrite -> writes.add(it)
         is TraceElement.ModifyK1 -> modifiedK1 = it.value
         is TraceElement.UseK1 -> usedK1 = it.value
+        is TraceElement.Branch -> {
+          // ignore, doesn't matter for comparing traces
+        }
         else -> error("Unexpected element type")
       }
     }
@@ -232,8 +241,8 @@ class TraceComparator(private val traceWriter: TraceWriter) {
     return expectedExpr is Expr.Const && actualExpr is Expr.Const && expectedExpr.value == actualExpr.value
   }
 
-  private fun TraceElement.toString(module: Module): String {
-    return "[${traceWriter.writeElementToString(module, this)}]"
+  private fun TraceElement.toString(module: Module, trace: Trace): String {
+    return "[${traceWriter.writeElementToString(module, trace.additionalAllocations, this)}]"
   }
 
   data class Message(val relatedExpectedPc: Int?, val relatedActualPc: Int?, val message: String)

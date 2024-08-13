@@ -45,7 +45,7 @@ class GhidraModule(
   fun registerGlobal(name: String): Pair<ModuleSymbol, GhidraType> {
     val symbol = ghidraSymbols.find { it.name == name }
       ?: error("No such symbol: $name")
-    val dataType = moduleTypes.get(symbol.dataTypePathName!!)
+    val dataType = types.get(symbol.dataTypePathName!!)
       ?: error("No such data type: ${symbol.dataTypePathName}")
     val moduleSymbol = ModuleSymbol(symbol.name, symbol.address, dataType.length)
     registerGlobal(moduleSymbol, dataType)

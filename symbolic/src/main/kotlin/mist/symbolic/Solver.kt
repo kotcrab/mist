@@ -4,7 +4,6 @@ import io.ksmt.KContext
 import io.ksmt.expr.KExpr
 import io.ksmt.solver.KModel
 import io.ksmt.solver.KSolverStatus
-import io.ksmt.solver.bitwuzla.KBitwuzlaSolver
 import io.ksmt.sort.*
 import io.ksmt.utils.cast
 import kotlin.time.Duration
@@ -13,22 +12,20 @@ import kotlin.time.Duration.Companion.seconds
 class Solver(
   private val ctx: Context,
   private val defaultSolverTimeout: Duration = 3.seconds,
+  private val solverCtx: SolverContext = SolverContext(),
+  private val symbolicNamePrefix: String = ""
 ) : AutoCloseable {
-  private val kCtx = KContext(
-    operationMode = KContext.OperationMode.SINGLE_THREAD, // Disables thread safety
-    astManagementMode = KContext.AstManagementMode.NO_GC,
-    simplificationMode = KContext.SimplificationMode.SIMPLIFY,
-  )
-  private val solver = KBitwuzlaSolver(kCtx)
+  private val kCtx = solverCtx.kCtx
+  private val solver = solverCtx.solver
 
   private val bvExprCache = mutableMapOf<BvExpr, KExpr<out KBvSort>>()
   private val boolExprCache = mutableMapOf<BoolExpr, KExpr<KBoolSort>>()
 
-  private val initialRam = kCtx.mkConst("ram", kCtx.mkArraySort(kCtx.bv32Sort, kCtx.bv8Sort))
+  private val initialRam = solverCtx.initialRam
   private val memoryExpressions: MutableList<MemoryKExpr> = mutableListOf()
 
-  fun <T> make(block: KContext.() -> T): T {
-    return block(kCtx)
+  fun <T> make(block: KContext.(namePrefix: String) -> T): T {
+    return block(kCtx, symbolicNamePrefix)
   }
 
   fun cachedSolverExpr(expr: BvExpr): KExpr<out KBvSort> {
@@ -43,7 +40,7 @@ class Solver(
     return if (index < 0) initialRam else memoryExpressions[index]
   }
 
-  private fun updateMemoryExpressions() {
+  fun updateMemoryExpressions() {
     ctx.memory.captures.subList(memoryExpressions.size, ctx.memory.captures.size).forEach { stores ->
       val newExpression = stores.fold(memoryExpressions.lastOrNull() ?: initialRam) { acc, store ->
         val storeValue = when (store.value) {
@@ -75,8 +72,7 @@ class Solver(
   }
 
   override fun close() {
-    solver.close()
-    kCtx.close()
+    solverCtx.close()
   }
 }
 

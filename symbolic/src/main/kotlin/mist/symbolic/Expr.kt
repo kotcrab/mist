@@ -29,6 +29,14 @@ sealed interface Expr {
       }
     }
 
+    fun plus(other: Int): Const {
+      return of(value + other)
+    }
+
+    fun plus(other: Const): Const {
+      return of(value + other.value)
+    }
+
     override fun newSolverExpr(solver: Solver) = solver.make {
       mkBv(value)
     }
@@ -49,8 +57,8 @@ sealed interface Expr {
       }
     }
 
-    override fun newSolverExpr(solver: Solver) = solver.make {
-      mkConst(name, bv32Sort)
+    override fun newSolverExpr(solver: Solver) = solver.make { namePrefix ->
+      mkConst(namePrefix + name, bv32Sort)
     }
 
     override fun getComponents(): List<Expr> {

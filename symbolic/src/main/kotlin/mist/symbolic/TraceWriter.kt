@@ -1,12 +1,28 @@
 package mist.symbolic
 
 import kio.util.toWHex
+import mist.ghidra.model.GhidraType
 import mist.module.Module
+import mist.module.ModuleSymbol
 import java.io.File
 
 class TraceWriter {
-  fun writeToFile(module: Module, trace: Trace, file: File, traceCompareMessages: List<TraceComparator.Message>) {
-    file.writeText(writeToString(module, trace) + "\n" + writeToString(traceCompareMessages))
+  fun writeToFile(
+    module: Module,
+    trace: Trace,
+    file: File,
+    traceCompareMessages: List<TraceComparator.Message>,
+    proveMessages: List<String>
+  ) {
+    file.writeText(buildString {
+      append(writeToString(module, trace))
+      append("\n")
+      append(writeToString(traceCompareMessages))
+      if (proveMessages.isNotEmpty()) {
+        append("\n")
+        append(proveMessages.joinToString(separator = "\n", prefix = "Prove messages:\n"))
+      }
+    })
   }
 
   private fun writeToString(module: Module, trace: Trace): String {
@@ -16,6 +32,7 @@ class TraceWriter {
         (it is TraceElement.MemoryRead && (it.address as Expr.Const).value in Engine.assumedSpRange) ||
           (it is TraceElement.MemoryWrite && (it.address as Expr.Const).value in Engine.assumedSpRange)
       }
+      .filter { it !is TraceElement.Branch }
       .joinToString(separator = "\n", postfix = "\n") {
         val prefix = "[${it.pc.toWHex()}] " + "%03d|".format(level)
         when (it) {
@@ -23,11 +40,11 @@ class TraceWriter {
           is TraceElement.FunctionReturn -> level--
           else -> {} // ignore
         }
-        prefix + writeElementToString(module, it)
+        prefix + writeElementToString(module, trace.additionalAllocations, it)
       }
   }
 
-  fun writeElementToString(module: Module, element: TraceElement): String {
+  fun writeElementToString(module: Module, additionalAllocations: List<Pair<ModuleSymbol, GhidraType>>, element: TraceElement): String {
     return when (element) {
       is TraceElement.ExecutionStart -> {
         "start args: ${element.arguments.joinToString(separator = ", ")}"
@@ -46,16 +63,17 @@ class TraceWriter {
       }
       is TraceElement.JumpOutOfFunctionBody -> "out of body jump at ${element.pc.toWHex()} to ${element.toAddress.toWHex()} from reg ${element.sourceReg}"
       is TraceElement.MemoryRead -> "read${element.size}${if (element.unsigned) "u" else ""}${element.unaligned?.short ?: ""}" +
-        "(${module.lookupAddress((element.address as Expr.Const).value).toAccessString()}) [value=${element.value}]" +
+        "(${module.lookupAddress((element.address as Expr.Const).value, additionalAllocations).toAccessString()}) [value=${element.value}]" +
         (element.shift?.let { " [shift=$it]" } ?: "")
       is TraceElement.MemoryWrite -> "write${element.size}${element.unaligned?.short ?: ""}" +
-        "(${module.lookupAddress((element.address as Expr.Const).value).toAccessString()}, ${element.value})" +
+        "(${module.lookupAddress((element.address as Expr.Const).value, additionalAllocations).toAccessString()}, ${element.value})" +
         (element.shift?.let { " [shift=$it]" } ?: "")
       is TraceElement.Sync -> "sync(${element.value.toWHex()})"
       is TraceElement.Break -> "break(${element.value.toWHex()})"
       is TraceElement.UseK1 -> "useK1() [value=${element.value}]"
       is TraceElement.ModifyK1 -> "modifyK1(${element.value})"
       is TraceElement.DidNotTerminateWithinLimit -> "--- did not terminate within limit, pc=${element.pc.toWHex()} ---"
+      else -> error("Unhandled element type: $element")
     }
   }
 

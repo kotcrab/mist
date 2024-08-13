@@ -1,15 +1,15 @@
 package mist.suite
 
 import kio.util.child
+import mist.asm.mips.GprReg
 import mist.asm.mips.allegrex.AllegrexDisassembler
 import mist.ghidra.GhidraClient
 import mist.module.*
 import mist.suite.SuiteConfig.ContextInitScope
-import mist.symbolic.BvExpr
-import mist.symbolic.Context
-import mist.symbolic.Expr
-import mist.symbolic.FunctionLibrary
+import mist.symbolic.*
 import java.io.File
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 
 fun suiteConfig(moduleName: String, configure: SuiteConfig.() -> Unit): SuiteConfig {
   val suiteConfig = SuiteConfig(moduleName)
@@ -55,6 +55,7 @@ class SuiteConfig(val moduleName: String) {
   }
 
   fun test(functionName: String, configure: SuiteTestConfig.() -> Unit) {
+    additionalFunctionsToExecute.add(functionName)
     val config = SuiteTestConfig()
     config.configure()
     testConfigs[functionName] = config
@@ -66,7 +67,7 @@ class SuiteConfig(val moduleName: String) {
 
   class ContextInitScope(
     private val module: Module,
-    val ctx: Context
+    private val ctx: Context
   ) {
     fun writeSymbolField(path: String, value: Int) {
       writeSymbolField(path, Expr.Const.of(value))
@@ -74,21 +75,49 @@ class SuiteConfig(val moduleName: String) {
 
     fun writeSymbolField(path: String, value: BvExpr) {
       val (address, size) = module.lookupGlobalMember(path)
-      writeMemory(address, size, value)
+      ctx.memory.write(Expr.Const.of(address), size, value)
     }
 
     fun writeSymbol(name: String, value: BvExpr) {
       val (address, size) = module.lookupGlobal(name)
-      writeMemory(address, size, value)
+      ctx.memory.write(Expr.Const.of(address), size, value)
     }
 
-    private fun writeMemory(address: Int, size: Int, value: BvExpr) {
-      when (size) {
-        1 -> ctx.memory.writeByte(Expr.Const.of(address), value)
-        2 -> ctx.memory.writeHalf(Expr.Const.of(address), value)
-        4 -> ctx.memory.writeWord(Expr.Const.of(address), value)
-        else -> error("Can't write to memory, not a standard size: $size")
-      }
+    fun create(typeName: String, name: String, initByte: Int? = null): AllocatedType {
+      val type = module.findTypeOrThrow(typeName)
+      return AllocatedType(ctx, module.types, Expr.Const.of(ctx.memory.allocate(type, name, initByte)), type)
+    }
+
+    fun allocate(typeName: String, name: String, initByte: Int? = null): Expr.Const {
+      return Expr.Const.of(ctx.memory.allocate(module.findTypeOrThrow(typeName), name, initByte))
+    }
+
+    fun allocate(size: Int, initByte: Int? = null): Expr.Const {
+      return Expr.Const.of(ctx.memory.allocate(size, initByte))
+    }
+
+    fun assume(expr: ExprBuilder.() -> BoolExpr) {
+      ctx.assume(expr(ExprBuilder(ctx)))
+    }
+
+    fun args(
+      a0: BvExpr? = null,
+      a1: BvExpr? = null,
+      a2: BvExpr? = null,
+      a3: BvExpr? = null,
+      t0: BvExpr? = null,
+      t1: BvExpr? = null,
+      t2: BvExpr? = null,
+      t3: BvExpr? = null,
+    ) {
+      a0?.let { ctx.writeGpr(GprReg.A0, it) }
+      a1?.let { ctx.writeGpr(GprReg.A1, it) }
+      a2?.let { ctx.writeGpr(GprReg.A2, it) }
+      a3?.let { ctx.writeGpr(GprReg.A3, it) }
+      t0?.let { ctx.writeGpr(GprReg.T0, it) }
+      t1?.let { ctx.writeGpr(GprReg.T1, it) }
+      t2?.let { ctx.writeGpr(GprReg.T2, it) }
+      t3?.let { ctx.writeGpr(GprReg.T3, it) }
     }
   }
 }
@@ -96,9 +125,28 @@ class SuiteConfig(val moduleName: String) {
 class SuiteTestConfig {
   var testContextConfigure: ContextInitScope.() -> Unit = { }
     private set
+  var proveFunctionCalls: Boolean = false
+    private set
+  var proveFunctionReturns: Boolean = false
+    private set
+  val proveAllocations: MutableList<String> = mutableListOf()
+  var proveTimeout = 1.minutes
+    private set
 
   fun configureContext(configure: ContextInitScope.() -> Unit) {
     testContextConfigure = configure
+  }
+
+  fun proveEqualityOf(
+    functionCalls: Boolean = true,
+    functionReturns: Boolean = true,
+    allocations: List<String> = emptyList(),
+    timeout: Duration = 1.minutes
+  ) {
+    proveFunctionCalls = functionCalls
+    proveFunctionReturns = functionReturns
+    proveAllocations.addAll(allocations)
+    proveTimeout = timeout
   }
 }
 
@@ -138,6 +186,7 @@ class Suite(
 
   private fun checkModulesFunctions() {
     println("Checking module functions")
+    // TODO print untested functions
     val functionNames = fwModule.functions.values.map { it.name }.toSet() + uofwModule.functions.values.map { it.name }.toSet()
     val messages = mutableListOf<String>()
     functionNames.forEach { functionName ->

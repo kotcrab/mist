@@ -7,7 +7,7 @@ import mist.ghidra.model.GhidraType
 
 abstract class Module(
   private val disassembler: Disassembler<MipsInstr>,
-  protected val moduleTypes: ModuleTypes
+  val types: ModuleTypes
 ) {
   abstract val functions: Map<Int, ModuleFunction>
 
@@ -29,24 +29,28 @@ abstract class Module(
     val parts = path.split(".")
     val (symbol, type) = typedGlobals.find { (symbol, _) -> symbol.name == parts[0] }
       ?: error("No such typed global: ${parts[0]}")
-    val (fieldOffset, fieldLength) = moduleTypes.lookupStructMember(type, parts.drop(1))
+    val (fieldOffset, fieldLength) = types.lookupStructMember(type, parts.drop(1))
     return (symbol.address + fieldOffset).toInt() to fieldLength
   }
 
-  fun lookupAddress(address: Int): ModuleAddress {
+  fun lookupAddress(address: Int, additionalAllocations: List<Pair<ModuleSymbol, GhidraType>>): ModuleAddress {
     val moduleAddress = ModuleAddress(address, null)
     val checkAddress = if (moduleAddress.isUncached()) moduleAddress.cachedAddress() else address
-    val global = typedGlobals.find { (symbol, dataType) ->
+    val global = (typedGlobals.asSequence() + additionalAllocations).find { (symbol, type) ->
       checkAddress.toUInt() >= symbol.address.toUInt() &&
-        checkAddress.toUInt() <= symbol.address.toUInt() + dataType.length.toUInt()
+        checkAddress.toUInt() <= symbol.address.toUInt() + type.length.toUInt()
     }
     return if (global != null) {
       val (symbol, type) = global
       val localOffset = checkAddress - symbol.address.toInt()
-      moduleAddress.copy(symbol = ModuleAddress.Symbol(symbol.name, localOffset, moduleTypes.memberPathForOffset(type, localOffset)))
+      moduleAddress.copy(symbol = ModuleAddress.Symbol(symbol.name, localOffset, types.memberPathForOffset(type, localOffset)))
     } else {
       moduleAddress
     }
+  }
+
+  fun findTypeOrThrow(typeName: String): GhidraType {
+    return types.findOrThrow(typeName)
   }
 
   fun getFunctionOrThrow(functionName: String): ModuleFunction {

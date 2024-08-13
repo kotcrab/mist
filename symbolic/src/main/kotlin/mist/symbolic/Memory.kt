@@ -64,6 +64,15 @@ class Memory private constructor(
     return buffer
   }
 
+  fun write(at: BvExpr, size: Int, value: BvExpr) {
+    when (size) {
+      1 -> writeByte(at, value)
+      2 -> writeHalf(at, value)
+      4 -> writeWord(at, value)
+      else -> error("Can't write to memory, not a standard size: $size")
+    }
+  }
+
   fun writeByte(at: BvExpr, expr: BvExpr) {
     writesSinceLastBranch++
     writeByteInline(at, Expr.Extract.of(expr, 7, 0))
@@ -185,6 +194,10 @@ class Memory private constructor(
         return Expr.ZERO
       }
     }
+    return selectByte(at)
+  }
+
+  fun selectByte(at: BvExpr): Expr.Select {
     captureStores()
     return Expr.Select.of(at, captures.size - 1)
   }

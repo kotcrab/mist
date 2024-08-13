@@ -7,7 +7,7 @@ sealed interface TraceElement {
 
   data class ExecutionStart(
     override val pc: Int,
-    val arguments: List<Expr>
+    val arguments: List<BvExpr>
   ) : TraceElement, TraceSyncPoint
 
   data class FunctionCall(
@@ -15,15 +15,14 @@ sealed interface TraceElement {
     val address: Int,
     val name: String,
     val known: Boolean,
-    val arguments: List<Expr>
-  ) : TraceElement,
-    TraceSyncPoint
+    val arguments: List<BvExpr>
+  ) : TraceElement, TraceSyncPoint
 
   data class FunctionReturn(
     override val pc: Int,
     val returnSize: Int?,
-    val v0: Expr,
-    val v1: Expr
+    val v0: BvExpr,
+    val v1: BvExpr
   ) : TraceElement, TraceSyncPoint
 
   data class JumpOutOfFunctionBody(
@@ -34,21 +33,21 @@ sealed interface TraceElement {
 
   data class MemoryRead(
     override val pc: Int,
-    val address: Expr,
+    val address: BvExpr,
     val size: Int,
-    val value: Expr,
+    val value: BvExpr,
     val unsigned: Boolean = false,
     val unaligned: UnalignedMemoryAccess? = null,
-    val shift: Expr? = null
+    val shift: BvExpr? = null
   ) : TraceElement
 
   data class MemoryWrite(
     override val pc: Int,
-    val address: Expr,
+    val address: BvExpr,
     val size: Int,
-    val value: Expr,
+    val value: BvExpr,
     val unaligned: UnalignedMemoryAccess? = null,
-    val shift: Expr? = null
+    val shift: BvExpr? = null
   ) : TraceElement
 
   data class Sync(
@@ -63,12 +62,17 @@ sealed interface TraceElement {
 
   data class ModifyK1(
     override val pc: Int,
-    val value: Expr
+    val value: BvExpr
   ) : TraceElement
 
   data class UseK1(
     override val pc: Int,
-    val value: Expr
+    val value: BvExpr
+  ) : TraceElement
+
+  data class Branch(
+    override val pc: Int,
+    val taken: Boolean
   ) : TraceElement
 
   data class DidNotTerminateWithinLimit(

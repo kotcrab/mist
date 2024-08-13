@@ -150,14 +150,26 @@ class Context private constructor(
   private fun getOrCreateSolverContext(): Solver {
     if (solver == null) {
       solver = Solver(this).also { newSolver ->
-        assumptions.forEach {
-          newSolver.assert(it)
-        }
-        paths.forEach { path ->
-          newSolver.assert(path.condition)
-        }
+        assertForNewSolver(newSolver)
       }
     }
     return solver!!
+  }
+
+  private fun assertForNewSolver(newSolver: Solver) {
+    assumptions.forEach {
+      newSolver.assert(it)
+    }
+    paths.forEach { path ->
+      newSolver.assert(path.condition)
+    }
+  }
+
+  fun createDetachedSolver(solverCtx: SolverContext, symbolicNamePrefix: String): Solver {
+    val detachedSolver = Solver(this, solverCtx = solverCtx, symbolicNamePrefix = symbolicNamePrefix)
+    memory.captureStores()
+    detachedSolver.updateMemoryExpressions()
+    assertForNewSolver(detachedSolver)
+    return detachedSolver
   }
 }
