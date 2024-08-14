@@ -23,7 +23,11 @@ sealed interface TraceElement {
     val returnSize: Int?,
     val v0: BvExpr,
     val v1: BvExpr
-  ) : TraceElement, TraceSyncPoint
+  ) : TraceElement, TraceSyncPoint {
+    fun returnsV0() = (returnSize ?: 0) >= 1
+
+    fun returnsV1() = (returnSize ?: 0) >= 2
+  }
 
   data class JumpOutOfFunctionBody(
     override val pc: Int,

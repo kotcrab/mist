@@ -130,10 +130,10 @@ class CompareFromModels(
         fwTrace.elements.filterIsInstance<TraceElement.FunctionReturn>()
           .zip(uofwTrace.elements.filterIsInstance<TraceElement.FunctionReturn>())
           .forEach { (fwReturn, uofwReturn) ->
-            if ((fwReturn.returnSize ?: 0) >= 1) {
+            if (fwReturn.returnsV0()) {
               assertExpr(fwReturn.v0, uofwReturn.v0)
             }
-            if (fwReturn.returnSize == 2) {
+            if (fwReturn.returnsV1()) {
               assertExpr(fwReturn.v1, uofwReturn.v1)
             }
           }

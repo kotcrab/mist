@@ -44,6 +44,7 @@ class Engine(
 
     private val modelWriter = ModelWriter()
     private val extendedSolverTimeout = 10.seconds
+    private val unknownFunctionArgsFallback = ModuleTypes.regsFunctionArgs
   }
 
   private var mode = EngineMode.SYMBOLIC_FORKING
@@ -674,29 +675,13 @@ class Engine(
     val toAddress = instr.op0AsImm()
     val function = module.getFunctionByAddress(toAddress)
     ctx.trace {
-      // TODO proper support for 64 bit args
-      val argumentsCount = function?.let { moduleTypes.getFunctionArgsCount(it.name) }
-      val arguments = (0..<(argumentsCount ?: 7)).map {
-        when (it) {
-          0 -> ctx.readGpr(GprReg.A0)
-          1 -> ctx.readGpr(GprReg.A1)
-          2 -> ctx.readGpr(GprReg.A2)
-          3 -> ctx.readGpr(GprReg.A3)
-          4 -> ctx.readGpr(GprReg.T0)
-          5 -> ctx.readGpr(GprReg.T1)
-          6 -> ctx.readGpr(GprReg.T2)
-          7 -> ctx.readGpr(GprReg.T3)
-          else -> {
-            error("Untested SP args") // TODO check this
-            // ctx.memory.readWord(ctx.readGpr(GprReg.Sp) + (it - 8) * 4)
-          }
-        }
-      }
+      val functionArgs = function?.let { moduleTypes.getFunctionArgs(it.name) }
+      val arguments = (functionArgs ?: unknownFunctionArgsFallback).map { it.read(ctx) }
       TraceElement.FunctionCall(
         address,
         address = toAddress,
         name = function?.name ?: "<unknown>",
-        known = argumentsCount != null,
+        known = functionArgs != null,
         arguments = arguments
       )
     }

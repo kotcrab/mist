@@ -90,8 +90,8 @@ class TraceComparator(private val traceWriter: TraceWriter) {
       is TraceElement.FunctionReturn -> {
         actualElement as TraceElement.FunctionReturn
         if ((expectedElement.returnSize != actualElement.returnSize) ||
-          ((expectedElement.returnSize ?: 0) >= 1 && !compareExpr(expectedElement.v0, actualElement.v0)) ||
-          (expectedElement.returnSize == 2 && !compareExpr(expectedElement.v1, actualElement.v1))
+          (expectedElement.returnsV0() && !compareExpr(expectedElement.v0, actualElement.v0)) ||
+          (expectedElement.returnsV1() && !compareExpr(expectedElement.v1, actualElement.v1))
         ) {
           messages.add(syncPointMismatchMessage)
         }

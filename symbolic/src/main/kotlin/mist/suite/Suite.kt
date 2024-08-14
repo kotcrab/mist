@@ -196,18 +196,18 @@ class Suite(
         messages.add("Type mismatch: ${functionName}: ${function1?.type} != ${function2?.type}")
       }
       val fwGhidraFunction = fwModule.getGhidraFunctionOrNull(functionName)
-      val argsCount = moduleTypes.getFunctionArgsCount(functionName)
-      val fwArgsCount = fwGhidraFunction?.parameters?.size
-      if (argsCount == null) {
-        messages.add("Unknown number of args: $functionName, assuming from fw: $fwArgsCount")
-        if (fwArgsCount != null) {
-          moduleTypes.addFunctionArgsCountOverride(functionName, fwArgsCount)
+      val functionArgs = moduleTypes.getFunctionArgs(functionName)
+      val fwArgsPathNames = fwGhidraFunction?.parameters?.map { it.dataTypePathName }
+      if (functionArgs == null) {
+        messages.add("Unknown args for: $functionName, assuming from fw: $fwArgsPathNames")
+        if (fwArgsPathNames != null) {
+          moduleTypes.addFunctionArgsOverrideFromDataTypes(functionName, fwArgsPathNames)
         }
       }
       val returnSize = moduleTypes.getFunctionReturnSize(functionName)
       val fwReturns = fwGhidraFunction?.returnTypePathName?.let { moduleTypes.get(it)?.length?.div(4) }
       if (returnSize == null) {
-        messages.add("Unknown return size: $functionName, assuming from fw: $fwReturns")
+        messages.add("Unknown return size for: $functionName, assuming from fw: $fwReturns")
         if (fwReturns != null) {
           moduleTypes.addFunctionReturnSizeOverride(functionName, fwReturns)
         }
