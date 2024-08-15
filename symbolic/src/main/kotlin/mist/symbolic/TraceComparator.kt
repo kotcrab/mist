@@ -78,6 +78,9 @@ class TraceComparator(private val traceWriter: TraceWriter) {
     when (expectedElement) {
       is TraceElement.FunctionCall -> {
         actualElement as TraceElement.FunctionCall
+        if (!actualElement.known || !expectedElement.known) {
+          messages.add(Message(expectedElement.pc, actualElement.pc, "Unknown function arguments: ${actualElement.name}"))
+        }
         if (expectedElement.name != actualElement.name || !compareExprs(
             expectedElement.arguments,
             actualElement.arguments,
@@ -89,6 +92,9 @@ class TraceComparator(private val traceWriter: TraceWriter) {
       }
       is TraceElement.FunctionReturn -> {
         actualElement as TraceElement.FunctionReturn
+        if (actualElement.returnSize == null || expectedElement.returnSize == null) {
+          messages.add(Message(expectedElement.pc, actualElement.pc, "Unknown return size"))
+        }
         if ((expectedElement.returnSize != actualElement.returnSize) ||
           (expectedElement.returnsV0() && !compareExpr(expectedElement.v0, actualElement.v0)) ||
           (expectedElement.returnsV1() && !compareExpr(expectedElement.v1, actualElement.v1))

@@ -61,7 +61,8 @@ class GenerateModels(
     testConfig?.testContextConfigure?.invoke(contextInitScope)
     ctx.pc = function.entryPoint
     val moduleMemory = module.createModuleMemory()
-    val moduleFunctionLibrary = suiteConfig.functionLibraryProvider.invoke(moduleMemory)
+    val suiteFunctionLibrary = suiteConfig.functionLibraryProvider.invoke(moduleMemory)
+    val testFunctionLibrary = testConfig?.functionLibraryTransform?.invoke(suiteFunctionLibrary) ?: suiteFunctionLibrary
     val functionModelsOutDir = modelsOutDir.child(function.name).also { it.mkdir() }
     val executedAddressesFile = functionModelsOutDir.child("_executedAddresses.txt")
     if (executedAddressesFile.exists()) {
@@ -73,7 +74,7 @@ class GenerateModels(
       disassembler = suite.disassembler.cached(),
       module = module,
       moduleTypes = suite.moduleTypes,
-      functionLibrary = moduleFunctionLibrary,
+      functionLibrary = testFunctionLibrary,
       name = function.name,
       modelsOutDir = functionModelsOutDir
     ).executeSymbolic(ctx)

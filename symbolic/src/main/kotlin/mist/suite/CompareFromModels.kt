@@ -60,6 +60,8 @@ class CompareFromModels(
       .mapIndexed { modelIdx, modelFile ->
         async(taskDispatcher) {
           println("Running test ${modelIdx + 1}/${modelFiles.size}...")
+          val functionName = modelFile.parentFile.name
+          val testConfig = suiteConfig.testConfigs[functionName]
           val fwTrace = executeFunction(modelFile, suite.fwModule)
           val uofwTrace = executeFunction(modelFile, suite.uofwModule)
           val proveMessages = proveOutputs(modelFile, suite, fwTrace, uofwTrace)
@@ -69,7 +71,7 @@ class CompareFromModels(
             uofwTrace = uofwTrace,
             outName = "${functionDir.name}.${modelFile.nameWithoutExtension}.txt",
             traceComparator.compareTraces(
-              suite.functionArgsIgnoredForCompare,
+              suite.functionArgsIgnoredForCompare + (testConfig?.functionArgsIgnoredForCompare ?: emptyMap()),
               suite.fwModule,
               suite.uofwModule,
               fwTrace,
@@ -159,7 +161,9 @@ class CompareFromModels(
     ctx.pc = function.entryPoint
     ctx.memory.ignoreIllegalAccess = true
     val moduleMemory = module.createModuleMemory()
-    val modelFunctionLibrary = modelLoader.loadFromFile(modelFile, ctx, suiteConfig.functionLibraryProvider.invoke(moduleMemory))
+    val suiteFunctionLibrary = suiteConfig.functionLibraryProvider.invoke(moduleMemory)
+    val testFunctionLibrary = testConfig?.functionLibraryTransform?.invoke(suiteFunctionLibrary) ?: suiteFunctionLibrary
+    val modelFunctionLibrary = modelLoader.loadFromFile(modelFile, ctx, testFunctionLibrary)
     return Engine(
       binLoader = moduleMemory.loader,
       disassembler = suite.disassembler.cached(),
@@ -183,13 +187,14 @@ class CompareFromModels(
     ctx.pc = function.entryPoint
     ctx.specificBranches.addAll(trace.elements.filterIsInstance<TraceElement.Branch>().map { it.taken })
     val moduleMemory = module.createModuleMemory()
-    val moduleFunctionLibrary = suiteConfig.functionLibraryProvider.invoke(moduleMemory)
+    val suiteFunctionLibrary = suiteConfig.functionLibraryProvider.invoke(moduleMemory)
+    val testFunctionLibrary = testConfig?.functionLibraryTransform?.invoke(suiteFunctionLibrary) ?: suiteFunctionLibrary
     Engine(
       binLoader = moduleMemory.loader,
       disassembler = suite.disassembler.cached(),
       module = module,
       moduleTypes = suite.moduleTypes,
-      functionLibrary = moduleFunctionLibrary,
+      functionLibrary = testFunctionLibrary,
       name = function.name,
       tracing = true,
       modelsOutDir = null

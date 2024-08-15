@@ -17,6 +17,7 @@ fun suiteConfig(moduleName: String, configure: SuiteConfig.() -> Unit): SuiteCon
   return suiteConfig
 }
 
+@SuiteDslMarker
 class SuiteConfig(val moduleName: String) {
   val additionalFunctionsToExecute = mutableSetOf<String>()
   var executeAllImplementationFunctions = false
@@ -65,6 +66,7 @@ class SuiteConfig(val moduleName: String) {
     functionArgsIgnoredForCompare[functionName] = args.toList()
   }
 
+  @SuiteDslMarker
   class ContextInitScope(
     private val module: Module,
     private val ctx: Context
@@ -92,7 +94,7 @@ class SuiteConfig(val moduleName: String) {
       return Expr.Const.of(ctx.memory.allocate(module.findTypeOrThrow(typeName), name, initByte))
     }
 
-    fun allocate(size: Int, initByte: Int? = null): Expr.Const {
+    fun allocate(size: Int = 0x1000, initByte: Int? = null): Expr.Const {
       return Expr.Const.of(ctx.memory.allocate(size, initByte))
     }
 
@@ -122,9 +124,14 @@ class SuiteConfig(val moduleName: String) {
   }
 }
 
+@SuiteDslMarker
 class SuiteTestConfig {
   var testContextConfigure: ContextInitScope.() -> Unit = { }
     private set
+  var functionLibraryTransform: (FunctionLibrary) -> FunctionLibrary = { it }
+    private set
+  val functionArgsIgnoredForCompare = mutableMapOf<String, List<Int>>()
+
   var proveFunctionCalls: Boolean = false
     private set
   var proveFunctionReturns: Boolean = false
@@ -135,6 +142,14 @@ class SuiteTestConfig {
 
   fun configureContext(configure: ContextInitScope.() -> Unit) {
     testContextConfigure = configure
+  }
+
+  fun functionLibrary(transform: (FunctionLibrary) -> FunctionLibrary) {
+    functionLibraryTransform = transform
+  }
+
+  fun ignoreComparingArgsOf(functionName: String, vararg args: Int) {
+    functionArgsIgnoredForCompare[functionName] = args.toList()
   }
 
   fun proveEqualityOf(
@@ -237,3 +252,6 @@ class Suite(
     GenerateModels(this, config, modelsOutDir).execute()
   }
 }
+
+@DslMarker
+annotation class SuiteDslMarker
