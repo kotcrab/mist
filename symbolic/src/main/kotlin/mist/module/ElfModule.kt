@@ -14,6 +14,7 @@ class ElfModule(
   elfFile: File,
   mapFile: File,
   exports: List<ModuleExport>,
+  private val functionNameOverrides: Map<String, String>
 ) : Module(disassembler, moduleTypes) {
   private val loader = PspElfLoader(ElfFile(elfFile), DecompLog())
   private val symbols = parseSymbols(mapFile)
@@ -40,10 +41,10 @@ class ElfModule(
     val moduleFunctions = mutableListOf<ModuleFunction>()
     symbols.functions.forEach {
       val type = if (exports.any { export -> export.name == it.name }) ModuleFunction.Type.EXPORT else ModuleFunction.Type.IMPLEMENTATION
-      moduleFunctions.add(it.toModuleFunction(type))
+      moduleFunctions.add(it.toModuleFunction(type, functionNameOverrides))
     }
     symbols.imports.forEach {
-      moduleFunctions.add(it.toModuleFunction(ModuleFunction.Type.IMPORT))
+      moduleFunctions.add(it.toModuleFunction(ModuleFunction.Type.IMPORT, functionNameOverrides))
     }
     return moduleFunctions.associateBy { it.entryPoint }
   }
@@ -123,8 +124,8 @@ class ElfModule(
     val address: Int,
     val length: Int,
   ) {
-    fun toModuleFunction(type: ModuleFunction.Type): ModuleFunction {
-      return ModuleFunction(name, address, address + length - 1, length, type)
+    fun toModuleFunction(type: ModuleFunction.Type, nameOverrides: Map<String, String>): ModuleFunction {
+      return ModuleFunction(nameOverrides.getOrDefault(name, name), address, address + length - 1, length, type)
     }
   }
 }

@@ -38,7 +38,7 @@ abstract class Module(
     val checkAddress = if (moduleAddress.isUncached()) moduleAddress.cachedAddress() else address
     val global = (typedGlobals.asSequence() + additionalAllocations).find { (symbol, type) ->
       checkAddress.toUInt() >= symbol.address.toUInt() &&
-        checkAddress.toUInt() <= symbol.address.toUInt() + type.length.toUInt()
+        checkAddress.toUInt() <= symbol.address.toUInt() + type.length.toUInt() - 1u
     }
     return if (global != null) {
       val (symbol, type) = global

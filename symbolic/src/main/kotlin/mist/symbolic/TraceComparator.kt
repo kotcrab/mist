@@ -138,7 +138,7 @@ class TraceComparator(private val traceWriter: TraceWriter) {
       if (read.address is Expr.Const && read.address.value in Engine.assumedSpRange) {
         return@forEach
       }
-      val actualRead = actualSummary.reads.find { compareExpr(it.address, read.address) }
+      val actualRead = actualSummary.reads.find { compareAddr(expectedModule, actualModule, read.address, it.address) }
       if (actualRead == null) {
         messages.add(Message(read.pc, null, "No matching read for: ${read.toString(expectedModule, expectedTrace)}"))
         return@forEach
@@ -165,7 +165,7 @@ class TraceComparator(private val traceWriter: TraceWriter) {
       if (write.address is Expr.Const && write.address.value in Engine.assumedSpRange) {
         return@forEach
       }
-      val actualWriteIndex = remainingActualWrites.indexOfFirst { compareExpr(it.address, write.address) }
+      val actualWriteIndex = remainingActualWrites.indexOfFirst { compareAddr(expectedModule, actualModule, write.address, it.address) }
       if (actualWriteIndex == -1) {
         messages.add(Message(write.pc, null, "No matching write for: ${write.toString(expectedModule, expectedTrace)}"))
         return@forEach
@@ -241,6 +241,24 @@ class TraceComparator(private val traceWriter: TraceWriter) {
       }
     }
     return true
+  }
+
+  private fun compareAddr(expectedModule: Module, actualModule: Module, expectedAddr: Expr, actualAddr: Expr): Boolean {
+    if (expectedAddr !is Expr.Const || actualAddr !is Expr.Const) {
+      return false
+    }
+    // passing empty additional relocation list because those should always be the same for both modules so comparing by address is fine
+    val expectedModuleAddress = expectedModule.lookupAddress(expectedAddr.value, emptyList())
+    val actualModuleAddress = actualModule.lookupAddress(actualAddr.value, emptyList())
+    if (expectedModuleAddress.isUncached() != actualModuleAddress.isUncached()) {
+      return false
+    }
+    val expectedSymbol = expectedModuleAddress.symbol
+    val actualSymbol = actualModuleAddress.symbol
+    if (expectedSymbol == null || actualSymbol == null) {
+      return compareExpr(expectedAddr, actualAddr)
+    }
+    return expectedSymbol.name == actualSymbol.name && expectedSymbol.localOffset == actualSymbol.localOffset
   }
 
   private fun compareExpr(expectedExpr: Expr, actualExpr: Expr): Boolean {

@@ -30,6 +30,7 @@ class SuiteConfig(val moduleName: String) {
     private set
   val testConfigs = mutableMapOf<String, SuiteTestConfig>()
   val functionArgsIgnoredForCompare = mutableMapOf<String, List<Int>>()
+  val elfFunctionNameOverrides = mutableMapOf<String, String>()
 
   fun alsoExecute(functionName: String) {
     additionalFunctionsToExecute.add(functionName)
@@ -55,7 +56,7 @@ class SuiteConfig(val moduleName: String) {
     commonContextConfigure = configure
   }
 
-  fun test(functionName: String, configure: SuiteTestConfig.() -> Unit) {
+  fun test(functionName: String, configure: SuiteTestConfig.() -> Unit = {}) {
     additionalFunctionsToExecute.add(functionName)
     val config = SuiteTestConfig()
     config.configure()
@@ -64,6 +65,10 @@ class SuiteConfig(val moduleName: String) {
 
   fun ignoreComparingArgsOf(functionName: String, vararg args: Int) {
     functionArgsIgnoredForCompare[functionName] = args.toList()
+  }
+
+  fun overrideElfFunctionName(actualName: String, overrideName: String) {
+    elfFunctionNameOverrides[actualName] = overrideName
   }
 
   @SuiteDslMarker
@@ -187,6 +192,7 @@ class Suite(
       uofwDir.child("src/kd/${config.moduleName}/${config.moduleName}.elf"),
       uofwDir.child("map/${config.moduleName}.map"),
       moduleExports,
+      config.elfFunctionNameOverrides,
     )
     println("Modules loaded")
 
