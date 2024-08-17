@@ -89,9 +89,8 @@ class CompareFromModels(
     val functionName = modelFile.parentFile.name
     val testConfig = suiteConfig.testConfigs[functionName]
       ?: return emptyList()
-    if (!testConfig.proveFunctionCalls && !testConfig.proveFunctionReturns && testConfig.proveAllocations.isEmpty()) {
-      return emptyList()
-    }
+    val proveConfig = testConfig.prove
+      ?: return emptyList()
     val fwCtx = executeSymbolicSpecific(modelFile, suite.fwModule, fwTrace)
     val uofwCtx = executeSymbolicSpecific(modelFile, suite.uofwModule, uofwTrace)
     val proveMessages = mutableListOf<String>()
@@ -105,7 +104,12 @@ class CompareFromModels(
         solverCtx.solver.assert(solverCtx.kCtx.mkEq(fwKExpr, uofwKExpr))
       }
 
-      testConfig.proveAllocations.forEach { allocationName ->
+      val allocationNamesToProve = fwTrace.additionalAllocations.map { it.first.name }
+        .toSet()
+        .plus(uofwTrace.additionalAllocations.map { it.first.name })
+        .filterNot { it in proveConfig.excludedAllocations }
+
+      allocationNamesToProve.forEach { allocationName ->
         val (fwSymbol, _) = fwTrace.additionalAllocations.firstOrNull { it.first.name == allocationName }
           ?: error("No such named FW allocation: $allocationName")
         val (uofwSymbol, _) = uofwTrace.additionalAllocations.firstOrNull { it.first.name == allocationName }
@@ -118,7 +122,7 @@ class CompareFromModels(
         }
       }
 
-      if (testConfig.proveFunctionCalls) {
+      if (proveConfig.functionCalls) {
         fwTrace.elements.filterIsInstance<TraceElement.FunctionCall>()
           .zip(uofwTrace.elements.filterIsInstance<TraceElement.FunctionCall>())
           .forEach { (fwCall, uofwCall) ->
@@ -128,7 +132,7 @@ class CompareFromModels(
           }
       }
 
-      if (testConfig.proveFunctionReturns) {
+      if (proveConfig.functionReturns) {
         fwTrace.elements.filterIsInstance<TraceElement.FunctionReturn>()
           .zip(uofwTrace.elements.filterIsInstance<TraceElement.FunctionReturn>())
           .forEach { (fwReturn, uofwReturn) ->
@@ -142,7 +146,7 @@ class CompareFromModels(
       }
 
       println("Trying to prove outputs...")
-      val status = solverCtx.solver.check(testConfig.proveTimeout)
+      val status = solverCtx.solver.check(proveConfig.timeout)
       if (status != KSolverStatus.SAT) {
         proveMessages.add("Failed to prove outputs, result is $status")
       }

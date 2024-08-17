@@ -134,6 +134,7 @@ class Engine(
         break
       }
       if (ctx.breakRaised) { // break happened in delay slot
+        handleFinishedCtx(ctx, null)
         break
       }
 
@@ -491,9 +492,7 @@ class Engine(
       }
       is MipsOpcode.Break -> {
         ctx.trace { TraceElement.Break(address, instr.op0AsImm()) }
-        handleFinishedCtx(ctx, instr)
         ctx.breakRaised = true
-        return ExecuteResult.YIELD
       }
 
       else -> error("Unimplemented opcode: $instr")
@@ -695,6 +694,7 @@ class Engine(
         ctx.trace {
           TraceElement.FunctionReturn(
             address,
+            function.name,
             moduleTypes.getFunctionReturnSize(function.name),
             ctx.readGpr(GprReg.V0),
             ctx.readGpr(GprReg.V1)
@@ -737,9 +737,12 @@ class Engine(
         }
       } else {
         ctx.trace {
+          val functionName = module.getFunctionByAddress(address)?.name
+            ?: ctx.traceElements.filterIsInstance<TraceElement.FunctionCall>().last().name
           TraceElement.FunctionReturn(
             address,
-            module.getFunctionByAddress(address)?.name?.let { moduleTypes.getFunctionReturnSize(it) },
+            functionName,
+            functionName.let { moduleTypes.getFunctionReturnSize(it) },
             ctx.readGpr(GprReg.V0),
             ctx.readGpr(GprReg.V1)
           )
@@ -754,7 +757,7 @@ class Engine(
     return ExecuteResult.CONTINUE
   }
 
-  private fun handleFinishedCtx(ctx: Context, instr: MipsInstr) {
+  private fun handleFinishedCtx(ctx: Context, instr: MipsInstr?) {
     if (mode != EngineMode.CONCRETE) {
       // Solve in case it was for example concrete jump during symbolic execution
       val status = ctx.checkSolver(extendedSolverTimeout)
@@ -767,7 +770,7 @@ class Engine(
     val pathId = stats.finishedPaths.getAndIncrement()
     allExecutedAddresses.addAll(ctx.executedAddresses)
     if (modelsOutDir != null) {
-      modelWriter.writeToFile(ctx.solverModel().detach(), modelsOutDir.child("%06d.txt".format(pathId)))
+      modelWriter.writeToFile(ctx.solverModel().detach(), ctx.functionStates, modelsOutDir.child("%06d.txt".format(pathId)))
     }
   }
 

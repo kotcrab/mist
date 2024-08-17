@@ -93,7 +93,7 @@ class TraceComparator(private val traceWriter: TraceWriter) {
       is TraceElement.FunctionReturn -> {
         actualElement as TraceElement.FunctionReturn
         if (actualElement.returnSize == null || expectedElement.returnSize == null) {
-          messages.add(Message(expectedElement.pc, actualElement.pc, "Unknown return size"))
+          messages.add(Message(expectedElement.pc, actualElement.pc, "Unknown return size: ${actualElement.name ?: "<unknown>"}"))
         }
         if ((expectedElement.returnSize != actualElement.returnSize) ||
           (expectedElement.returnsV0() && !compareExpr(expectedElement.v0, actualElement.v0)) ||

@@ -8,15 +8,15 @@ val audioSuiteConfig = suiteConfig("audio") {
   global("g_audio")
   global("g_audioEvent")
 
-  alsoExecute("module_start")
-  alsoExecute("updateAudioBuf")
-  alsoExecute("audioMixerThread")
-  alsoExecute("audioInputThread")
-  alsoExecute("audioIntrHandler")
-  alsoExecute("audioEventHandler")
-  alsoExecute("audioOutputDmaCb")
-  alsoExecute("audioSRCOutputDmaCb")
-  alsoExecute("audioInputDmaCb")
+  test("module_start")
+  test("updateAudioBuf")
+  test("audioMixerThread")
+  test("audioInputThread")
+  test("audioIntrHandler")
+  test("audioEventHandler")
+  test("audioOutputDmaCb")
+  test("audioSRCOutputDmaCb")
+  test("audioInputDmaCb")
 
   functionLibrary { moduleMemory ->
     sceSymbolicFunctionLibrary(moduleMemory).extendWith(

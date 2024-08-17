@@ -20,6 +20,7 @@ sealed interface TraceElement {
 
   data class FunctionReturn(
     override val pc: Int,
+    val name: String?,
     val returnSize: Int?,
     val v0: BvExpr,
     val v1: BvExpr

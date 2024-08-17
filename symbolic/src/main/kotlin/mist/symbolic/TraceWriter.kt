@@ -15,13 +15,13 @@ class TraceWriter {
     proveMessages: List<String>
   ) {
     file.writeText(buildString {
-      append(writeToString(module, trace))
-      append("\n")
       append(writeToString(traceCompareMessages))
       if (proveMessages.isNotEmpty()) {
-        append("\n")
-        append(proveMessages.joinToString(separator = "\n", prefix = "Prove messages:\n"))
+        append(proveMessages.joinToString(separator = "\n", prefix = "Prove messages:\n", postfix = "\n\n"))
       }
+      append("Trace:\n")
+      append(writeToString(module, trace))
+      append("\n")
     })
   }
 
@@ -82,7 +82,7 @@ class TraceWriter {
       return "No trace compare messages."
     }
     val noPcSet = " (none) "
-    return traceCompareMessages.joinToString(separator = "\n", prefix = "Trace compare messages:\n", postfix = "\n") {
+    return traceCompareMessages.joinToString(separator = "\n", prefix = "Trace compare messages:\n", postfix = "\n\n") {
       "[${it.relatedExpectedPc?.toWHex() ?: noPcSet}/${it.relatedActualPc?.toWHex() ?: noPcSet}]: ${it.message}"
     }
   }

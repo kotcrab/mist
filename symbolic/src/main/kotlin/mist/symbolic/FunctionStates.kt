@@ -27,6 +27,11 @@ class FunctionStates(
     return value
   }
 
+  fun getAll(namePrefix: String): Map<String, Counter> {
+    return counters.filterKeys { it.startsWith(namePrefix) }
+      .mapValues { it.value.copy() }
+  }
+
   fun copyOf(): FunctionStates {
     return FunctionStates(
       counters

@@ -4,18 +4,20 @@ import io.ksmt.expr.KBitVec32Value
 import io.ksmt.expr.KBitVec8Value
 import io.ksmt.solver.KModel
 import io.ksmt.solver.model.KFuncInterpVarsFree
+import io.ksmt.solver.model.KModelImpl
 import io.ksmt.sort.KBv8Sort
 import io.ksmt.utils.cast
 import kio.util.toWHex
 import java.io.File
 
 class ModelWriter {
-  fun writeToFile(model: KModel, file: File) {
-    file.writeText(writeToString(model))
+  fun writeToFile(model: KModel, functionStates: FunctionStates, file: File) {
+    file.writeText(writeToString(model, functionStates))
   }
 
-  private fun writeToString(model: KModel): String {
+  private fun writeToString(model: KModel, functionStates: FunctionStates): String {
     val sb = StringBuilder()
+    sb.appendLine("// model declarations")
     model.declarations.forEach { decl ->
       when {
         decl.name == "ram" -> {
@@ -38,6 +40,19 @@ class ModelWriter {
         else -> {
           val value: KBitVec32Value = model.interpretation(decl)!!.default.cast()
           sb.appendLine("${decl.name}=${value.intValue.toWHex()}")
+        }
+      }
+    }
+    sb.appendLine("\n// function return values")
+    functionStates.getAll("fun:").forEach { (stateKey, counter) ->
+      val name = stateKey.removePrefix("fun:")
+      val ctx = (model as KModelImpl).ctx
+      val registers = listOf("v0", "v1")
+      repeat(counter.value) { executionNumber ->
+        registers.forEach { register ->
+          val symbolicName = "fun:$register:$executionNumber:$name"
+          val value: KBitVec32Value = model.eval(ctx.mkConst(symbolicName, ctx.bv32Sort), isComplete = true).cast()
+          sb.appendLine("$symbolicName=${value.intValue.toWHex()}")
         }
       }
     }

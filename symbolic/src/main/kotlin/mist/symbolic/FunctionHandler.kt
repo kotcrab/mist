@@ -38,7 +38,7 @@ class ReplaySymbolicFunctionHandler(
 
   override fun handle(ctx: Context): Boolean {
     delegate.handle(ctx)
-    val executionNumber = ctx.functionStates.getAndIncrement("__replay_${name}")
+    val executionNumber = ctx.functionStates.getAndIncrement("replay:fun:${name}")
     if (ctx.readGpr(GprReg.V0) is Expr.Const && ctx.readGpr(GprReg.V1) is Expr.Const) {
       return false
     }
@@ -61,7 +61,7 @@ class SymbolicFunctionHandler(
   private val constraints: Context.() -> List<BvExpr> = { emptyList() },
 ) : NamedFunctionHandler {
   override fun handle(ctx: Context): Boolean {
-    val executionNumber = ctx.functionStates.getAndIncrement(name)
+    val executionNumber = ctx.functionStates.getAndIncrement("fun:$name")
     if (executionNumber >= symbolicExecutionLimit) {
       DefaultFunctionHandler.handle(ctx)
       ctx.writeGpr(GprReg.V0, Expr.Const.of(constValueV0))

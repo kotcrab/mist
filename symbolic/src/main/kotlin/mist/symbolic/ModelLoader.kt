@@ -8,6 +8,9 @@ class ModelLoader {
     val functionReplaysV0 = mutableMapOf<String, MutableMap<Int, BvExpr>>()
     val functionReplaysV1 = mutableMapOf<String, MutableMap<Int, BvExpr>>()
     file.forEachLine { line ->
+      if (line.isBlank() || line.startsWith("//")) {
+        return@forEachLine
+      }
       val lineParts = line.split("=")
       val parts = lineParts[0].split(":")
       val value = Expr.Const.of(Integer.parseUnsignedInt(lineParts[1], 16))

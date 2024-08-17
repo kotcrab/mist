@@ -76,6 +76,7 @@ class GenerateModels(
       moduleTypes = suite.moduleTypes,
       functionLibrary = testFunctionLibrary,
       name = function.name,
+      tracing = false,
       modelsOutDir = functionModelsOutDir
     ).executeSymbolic(ctx)
     functionModelsOutDir.child("_coverage.txt").writeText(module.disassembleWithCoverage(function, executedAddresses))

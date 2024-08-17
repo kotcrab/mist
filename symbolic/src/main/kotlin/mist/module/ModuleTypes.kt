@@ -143,7 +143,7 @@ class ModuleTypes(
     }
     val members = (type.properties as GhidraType.CompositeProperties).members
     val member = members.find { it.fieldName == memberName }
-      ?: error("$memberName doesn't exist in $fullPath")
+      ?: error("$memberName member doesn't exist in type ${type.name} (full path was $fullPath)")
     val memberType = get(member.typePathName!!)
       ?: error("Missing type ${member.typePathName} for member $memberName")
     val memberOffsetSum = offsetSum + member.offset

@@ -45,9 +45,13 @@ class Memory private constructor(
     writesSinceLastBranch = 0
   }
 
-  fun allocate(type: GhidraType, name: String, initByte: Int? = null): Int {
-    val buffer = allocate(type.length, initByte)
-    typedAllocations.add(ModuleSymbol(name, buffer.toLong(), type.length) to type)
+  fun allocate(type: GhidraType, name: String, elements: Int, initByte: Int? = null): Int {
+    val allocSize = type.length * elements
+    val buffer = allocate(allocSize, initByte)
+    if (typedAllocations.find { it.first.name == name } != null) {
+      error("Typed allocation already exists: $name")
+    }
+    typedAllocations.add(ModuleSymbol(name, buffer.toLong(), allocSize) to type)
     return buffer
   }
 
