@@ -62,16 +62,17 @@ class CompareFromModels(
           println("Running test ${modelIdx + 1}/${modelFiles.size}...")
           val functionName = modelFile.parentFile.name
           val testConfig = suiteConfig.testConfigs[functionName]
+          val functionArgsIgnoredForCompare = suite.functionArgsIgnoredForCompare + (testConfig?.functionArgsIgnoredForCompare ?: emptyMap())
           val fwTrace = executeFunction(modelFile, suite.fwModule)
           val uofwTrace = executeFunction(modelFile, suite.uofwModule)
-          val proveMessages = proveOutputs(modelFile, suite, fwTrace, uofwTrace)
+          val proveMessages = proveOutputs(modelFile, suite, fwTrace, uofwTrace, functionArgsIgnoredForCompare)
 
           CompletedCase(
             fwTrace = fwTrace,
             uofwTrace = uofwTrace,
             outName = "${functionDir.name}.${modelFile.nameWithoutExtension}.txt",
             traceComparator.compareTraces(
-              suite.functionArgsIgnoredForCompare + (testConfig?.functionArgsIgnoredForCompare ?: emptyMap()),
+              functionArgsIgnoredForCompare,
               suite.fwModule,
               suite.uofwModule,
               fwTrace,
@@ -85,7 +86,13 @@ class CompareFromModels(
       .filter { writeAllTraces || it.traceCompareMessages.isNotEmpty() || it.proveMessages.isNotEmpty() }
   }
 
-  private fun proveOutputs(modelFile: File, suite: Suite, fwTrace: Trace, uofwTrace: Trace): List<String> {
+  private fun proveOutputs(
+    modelFile: File,
+    suite: Suite,
+    fwTrace: Trace,
+    uofwTrace: Trace,
+    functionArgsIgnoredForCompare: Map<String, Set<Int>>
+  ): List<String> {
     val functionName = modelFile.parentFile.name
     val testConfig = suiteConfig.testConfigs[functionName]
       ?: return emptyList()
@@ -126,8 +133,11 @@ class CompareFromModels(
         fwTrace.elements.filterIsInstance<TraceElement.FunctionCall>()
           .zip(uofwTrace.elements.filterIsInstance<TraceElement.FunctionCall>())
           .forEach { (fwCall, uofwCall) ->
-            fwCall.arguments.zip(uofwCall.arguments).forEach { (fwArg, uofwArg) ->
-              assertExpr(fwArg, uofwArg)
+            val ignoredArgIndexes = functionArgsIgnoredForCompare[fwCall.name] ?: emptyList()
+            fwCall.arguments.zip(uofwCall.arguments).forEachIndexed { index, (fwArg, uofwArg) ->
+              if (index !in ignoredArgIndexes) {
+                assertExpr(fwArg, uofwArg)
+              }
             }
           }
       }

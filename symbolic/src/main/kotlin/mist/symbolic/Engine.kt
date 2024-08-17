@@ -171,6 +171,14 @@ class Engine(
       error("Tried to execute jump or branch instruction in branch delay slot")
     }
 
+    if (tracing) {
+      if (instr.getModifiedRegisters().contains(GprReg.K1)) {
+        ctx.trace { TraceElement.ModifyK1(address, ctx.readGpr(GprReg.K1)) }
+      } else if (instr.getUsedRegisters().contains(GprReg.K1)) {
+        ctx.trace { TraceElement.UseK1(address, ctx.readGpr(GprReg.K1)) }
+      }
+    }
+
     when (instr.opcode) {
       // Arithmetic
       is MipsOpcode.Add, MipsOpcode.Addu, MipsOpcode.Addi, MipsOpcode.Addiu -> {
@@ -496,14 +504,6 @@ class Engine(
       }
 
       else -> error("Unimplemented opcode: $instr")
-    }
-
-    if (tracing) {
-      if (instr.getModifiedRegisters().contains(GprReg.K1)) {
-        ctx.trace { TraceElement.ModifyK1(address, ctx.readGpr(GprReg.K1)) }
-      } else if (instr.getUsedRegisters().contains(GprReg.K1)) {
-        ctx.trace { TraceElement.UseK1(address, ctx.readGpr(GprReg.K1)) }
-      }
     }
 
     return ExecuteResult.CONTINUE

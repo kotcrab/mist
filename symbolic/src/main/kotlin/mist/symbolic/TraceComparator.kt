@@ -4,7 +4,7 @@ import mist.module.Module
 
 class TraceComparator(private val traceWriter: TraceWriter) {
   fun compareTraces(
-    functionArgsIgnoredForCompare: Map<String, List<Int>>,
+    functionArgsIgnoredForCompare: Map<String, Set<Int>>,
     expectedModule: Module,
     actualModule: Module,
     expectedTrace: Trace,
@@ -52,7 +52,7 @@ class TraceComparator(private val traceWriter: TraceWriter) {
 
   private fun compareSyncPoints(
     messages: MutableList<Message>,
-    functionArgsIgnoredForCompare: Map<String, List<Int>>,
+    functionArgsIgnoredForCompare: Map<String, Set<Int>>,
     expectedModule: Module,
     actualModule: Module,
     expectedTrace: Trace,
@@ -84,7 +84,7 @@ class TraceComparator(private val traceWriter: TraceWriter) {
         if (expectedElement.name != actualElement.name || !compareExprs(
             expectedElement.arguments,
             actualElement.arguments,
-            functionArgsIgnoredForCompare[expectedElement.name] ?: emptyList()
+            functionArgsIgnoredForCompare[expectedElement.name] ?: emptySet()
           )
         ) {
           messages.add(syncPointMismatchMessage)
@@ -230,7 +230,7 @@ class TraceComparator(private val traceWriter: TraceWriter) {
     }
   }
 
-  private fun compareExprs(expectedExprs: List<Expr>, actualExprs: List<Expr>, ignoredIndexes: List<Int>): Boolean {
+  private fun compareExprs(expectedExprs: List<Expr>, actualExprs: List<Expr>, ignoredIndexes: Set<Int>): Boolean {
     expectedExprs.zip(actualExprs).forEachIndexed { index, exprs ->
       if (index in ignoredIndexes) {
         return@forEachIndexed

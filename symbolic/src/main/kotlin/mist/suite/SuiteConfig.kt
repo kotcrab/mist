@@ -26,7 +26,7 @@ class SuiteConfig(val moduleName: String) {
   var commonContextConfigure: ContextInitScope.() -> Unit = { }
     private set
   val testConfigs = mutableMapOf<String, SuiteTestConfig>()
-  val functionArgsIgnoredForCompare = mutableMapOf<String, List<Int>>()
+  val functionArgsIgnoredForCompare = mutableMapOf<String, Set<Int>>()
   val elfFunctionNameOverrides = mutableMapOf<String, String>()
 
   fun alsoExecuteAllImplementationFunctions() {
@@ -59,7 +59,7 @@ class SuiteConfig(val moduleName: String) {
   }
 
   fun ignoreComparingArgsOf(functionName: String, vararg args: Int) {
-    functionArgsIgnoredForCompare[functionName] = args.toList()
+    functionArgsIgnoredForCompare[functionName] = args.toSet()
   }
 
   fun overrideElfFunctionName(actualName: String, overrideName: String) {
@@ -100,6 +100,15 @@ class SuiteConfig(val moduleName: String) {
       return Expr.Const.of(ctx.memory.allocate(size, initByte))
     }
 
+    fun allocateString(text: String): Expr.Const {
+      val bytes = text.toByteArray()
+      val buffer = Expr.Const.of(ctx.memory.allocate(bytes.size + 1, initByte = 0))
+      bytes.forEachIndexed { index, byte ->
+        ctx.memory.writeByte(buffer.plus(index), Expr.Const.of(byte.toInt()))
+      }
+      return buffer
+    }
+
     fun assume(expr: ExprBuilder.() -> BoolExpr) {
       ctx.assume(expr(ExprBuilder(ctx)))
     }
@@ -132,7 +141,7 @@ class SuiteTestConfig {
     private set
   var functionLibraryTransform: (FunctionLibrary) -> FunctionLibrary = { it }
     private set
-  val functionArgsIgnoredForCompare = mutableMapOf<String, List<Int>>()
+  val functionArgsIgnoredForCompare = mutableMapOf<String, Set<Int>>()
   var prove: Prove? = null
     private set
 
@@ -145,7 +154,7 @@ class SuiteTestConfig {
   }
 
   fun ignoreComparingArgsOf(functionName: String, vararg args: Int) {
-    functionArgsIgnoredForCompare[functionName] = args.toList()
+    functionArgsIgnoredForCompare[functionName] = args.toSet()
   }
 
   fun proveEquality(
