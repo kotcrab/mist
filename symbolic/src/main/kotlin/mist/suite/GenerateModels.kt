@@ -57,10 +57,13 @@ class GenerateModels(
     val ctx = Context.presetSymbolic()
     val testConfig = suiteConfig.testConfigs[function.name]
     val contextInitScope = SuiteConfig.ContextInitScope(module, ctx)
+    val moduleMemory = module.createModuleMemory()
+    if (testConfig?.initContextWithModuleMemory == true) {
+      module.writeMemoryToContext(ctx)
+    }
     suiteConfig.commonContextConfigure.invoke(contextInitScope)
     testConfig?.testContextConfigure?.invoke(contextInitScope)
     ctx.pc = function.entryPoint
-    val moduleMemory = module.createModuleMemory()
     val suiteFunctionLibrary = suiteConfig.functionLibraryProvider.invoke(moduleMemory)
     val testFunctionLibrary = testConfig?.functionLibraryTransform?.invoke(suiteFunctionLibrary) ?: suiteFunctionLibrary
     val functionModelsOutDir = modelsOutDir.child(function.name).also { it.mkdir() }

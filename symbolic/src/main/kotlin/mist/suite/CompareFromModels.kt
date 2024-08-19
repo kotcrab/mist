@@ -170,11 +170,14 @@ class CompareFromModels(
     val ctx = Context()
     val testConfig = suiteConfig.testConfigs[function.name]
     val contextInitScope = SuiteConfig.ContextInitScope(module, ctx)
+    val moduleMemory = module.createModuleMemory()
+    if (testConfig?.initContextWithModuleMemory == true) {
+      module.writeMemoryToContext(ctx)
+    }
     suiteConfig.commonContextConfigure.invoke(contextInitScope)
     testConfig?.testContextConfigure?.invoke(contextInitScope)
     ctx.pc = function.entryPoint
     ctx.memory.ignoreIllegalAccess = true
-    val moduleMemory = module.createModuleMemory()
     val suiteFunctionLibrary = suiteConfig.functionLibraryProvider.invoke(moduleMemory)
     val testFunctionLibrary = testConfig?.functionLibraryTransform?.invoke(suiteFunctionLibrary) ?: suiteFunctionLibrary
     val modelFunctionLibrary = modelLoader.loadFromFile(modelFile, ctx, testFunctionLibrary)
@@ -196,11 +199,14 @@ class CompareFromModels(
     val ctx = Context.presetSymbolic()
     val testConfig = suiteConfig.testConfigs[functionName]
     val contextInitScope = SuiteConfig.ContextInitScope(module, ctx)
+    val moduleMemory = module.createModuleMemory()
+    if (testConfig?.initContextWithModuleMemory == true) {
+      module.writeMemoryToContext(ctx)
+    }
     suiteConfig.commonContextConfigure.invoke(contextInitScope)
     testConfig?.testContextConfigure?.invoke(contextInitScope)
     ctx.pc = function.entryPoint
     ctx.specificBranches.addAll(trace.elements.filterIsInstance<TraceElement.Branch>().map { it.taken })
-    val moduleMemory = module.createModuleMemory()
     val suiteFunctionLibrary = suiteConfig.functionLibraryProvider.invoke(moduleMemory)
     val testFunctionLibrary = testConfig?.functionLibraryTransform?.invoke(suiteFunctionLibrary) ?: suiteFunctionLibrary
     Engine(

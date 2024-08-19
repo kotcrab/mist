@@ -5,6 +5,8 @@ import mist.asm.mips.MipsInstr
 import mist.ghidra.model.GhidraType
 import mist.io.ElfFile
 import mist.io.PspElfLoader
+import mist.symbolic.Context
+import mist.symbolic.Expr
 import mist.util.DecompLog
 import java.io.File
 
@@ -29,6 +31,14 @@ class ElfModule(
       }
     }
     return memory
+  }
+
+  override fun writeMemoryToContext(ctx: Context) {
+    loader.memoryRanges.forEach { range ->
+      range.forEach { at ->
+        ctx.memory.writeByte(Expr.Const.of(at), Expr.Const.of(loader.readByte(at)))
+      }
+    }
   }
 
   fun registerGlobal(name: String, type: GhidraType) {

@@ -103,10 +103,14 @@ class SuiteConfig(val moduleName: String) {
     fun allocateString(text: String): Expr.Const {
       val bytes = text.toByteArray()
       val buffer = Expr.Const.of(ctx.memory.allocate(bytes.size + 1, initByte = 0))
+      writeBytes(buffer, bytes)
+      return buffer
+    }
+
+    fun writeBytes(buffer: Expr.Const, bytes: ByteArray) {
       bytes.forEachIndexed { index, byte ->
         ctx.memory.writeByte(buffer.plus(index), Expr.Const.of(byte.toInt()))
       }
-      return buffer
     }
 
     fun assume(expr: ExprBuilder.() -> BoolExpr) {
@@ -142,6 +146,8 @@ class SuiteTestConfig {
   var functionLibraryTransform: (FunctionLibrary) -> FunctionLibrary = { it }
     private set
   val functionArgsIgnoredForCompare = mutableMapOf<String, Set<Int>>()
+  var initContextWithModuleMemory: Boolean = false
+    private set
   var prove: Prove? = null
     private set
 
@@ -155,6 +161,10 @@ class SuiteTestConfig {
 
   fun ignoreComparingArgsOf(functionName: String, vararg args: Int) {
     functionArgsIgnoredForCompare[functionName] = args.toSet()
+  }
+
+  fun initContextWithModuleMemory() {
+    initContextWithModuleMemory = true
   }
 
   fun proveEquality(

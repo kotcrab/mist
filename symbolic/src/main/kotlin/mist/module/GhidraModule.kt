@@ -8,6 +8,8 @@ import mist.ghidra.GhidraClient
 import mist.ghidra.model.GhidraFunction
 import mist.ghidra.model.GhidraType
 import mist.io.BinLoader
+import mist.symbolic.Context
+import mist.symbolic.Expr
 
 class GhidraModule(
   disassembler: Disassembler<MipsInstr>,
@@ -83,5 +85,13 @@ class GhidraModule(
       }
     }
     return memory
+  }
+
+  override fun writeMemoryToContext(ctx: Context) {
+    initialMemory.forEach { (start, data) ->
+      data.forEachIndexed { index, byte ->
+        ctx.memory.writeByte(Expr.Const.of(start + index), Expr.Const.of(byte.toInt()))
+      }
+    }
   }
 }

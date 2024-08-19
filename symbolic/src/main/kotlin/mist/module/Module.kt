@@ -4,6 +4,7 @@ import mist.asm.Disassembler
 import mist.asm.FunctionDef
 import mist.asm.mips.MipsInstr
 import mist.ghidra.model.GhidraType
+import mist.symbolic.Context
 
 abstract class Module(
   private val disassembler: Disassembler<MipsInstr>,
@@ -14,6 +15,8 @@ abstract class Module(
   private val typedGlobals = mutableListOf<Pair<ModuleSymbol, GhidraType>>()
 
   abstract fun createModuleMemory(): ModuleMemory
+
+  abstract fun writeMemoryToContext(ctx: Context)
 
   protected fun registerGlobal(symbol: ModuleSymbol, types: GhidraType) {
     typedGlobals.add(symbol to types)
