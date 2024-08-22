@@ -19,7 +19,7 @@ class SuiteConfig(val moduleName: String) {
   val additionalFunctionsToExecute = mutableSetOf<String>()
   var executeAllImplementationFunctions = false
     private set
-  val functionsToSkipExecution = mutableSetOf<String>()
+  val excludedFunctions = mutableSetOf<String>()
   val globals = mutableSetOf<String>()
   var functionLibraryProvider: (ModuleMemory) -> FunctionLibrary = { FunctionLibrary() }
     private set
@@ -33,8 +33,8 @@ class SuiteConfig(val moduleName: String) {
     executeAllImplementationFunctions = true
   }
 
-  fun skipExecuting(functionName: String) {
-    functionsToSkipExecution.add(functionName)
+  fun exclude(functionName: String) {
+    excludedFunctions.add(functionName)
   }
 
   fun global(name: String) {

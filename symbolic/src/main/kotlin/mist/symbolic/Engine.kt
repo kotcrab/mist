@@ -34,6 +34,7 @@ class Engine(
   private val maxExecutedInstructions: Int = 10000,
   private val branchingLimit: Int = 256,
   private val globalBranchingLimit: Int = Integer.MAX_VALUE / 2,
+  private val maxFinishedPaths: Int = 20000,
   parallelism: Int = 16,
 ) {
   companion object {
@@ -128,6 +129,10 @@ class Engine(
     }
 
     while (true) {
+      if (stats.finishedPaths.get() >= maxFinishedPaths) {
+        stats.droppedPaths.getAndIncrement()
+        break
+      }
       if (ctx.executedInstrs >= maxExecutedInstructions) {
         println("WARN: Execution did not terminate within the configured limit, pc=${ctx.pc.toWHex()}")
         ctx.trace { TraceElement.DidNotTerminateWithinLimit(ctx.pc) }
@@ -717,16 +722,22 @@ class Engine(
       val status = ctx.checkSolver(extendedSolverTimeout)
       if (status != KSolverStatus.SAT) {
         stats.failedJumpResolution.getAndIncrement()
-        println("WARN: Solver failed for jump instruction: $instr ($reg=${regExpr} status=$status), dropping path")
-        return ExecuteResult.YIELD
-      }
-      val evalPc = ctx.solverEval(regExpr, false)
-      if (evalPc is KBitVec32Value) {
-        ctx.pc = evalPc.intValue
+        if (module.getFunctionByAddress(address)?.name == name && reg == GprReg.Ra) {
+          println("WARN: Solver failed for jump instruction: $instr ($reg=${regExpr} status=$status), assuming execution end")
+          ctx.pc = RETURN_TOKEN
+        } else {
+          println("WARN: Solver failed for jump instruction: $instr ($reg=${regExpr} status=$status), dropping path")
+          return ExecuteResult.YIELD
+        }
       } else {
-        println("WARN: return address evaluated with is complete = true")
-        val evalPcComplete: KBitVec32Value = ctx.solverEval(regExpr, true).cast()
-        ctx.pc = evalPcComplete.intValue
+        val evalPc = ctx.solverEval(regExpr, false)
+        if (evalPc is KBitVec32Value) {
+          ctx.pc = evalPc.intValue
+        } else {
+          println("WARN: return address evaluated with is complete = true")
+          val evalPcComplete: KBitVec32Value = ctx.solverEval(regExpr, true).cast()
+          ctx.pc = evalPcComplete.intValue
+        }
       }
     }
 
@@ -768,6 +779,9 @@ class Engine(
       }
     }
     val pathId = stats.finishedPaths.getAndIncrement()
+    if (pathId >= maxFinishedPaths) {
+      println("WARN: Maximum number of finished paths reached, dropping other paths")
+    }
     allExecutedAddresses.addAll(ctx.executedAddresses)
     if (modelsOutDir != null) {
       modelWriter.writeToFile(ctx.solverModel().detach(), ctx.functionStates, modelsOutDir.child("%06d.txt".format(pathId)))

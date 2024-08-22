@@ -70,9 +70,10 @@ abstract class Module(
     }
   }
 
-  fun calculateCoverages(executedAddresses: Set<Int>): Map<String, Coverage> {
+  fun calculateCoverages(executedAddresses: Set<Int>, excludedFunctions: Set<String>): Map<String, Coverage> {
     return functions.values
       .filter { it.type != ModuleFunction.Type.IMPORT }
+      .filterNot { it.name in excludedFunctions }
       .sortedBy { it.entryPoint }
       .associateBy({ it.name }, { it.calculateCoverage(executedAddresses) })
   }

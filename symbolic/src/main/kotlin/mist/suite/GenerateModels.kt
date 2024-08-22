@@ -24,7 +24,7 @@ class GenerateModels(
         (it.type == ModuleFunction.Type.IMPLEMENTATION && suiteConfig.executeAllImplementationFunctions) ||
         it.name in suiteConfig.additionalFunctionsToExecute
     }
-    .filterNot { it.name in suiteConfig.functionsToSkipExecution }
+    .filterNot { it.name in suiteConfig.excludedFunctions }
 
   fun execute() {
     modelsOutDir.mkdir()
@@ -49,7 +49,7 @@ class GenerateModels(
       println("------------------\n")
     }
     println("---")
-    println(module.calculateCoverages(executedAddresses).toCoverageSummary())
+    println(module.calculateCoverages(executedAddresses, suiteConfig.excludedFunctions).toCoverageSummary())
     println("---")
   }
 
