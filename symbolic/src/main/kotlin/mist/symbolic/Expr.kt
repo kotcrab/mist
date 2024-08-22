@@ -234,9 +234,9 @@ sealed interface Expr {
             BinaryOp.Or -> l or r
             BinaryOp.Xor -> l xor r
             BinaryOp.Nor -> (l or r).inv()
-            BinaryOp.Sll -> l shl r
-            BinaryOp.Srl -> l ushr r
-            BinaryOp.Sra -> l shr r
+            BinaryOp.Sll -> if (r >= 32) 0 else l shl r
+            BinaryOp.Srl -> if (r >= 32) 0 else l ushr r
+            BinaryOp.Sra -> if (r >= 32) (if (l < 0) -1 else 0) else l shr r
             BinaryOp.MultLo -> (l.toLong() * r.toLong()).toInt()
             BinaryOp.MultHi -> ((l.toLong() * r.toLong()) ushr 32).toInt()
             BinaryOp.MultuLo -> (l.toUnsignedLong() * r.toUnsignedLong()).toInt()
