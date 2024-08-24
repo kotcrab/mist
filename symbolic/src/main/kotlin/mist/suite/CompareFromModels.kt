@@ -25,6 +25,7 @@ class CompareFromModels(
   private val traceWriter = TraceWriter()
   private val traceComparator = TraceComparator(traceWriter)
   private val functionsDirs = modelsDir.listFiles()?.filter { it.isDirectory }
+    ?.filterNot { it.name in suiteConfig.excludedFunctions }
     ?: error("Function models dir can't be read")
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -235,16 +236,22 @@ class CompareFromModels(
 
     execute("git", listOf("init"), workingDirectory = suiteOutDir)
 
+    val outDirs = TraceComparator.MessageLevel.entries
+      .associateWith { suiteOutDir.child(it.name.lowercase()) }
+      .onEach { it.value.mkdir() }
+
     println("Writing FW results")
     completedCases.forEach {
-      traceWriter.writeToFile(suite.fwModule, it.fwTrace, suiteOutDir.child(it.outName), it.traceCompareMessages, it.proveMessages)
+      val outFile = outDirs.getValue(it.traceCompareMessages.highestMessageLevel()).child(it.outName)
+      traceWriter.writeToFile(suite.fwModule, it.fwTrace, outFile, it.traceCompareMessages, it.proveMessages)
     }
     execute("git", listOf("add", "-A"), workingDirectory = suiteOutDir)
     execute("git", listOf("commit", "-m", "init"), workingDirectory = suiteOutDir)
 
     println("Writing uOFW results")
     completedCases.forEach {
-      traceWriter.writeToFile(suite.uofwModule, it.uofwTrace, suiteOutDir.child(it.outName), it.traceCompareMessages, it.proveMessages)
+      val outFile = outDirs.getValue(it.traceCompareMessages.highestMessageLevel()).child(it.outName)
+      traceWriter.writeToFile(suite.uofwModule, it.uofwTrace, outFile, it.traceCompareMessages, it.proveMessages)
     }
   }
 

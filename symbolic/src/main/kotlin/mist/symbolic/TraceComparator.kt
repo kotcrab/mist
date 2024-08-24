@@ -1,6 +1,7 @@
 package mist.symbolic
 
 import mist.module.Module
+import mist.symbolic.TraceComparator.MessageLevel.*
 
 class TraceComparator(private val traceWriter: TraceWriter) {
   fun compareTraces(
@@ -21,11 +22,11 @@ class TraceComparator(private val traceWriter: TraceWriter) {
         return messages
       }
       if (expectedElements.isEmpty()) {
-        messages.add(Message(null, null, "Not enough trace elements in the expected trace"))
+        messages.add(Message(ERROR, null, null, "Not enough trace elements in the expected trace"))
         return messages
       }
       if (actualElements.isEmpty()) {
-        messages.add(Message(null, null, "Not enough trace elements in the actual trace"))
+        messages.add(Message(ERROR, null, null, "Not enough trace elements in the actual trace"))
         return messages
       }
       if (!compareSyncPoints(
@@ -39,7 +40,7 @@ class TraceComparator(private val traceWriter: TraceWriter) {
           actualElements.removeFirst()
         )
       ) {
-        messages.add(Message(null, null, "Traces can't be fully compared"))
+        messages.add(Message(ERROR, null, null, "Traces can't be fully compared"))
         return messages
       }
       currentExpectedElements.clear()
@@ -67,6 +68,7 @@ class TraceComparator(private val traceWriter: TraceWriter) {
       error("Actual element is not a valid sync point: $expectedElement")
     }
     val syncPointMismatchMessage = Message(
+      ERROR,
       expectedElement.pc,
       actualElement.pc,
       "Sync point mismatch: ${expectedElement.toString(expectedModule, expectedTrace)} != ${actualElement.toString(actualModule, actualTrace)}"
@@ -79,7 +81,7 @@ class TraceComparator(private val traceWriter: TraceWriter) {
       is TraceElement.FunctionCall -> {
         actualElement as TraceElement.FunctionCall
         if (!actualElement.known || !expectedElement.known) {
-          messages.add(Message(expectedElement.pc, actualElement.pc, "Unknown function arguments: ${actualElement.name}"))
+          messages.add(Message(ERROR, expectedElement.pc, actualElement.pc, "Unknown function arguments: ${actualElement.name}"))
         }
         if (expectedElement.name != actualElement.name || !compareExprs(
             expectedElement.arguments,
@@ -93,7 +95,7 @@ class TraceComparator(private val traceWriter: TraceWriter) {
       is TraceElement.FunctionReturn -> {
         actualElement as TraceElement.FunctionReturn
         if (actualElement.returnSize == null || expectedElement.returnSize == null) {
-          messages.add(Message(expectedElement.pc, actualElement.pc, "Unknown return size: ${actualElement.name ?: "<unknown>"}"))
+          messages.add(Message(ERROR, expectedElement.pc, actualElement.pc, "Unknown return size: ${actualElement.name ?: "<unknown>"}"))
         }
         if ((expectedElement.returnSize != actualElement.returnSize) ||
           (expectedElement.returnsV0() && !compareExpr(expectedElement.v0, actualElement.v0)) ||
@@ -138,26 +140,27 @@ class TraceComparator(private val traceWriter: TraceWriter) {
       if (read.address is Expr.Const && read.address.value in Engine.assumedSpRange) {
         return@forEach
       }
+      // TODO better mememory compare
       val actualRead = actualSummary.reads.find { compareAddr(expectedModule, actualModule, read.address, it.address) }
       if (actualRead == null) {
-        messages.add(Message(read.pc, null, "No matching read for: ${read.toString(expectedModule, expectedTrace)}"))
+        messages.add(Message(INFO, read.pc, null, "No matching read for: ${read.toString(expectedModule, expectedTrace)}"))
         return@forEach
       }
       val compareMessage = "${read.toString(expectedModule, expectedTrace)} != ${actualRead.toString(actualModule, actualTrace)}"
       if (read.unsigned != actualRead.unsigned) {
-        messages.add(Message(read.pc, actualRead.pc, "Unsigned/signed read mismatch: $compareMessage"))
+        messages.add(Message(WARNING, read.pc, actualRead.pc, "Unsigned/signed read mismatch: $compareMessage"))
       }
       if (read.unaligned != actualRead.unaligned) {
-        messages.add(Message(read.pc, actualRead.pc, "Read unaligned mismatch: $compareMessage"))
+        messages.add(Message(WARNING, read.pc, actualRead.pc, "Read unaligned mismatch: $compareMessage"))
       }
       if (read.shift != null && actualRead.shift != null && !compareExpr(read.shift, actualRead.shift)) {
-        messages.add(Message(read.pc, actualRead.pc, "Read shift mismatch: $compareMessage"))
+        messages.add(Message(WARNING, read.pc, actualRead.pc, "Read shift mismatch: $compareMessage"))
       }
       if (read.size != actualRead.size) {
-        messages.add(Message(read.pc, actualRead.pc, "Read size mismatch: $compareMessage"))
+        messages.add(Message(WARNING, read.pc, actualRead.pc, "Read size mismatch: $compareMessage"))
       }
       if (!compareExpr(read.value, actualRead.value)) {
-        messages.add(Message(read.pc, actualRead.pc, "Read value mismatch: $compareMessage"))
+        messages.add(Message(ERROR, read.pc, actualRead.pc, "Read value mismatch: $compareMessage"))
       }
     }
     val remainingActualWrites = actualSummary.writes.toMutableList()
@@ -167,37 +170,37 @@ class TraceComparator(private val traceWriter: TraceWriter) {
       }
       val actualWriteIndex = remainingActualWrites.indexOfFirst { compareAddr(expectedModule, actualModule, write.address, it.address) }
       if (actualWriteIndex == -1) {
-        messages.add(Message(write.pc, null, "No matching write for: ${write.toString(expectedModule, expectedTrace)}"))
+        messages.add(Message(ERROR, write.pc, null, "No matching write for: ${write.toString(expectedModule, expectedTrace)}"))
         return@forEach
       }
       val actualWrite = remainingActualWrites.removeAt(actualWriteIndex)
       val compareMessage = "${write.toString(expectedModule, expectedTrace)} != ${actualWrite.toString(actualModule, actualTrace)}"
       if (write.unaligned != actualWrite.unaligned) {
-        messages.add(Message(write.pc, actualWrite.pc, "Written unaligned mismatch: $compareMessage"))
+        messages.add(Message(WARNING, write.pc, actualWrite.pc, "Written unaligned mismatch: $compareMessage"))
       }
       if (write.shift != null && actualWrite.shift != null && !compareExpr(write.shift, actualWrite.shift)) {
-        messages.add(Message(write.pc, actualWrite.pc, "Write shift mismatch: $compareMessage"))
+        messages.add(Message(WARNING, write.pc, actualWrite.pc, "Write shift mismatch: $compareMessage"))
       }
       if (write.size != actualWrite.size) {
-        messages.add(Message(write.pc, actualWrite.pc, "Written size mismatch: $compareMessage"))
+        messages.add(Message(WARNING, write.pc, actualWrite.pc, "Written size mismatch: $compareMessage"))
       }
       if (!compareExpr(write.value, actualWrite.value)) {
-        messages.add(Message(write.pc, actualWrite.pc, "Written value mismatch: $compareMessage"))
+        messages.add(Message(ERROR, write.pc, actualWrite.pc, "Written value mismatch: $compareMessage"))
       }
     }
     remainingActualWrites.forEach { write ->
       if (write.address is Expr.Const && write.address.value in Engine.assumedSpRange) {
         return@forEach
       }
-      messages.add(Message(null, write.pc, "Unexpected write: ${write.toString(actualModule, actualTrace)}"))
+      messages.add(Message(WARNING, null, write.pc, "Unexpected write: ${write.toString(actualModule, actualTrace)}"))
     }
 
     // Simplified, could be improved
     if ((expectedSummary.usedK1 == null) != (actualSummary.usedK1 == null)) {
-      messages.add(Message(null, null, "K1 use mismatch"))
+      messages.add(Message(WARNING, null, null, "K1 use mismatch"))
     }
     if ((expectedSummary.modifiedK1 == null) != (actualSummary.modifiedK1 == null)) {
-      messages.add(Message(null, null, "K1 modify mismatch"))
+      messages.add(Message(WARNING, null, null, "K1 modify mismatch"))
     }
   }
 
@@ -269,7 +272,13 @@ class TraceComparator(private val traceWriter: TraceWriter) {
     return "[${traceWriter.writeElementToString(module, trace.additionalAllocations, this)}]"
   }
 
-  data class Message(val relatedExpectedPc: Int?, val relatedActualPc: Int?, val message: String)
+  data class Message(val level: MessageLevel, val relatedExpectedPc: Int?, val relatedActualPc: Int?, val message: String)
+
+  enum class MessageLevel(val value: Int, val shortName: String) {
+    INFO(0, "I"),
+    WARNING(1, "W"),
+    ERROR(2, "E"),
+  }
 
   private class ElementsSummary(
     val reads: List<TraceElement.MemoryRead>,
@@ -277,4 +286,8 @@ class TraceComparator(private val traceWriter: TraceWriter) {
     val modifiedK1: Expr?,
     val usedK1: Expr?,
   )
+}
+
+fun List<TraceComparator.Message>.highestMessageLevel(): TraceComparator.MessageLevel {
+  return map { it.level }.maxBy { it.value }
 }

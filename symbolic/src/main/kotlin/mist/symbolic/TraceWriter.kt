@@ -83,7 +83,7 @@ class TraceWriter {
     }
     val noPcSet = " (none) "
     return traceCompareMessages.joinToString(separator = "\n", prefix = "Trace compare messages:\n", postfix = "\n\n") {
-      "[${it.relatedExpectedPc?.toWHex() ?: noPcSet}/${it.relatedActualPc?.toWHex() ?: noPcSet}]: ${it.message}"
+      "${it.level.shortName} [${it.relatedExpectedPc?.toWHex() ?: noPcSet}/${it.relatedActualPc?.toWHex() ?: noPcSet}]: ${it.message}"
     }
   }
 }
