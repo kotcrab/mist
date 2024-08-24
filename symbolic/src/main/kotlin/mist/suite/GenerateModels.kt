@@ -66,12 +66,17 @@ class GenerateModels(
     ctx.pc = function.entryPoint
     val suiteFunctionLibrary = suiteConfig.functionLibraryProvider.invoke(moduleMemory)
     val testFunctionLibrary = testConfig?.functionLibraryTransform?.invoke(suiteFunctionLibrary) ?: suiteFunctionLibrary
-    val functionModelsOutDir = modelsOutDir.child(function.name).also { it.mkdir() }
+    val functionModelsOutDir = modelsOutDir.child(function.name)
     val executedAddressesFile = functionModelsOutDir.child("_executedAddresses.txt")
     if (executedAddressesFile.exists()) {
-      println("Function already processed, skipping.")
+      println("Function already processed, skipping")
       return executedAddressesFile.readJson()
     }
+    if (functionModelsOutDir.exists()) {
+      println("Deleting incomplete results...")
+      functionModelsOutDir.deleteRecursively()
+    }
+    functionModelsOutDir.mkdir()
     val executedAddresses = Engine(
       binLoader = moduleMemory.loader,
       disassembler = suite.disassembler.cached(),
