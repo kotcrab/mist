@@ -85,8 +85,8 @@ fun sceSymbolicFunctionLibrary(moduleMemory: ModuleMemory): FunctionLibrary {
       SymbolicFunctionHandler("sceKernelFreeHeapMemory"),
       SymbolicFunctionHandler("sceKernelAllocHeapMemory", constraints = {
         listOf(
-          Expr.Const.of(0),
-          Expr.Const.of(memory.allocate(0x1000, 0xCD))
+          Expr.ZERO,
+          Expr.Const.of(ctx.memory.allocate(0x1000, 0xCD))
         )
       }),
 

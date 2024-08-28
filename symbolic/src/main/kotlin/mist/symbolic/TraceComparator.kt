@@ -140,7 +140,7 @@ class TraceComparator(private val traceWriter: TraceWriter) {
       if (read.address is Expr.Const && read.address.value in Engine.assumedSpRange) {
         return@forEach
       }
-      // TODO better mememory compare
+      // TODO better memory compare
       val actualRead = actualSummary.reads.find { compareAddr(expectedModule, actualModule, read.address, it.address) }
       if (actualRead == null) {
         messages.add(Message(INFO, read.pc, null, "No matching read for: ${read.toString(expectedModule, expectedTrace)}"))

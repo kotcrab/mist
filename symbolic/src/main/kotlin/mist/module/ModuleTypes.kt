@@ -139,7 +139,7 @@ class ModuleTypes(
 
     val fullPath by lazy { path.joinToString(separator = ".") }
     if (type.kind != GhidraType.Kind.STRUCTURE) {
-      error("$memberName is not a struct in $fullPath")
+      error("$memberName is not a struct in ${type.name} (full path was $fullPath)")
     }
     val members = (type.properties as GhidraType.CompositeProperties).members
     val member = members.find { it.fieldName == memberName }

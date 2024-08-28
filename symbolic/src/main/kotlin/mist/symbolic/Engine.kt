@@ -693,7 +693,7 @@ class Engine(
     if (function?.type == ModuleFunction.Type.IMPORT ||
       (function?.type == ModuleFunction.Type.IMPLEMENTATION && functionLibrary.supports(function.name))
     ) {
-      val providesImplementation = functionLibrary.getOrThrow(function.name).handle(ctx)
+      val providesImplementation = functionLibrary.getOrThrow(function.name).handle(moduleTypes, ctx)
       if (!providesImplementation) {
         ctx.pc = address + 8
         ctx.trace {
