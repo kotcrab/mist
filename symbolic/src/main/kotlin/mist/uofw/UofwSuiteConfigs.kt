@@ -8,5 +8,6 @@ fun uofwSuiteConfigForName(moduleName: String): SuiteConfig {
 }
 
 val uofwSuiteConfigs = listOf(
-  audioSuiteConfig
+  audioSuiteConfig,
+  isofsSuiteConfig,
 )
