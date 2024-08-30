@@ -138,7 +138,7 @@ class Engine(
         ctx.trace { TraceElement.DidNotTerminateWithinLimit(ctx.pc) }
         break
       }
-      if (ctx.breakRaised) { // break happened in delay slot
+      if (ctx.breakRaised) {
         handleFinishedCtx(ctx, null)
         break
       }
