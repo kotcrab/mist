@@ -21,7 +21,6 @@ class GenerateModels(
   private val functionsToExecute = module.functions.values
     .filter {
       it.type == ModuleFunction.Type.EXPORT ||
-        (it.type == ModuleFunction.Type.IMPLEMENTATION && suiteConfig.executeAllImplementationFunctions) ||
         it.name in suiteConfig.additionalFunctionsToExecute
     }
     .filterNot { it.name in suiteConfig.excludedFunctions }
@@ -56,13 +55,13 @@ class GenerateModels(
   private fun executeEngine(function: ModuleFunction): Set<Int> {
     val ctx = Context.presetSymbolic()
     val testConfig = suiteConfig.testConfigs[function.name]
-    val contextInitScope = SuiteConfig.ContextInitScope(module, ctx)
+    val configureContextScope = ConfigureContextScope(module, ctx)
     val moduleMemory = module.createModuleMemory()
     if (testConfig?.initContextWithModuleMemory == true) {
       module.writeMemoryToContext(ctx)
     }
-    suiteConfig.commonContextConfigure.invoke(contextInitScope)
-    testConfig?.testContextConfigure?.invoke(contextInitScope)
+    suiteConfig.commonContextConfigure.invoke(configureContextScope)
+    testConfig?.testContextConfigure?.invoke(configureContextScope)
     ctx.pc = function.entryPoint
     val suiteFunctionLibrary = suiteConfig.functionLibraryProvider.invoke(moduleMemory)
     val testFunctionLibrary = testConfig?.functionLibraryTransform?.invoke(suiteFunctionLibrary) ?: suiteFunctionLibrary

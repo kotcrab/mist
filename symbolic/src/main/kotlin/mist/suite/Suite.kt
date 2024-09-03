@@ -10,6 +10,7 @@ class Suite(
   uofwDir: File,
   private val config: SuiteConfig
 ) {
+  // TODO more generic names
   val fwModule: GhidraModule
   val uofwModule: ElfModule
   val moduleTypes: ModuleTypes

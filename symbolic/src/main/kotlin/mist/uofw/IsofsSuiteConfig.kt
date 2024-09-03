@@ -1,6 +1,7 @@
 package mist.uofw
 
 import mist.asm.mips.GprReg
+import mist.suite.ConfigureContextScope
 import mist.suite.SuiteConfig
 import mist.suite.TypedAllocation
 import mist.suite.suiteConfig
@@ -189,20 +190,20 @@ val isofsSuiteConfig = suiteConfig("isofs") {
           SymbolicFunctionHandler("isofsOpen", constraints = {
             listOf(
               Expr.ZERO,
-              Expr.Const.of(ctx.memory.allocate(moduleTypes.findOrThrow("IsofsFile"), "openFile", 1))
+              ctx.memory.allocate(moduleTypes.findOrThrow("IsofsFile"), "openFile", 1)
             )
           }),
           SymbolicFunctionHandler("isofsOpenRaw", constraints = {
             listOf(
               Expr.ZERO,
-              Expr.Const.of(ctx.memory.allocate(moduleTypes.findOrThrow("IsofsFile"), "openRawFile", 1))
+              ctx.memory.allocate(moduleTypes.findOrThrow("IsofsFile"), "openRawFile", 1)
             )
           }),
           SymbolicFunctionHandler("isofsParseSceLbnPath"),
           SymbolicFunctionHandler("isofsReadIsoDir", constraints = {
             listOf(
               Expr.ZERO,
-              Expr.Const.of(ctx.memory.allocate(moduleTypes.findOrThrow("IsoDirectory"), "isoDir", 1))
+              ctx.memory.allocate(moduleTypes.findOrThrow("IsoDirectory"), "isoDir", 1)
             )
           }),
           SymbolicFunctionHandler("strlen"),
@@ -287,14 +288,14 @@ val isofsSuiteConfig = suiteConfig("isofs") {
           SymbolicFunctionHandler("sceKernelAllocHeapMemory", constraints = {
             listOf(
               Expr.ZERO,
-              Expr.Const.of(ctx.memory.allocate(moduleTypes.findOrThrow("IsofsDir"), "heapDir", 1))
+              ctx.memory.allocate(moduleTypes.findOrThrow("IsofsDir"), "heapDir", 1)
             )
           }),
           SymbolicFunctionHandler("isofsCheckPath"),
           SymbolicFunctionHandler("isofsFindPath", constraints = {
             listOf(
               Expr.ZERO,
-              Expr.Const.of(ctx.memory.allocate(moduleTypes.findOrThrow("IsofsPath"), "heapPath", 1))
+              ctx.memory.allocate(moduleTypes.findOrThrow("IsofsPath"), "heapPath", 1)
             )
           }),
           SymbolicFunctionHandler("isofsGetUnit"),
@@ -349,7 +350,7 @@ val isofsSuiteConfig = suiteConfig("isofs") {
             constraints = {
               listOf(
                 Expr.ZERO,
-                Expr.Const.of(ctx.memory.allocate(moduleTypes.findOrThrow("IsoDirectory"), "isoDir${counter.getAndIncrement()}", 1))
+                ctx.memory.allocate(moduleTypes.findOrThrow("IsoDirectory"), "isoDir${counter.getAndIncrement()}", 1)
               )
             },
             preAction = { ctx -> ctx.memory.writeWord(ctx.readGpr(GprReg.A2), Expr.ZERO) }
@@ -379,7 +380,7 @@ val isofsSuiteConfig = suiteConfig("isofs") {
           SymbolicFunctionHandler("isofsReadIsoDir", constraints = {
             listOf(
               Expr.ZERO,
-              Expr.Const.of(ctx.memory.allocate(0x100))
+              ctx.memory.allocate(0x100)
             )
           }),
         )
@@ -622,7 +623,7 @@ val isofsSuiteConfig = suiteConfig("isofs") {
           SymbolicFunctionHandler("isofsParsePathTableEntries", constraints = {
             listOf(
               Expr.ZERO,
-              Expr.Const.of(ctx.memory.allocate(0x100))
+              ctx.memory.allocate(0x100)
             )
           }),
         )
@@ -678,7 +679,7 @@ val isofsSuiteConfig = suiteConfig("isofs") {
           SymbolicFunctionHandler("sceKernelAllocHeapMemory", constraints = {
             listOf(
               Expr.ZERO,
-              Expr.Const.of(ctx.memory.allocate(moduleTypes.findOrThrow("IsofsPath"), "heapPaths", 10))
+              ctx.memory.allocate(moduleTypes.findOrThrow("IsofsPath"), "heapPaths", 10)
             )
           }),
           SymbolicFunctionHandler("memset"),
@@ -798,11 +799,11 @@ val isofsSuiteConfig = suiteConfig("isofs") {
   exclude("isofsFindPath")
 }
 
-private fun SuiteConfig.ContextInitScope.createUnit(prefix: String = ""): Expr.Const {
+private fun ConfigureContextScope.createUnit(prefix: String = ""): Expr.Const {
   return createUnitType(prefix).address
 }
 
-private fun SuiteConfig.ContextInitScope.createUnitType(prefix: String = ""): TypedAllocation {
+private fun ConfigureContextScope.createUnitType(prefix: String = ""): TypedAllocation {
   val files0 = create("IsofsFile", "${prefix}files0", elements = 2)
   val files1 = create("IsofsFile", "${prefix}files1", elements = 2)
 
@@ -821,7 +822,7 @@ private fun SuiteConfig.ContextInitScope.createUnitType(prefix: String = ""): Ty
   return unit
 }
 
-private fun SuiteConfig.ContextInitScope.createFile(): Expr.Const {
+private fun ConfigureContextScope.createFile(): Expr.Const {
   val file = create("IsofsFile", "file")
   return file.address
 }

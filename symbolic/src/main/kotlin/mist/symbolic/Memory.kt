@@ -28,7 +28,6 @@ class Memory private constructor(
   private val onReadHalfHooks = mutableMapOf<Int, () -> BvExpr?>()
   private val onReadByteHooks = mutableMapOf<Int, () -> BvExpr?>()
 
-
   fun copyOf(): Memory {
     return Memory(
       captures = captures.toMutableList(),
@@ -45,17 +44,17 @@ class Memory private constructor(
     writesSinceLastBranch = 0
   }
 
-  fun allocate(type: GhidraType, name: String, elements: Int, initByte: Int? = null): Int {
+  fun allocate(type: GhidraType, name: String, elements: Int, initByte: Int? = null): Expr.Const {
     val allocSize = type.length * elements
     val buffer = allocate(allocSize, initByte)
     if (typedAllocations.find { it.first.name == name } != null) {
       error("Typed allocation already exists: $name")
     }
-    typedAllocations.add(ModuleSymbol(name, buffer.toLong(), allocSize) to type)
-    return buffer
+    typedAllocations.add(ModuleSymbol(name, buffer.value.toLong(), allocSize) to type)
+    return Expr.Const.of(buffer.value)
   }
 
-  fun allocate(size: Int, initByte: Int? = null): Int {
+  fun allocate(size: Int, initByte: Int? = null): Expr.Const {
     val buffer = currentBufferAlloc
     repeat(size) {
       if (initByte != null) {
@@ -65,7 +64,7 @@ class Memory private constructor(
     currentBufferAlloc += size
     val pad = 0x10
     currentBufferAlloc = (currentBufferAlloc / pad + 1) * pad
-    return buffer
+    return Expr.Const.of(buffer)
   }
 
   fun write(at: BvExpr, size: Int, value: BvExpr) {

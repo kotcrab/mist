@@ -65,7 +65,7 @@ fun sceSymbolicFunctionLibrary(moduleMemory: ModuleMemory): FunctionLibrary {
       ResultFunctionHandler("sceKernelDcacheWritebackRange"),
       ResultFunctionHandler("sceKernelDcacheWritebackInvalidateRange"),
 
-      ResultFunctionHandler("sceKernelDmaOpAlloc") { Expr.Const.of(memory.allocate(0x40, 0xCD)) },
+      ResultFunctionHandler("sceKernelDmaOpAlloc") { memory.allocate(0x40, 0xCD) },
       SymbolicFunctionHandler("sceKernelDmaOpAssign"),
       SymbolicFunctionHandler("sceKernelDmaOpConcatenate"),
       ResultFunctionHandler("sceKernelDmaOpDeQueue"),
@@ -86,7 +86,7 @@ fun sceSymbolicFunctionLibrary(moduleMemory: ModuleMemory): FunctionLibrary {
       SymbolicFunctionHandler("sceKernelAllocHeapMemory", constraints = {
         listOf(
           Expr.ZERO,
-          Expr.Const.of(ctx.memory.allocate(0x1000, 0xCD))
+          ctx.memory.allocate(0x1000, 0xCD)
         )
       }),
 
