@@ -124,8 +124,8 @@ class CompareFromModels(
           ?: error("No such named uOFW allocation: $allocationName")
         repeat(fwSymbol.length) { offset ->
           assertExpr(
-            fwCtx.memory.selectByte(Expr.Const.of(fwSymbol.address.toInt()).plus(offset)),
-            uofwCtx.memory.selectByte(Expr.Const.of(uofwSymbol.address.toInt()).plus(offset)),
+            fwCtx.memory.selectByte(Expr.Const.of(fwSymbol.address).plus(offset)),
+            uofwCtx.memory.selectByte(Expr.Const.of(uofwSymbol.address).plus(offset)),
           )
         }
       }

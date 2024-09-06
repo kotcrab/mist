@@ -25,7 +25,7 @@ abstract class Module(
   fun lookupGlobal(name: String): Pair<Int, Int> {
     val (symbol, _) = typedGlobals.find { (symbol, _) -> symbol.name == name }
       ?: error("No such typed global: $name")
-    return symbol.address.toInt() to symbol.length
+    return symbol.address to symbol.length
   }
 
   fun lookupGlobalMember(path: String): Pair<Int, Int> {
@@ -33,7 +33,7 @@ abstract class Module(
     val (symbol, type) = typedGlobals.find { (symbol, _) -> symbol.name == parts[0] }
       ?: error("No such typed global: ${parts[0]}")
     val (fieldOffset, fieldLength) = types.lookupStructMember(type, parts.drop(1))
-    return (symbol.address + fieldOffset).toInt() to fieldLength
+    return (symbol.address + fieldOffset) to fieldLength
   }
 
   fun lookupAddress(address: Int, additionalAllocations: List<Pair<ModuleSymbol, GhidraType>>): ModuleAddress {
@@ -45,7 +45,7 @@ abstract class Module(
     }
     return if (global != null) {
       val (symbol, type) = global
-      val localOffset = checkAddress - symbol.address.toInt()
+      val localOffset = checkAddress - symbol.address
       moduleAddress.copy(symbol = ModuleAddress.Symbol(symbol.name, localOffset, types.memberPathForOffset(type, localOffset)))
     } else {
       moduleAddress

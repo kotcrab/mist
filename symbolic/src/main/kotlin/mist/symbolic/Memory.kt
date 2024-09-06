@@ -50,7 +50,7 @@ class Memory private constructor(
     if (typedAllocations.find { it.first.name == name } != null) {
       error("Typed allocation already exists: $name")
     }
-    typedAllocations.add(ModuleSymbol(name, buffer.value.toLong(), allocSize) to type)
+    typedAllocations.add(ModuleSymbol(name, buffer.value, allocSize) to type)
     return Expr.Const.of(buffer.value)
   }
 
