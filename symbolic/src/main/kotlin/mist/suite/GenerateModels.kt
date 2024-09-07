@@ -59,16 +59,8 @@ class GenerateModels(
   private fun executeEngine(function: ModuleFunction): Set<Int> {
     val ctx = Context.presetSymbolic()
     val testConfig = suiteConfig.testConfigs[function.name]
-    val configureContextScope = ConfigureContextScope(module, ctx)
     val moduleMemory = module.createModuleMemory()
-    if (testConfig?.initContextWithModuleMemory == true) {
-      module.writeMemoryToContext(ctx)
-    }
-    if (suiteConfig.initContextsWithGlobals) {
-      module.writeGlobalsToContext(ctx)
-    }
-    suiteConfig.commonContextConfigure.invoke(configureContextScope)
-    testConfig?.testContextConfigure?.invoke(configureContextScope)
+    suiteConfig.initCtx(module, ctx, testConfig)
     ctx.pc = function.entryPoint
     val suiteFunctionLibrary = suiteConfig.functionLibraryProvider.invoke(moduleMemory)
     val testFunctionLibrary = testConfig?.functionLibraryTransform?.invoke(suiteFunctionLibrary) ?: suiteFunctionLibrary
@@ -91,7 +83,8 @@ class GenerateModels(
       functionLibrary = testFunctionLibrary,
       name = function.name,
       tracing = false,
-      modelsOutDir = functionModelsOutDir
+      modelsOutDir = functionModelsOutDir,
+      maxFinishedPaths = testConfig?.maxFinishedPaths ?: Engine.DEFAULT_MAX_FINISHED_PATHS
     ).executeSymbolic(ctx)
     functionModelsOutDir.child("_coverage.txt").writeText(module.disassembleWithCoverage(function, executedAddresses))
     executedAddressesFile.writeJson(executedAddresses)

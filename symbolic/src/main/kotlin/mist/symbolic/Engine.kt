@@ -34,13 +34,14 @@ class Engine(
   private val maxExecutedInstructions: Int = 10000,
   private val branchingLimit: Int = 256,
   private val globalBranchingLimit: Int = Integer.MAX_VALUE / 2,
-  private val maxFinishedPaths: Int = 20000,
+  private val maxFinishedPaths: Int = DEFAULT_MAX_FINISHED_PATHS,
   parallelism: Int = 16,
 ) {
   companion object {
     const val RETURN_TOKEN = 0x12244896
     const val INITIAL_SP = 0x09FFFE90
     const val DEAD_VALUE = 0xDEADBEEF.toInt()
+    const val DEFAULT_MAX_FINISHED_PATHS = 20000
     val assumedSpRange = (INITIAL_SP - 0x10000)..INITIAL_SP
 
     private val modelWriter = ModelWriter()

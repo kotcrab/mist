@@ -1,6 +1,7 @@
 package mist.suite
 
 import mist.asm.mips.GprReg
+import mist.module.GhidraModule
 import mist.module.Module
 import mist.module.ModuleMemory
 import mist.symbolic.*
@@ -24,6 +25,7 @@ class SuiteConfig(
   val functionArgsIgnoredForCompare: Map<String, Set<Int>>,
   val elfFunctionNameOverrides: Map<String, String>,
   val initContextsWithGlobals: Boolean,
+  val requiredSourceData: List<UIntRange>,
 ) {
   @SuiteConfigDsl
   class Builder(private val moduleName: String) {
@@ -36,6 +38,7 @@ class SuiteConfig(
     private val functionArgsIgnoredForCompare = mutableMapOf<String, Set<Int>>()
     private val elfFunctionNameOverrides = mutableMapOf<String, String>()
     private var initContextsWithGlobals = false
+    private val requiredSourceData = mutableListOf<UIntRange>()
 
     fun test(functionName: String, configure: (SuiteTestConfig.Builder.() -> Unit)? = null) {
       additionalFunctionsToExecute.add(functionName)
@@ -74,6 +77,10 @@ class SuiteConfig(
       initContextsWithGlobals = true
     }
 
+    fun requireSourceData(range: UIntRange) {
+      requiredSourceData.add(range)
+    }
+
     fun build(): SuiteConfig {
       return SuiteConfig(
         moduleName,
@@ -85,9 +92,34 @@ class SuiteConfig(
         testConfigs,
         functionArgsIgnoredForCompare,
         elfFunctionNameOverrides,
-        initContextsWithGlobals
+        initContextsWithGlobals,
+        requiredSourceData,
       )
     }
+  }
+
+  fun initCtx(
+    module: Module,
+    ctx: Context,
+    testConfig: SuiteTestConfig?
+  ) {
+    val configureContextScope = ConfigureContextScope(module, ctx)
+    if (testConfig?.initContextWithModuleMemory == true) {
+      module.writeMemoryToContext(ctx)
+    }
+    if (initContextsWithGlobals) {
+      module.writeGlobalsToContext(ctx)
+    }
+    if (module is GhidraModule && requiredSourceData.isNotEmpty()) {
+      val moduleMemory = module.createModuleMemory()
+      requiredSourceData.forEach { range ->
+        range.forEach { at ->
+          ctx.memory.writeByte(Expr.Const.of(at.toInt()), Expr.Const.of(moduleMemory.readByte(at.toInt())))
+        }
+      }
+    }
+    commonContextConfigure.invoke(configureContextScope)
+    testConfig?.testContextConfigure?.invoke(configureContextScope)
   }
 
   data class SuiteGlobal(val name: String, val init: Boolean)
@@ -100,6 +132,7 @@ class SuiteTestConfig(
   val functionArgsIgnoredForCompare: Map<String, Set<Int>>,
   val initContextWithModuleMemory: Boolean, // TODO replace uses with initContextsWithGlobals
   val prove: Prove?,
+  val maxFinishedPaths: Int?,
 ) {
   class Builder {
     private var testContextConfigure: ConfigureContextScope.() -> Unit = { }
@@ -107,6 +140,7 @@ class SuiteTestConfig(
     private val functionArgsIgnoredForCompare = mutableMapOf<String, Set<Int>>()
     private var initContextWithModuleMemory: Boolean = false
     private var prove: Prove? = null
+    private var maxFinishedPaths: Int? = null
 
     fun configureContext(configure: ConfigureContextScope.() -> Unit) {
       testContextConfigure = configure
@@ -140,13 +174,18 @@ class SuiteTestConfig(
       )
     }
 
+    fun maxFinishedPaths(value: Int) {
+      maxFinishedPaths = value
+    }
+
     fun build(): SuiteTestConfig {
       return SuiteTestConfig(
         testContextConfigure,
         functionLibraryTransform,
         functionArgsIgnoredForCompare,
         initContextWithModuleMemory,
-        prove
+        prove,
+        maxFinishedPaths,
       )
     }
   }

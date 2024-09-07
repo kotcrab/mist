@@ -184,16 +184,8 @@ class CompareFromModels(
     val function = module.getFunctionOrThrow(modelFile.parentFile.name)
     val ctx = Context()
     val testConfig = suiteConfig.testConfigs[function.name]
-    val configureContextScope = ConfigureContextScope(module, ctx)
     val moduleMemory = module.createModuleMemory()
-    if (testConfig?.initContextWithModuleMemory == true) {
-      module.writeMemoryToContext(ctx)
-    }
-    if (suiteConfig.initContextsWithGlobals) {
-      module.writeGlobalsToContext(ctx)
-    }
-    suiteConfig.commonContextConfigure.invoke(configureContextScope)
-    testConfig?.testContextConfigure?.invoke(configureContextScope)
+    suiteConfig.initCtx(module, ctx, testConfig)
     ctx.pc = function.entryPoint
     ctx.memory.ignoreIllegalAccess = true
     val suiteFunctionLibrary = suiteConfig.functionLibraryProvider.invoke(moduleMemory)
@@ -216,16 +208,8 @@ class CompareFromModels(
     val function = module.getFunctionOrThrow(functionName)
     val ctx = Context.presetSymbolic()
     val testConfig = suiteConfig.testConfigs[functionName]
-    val configureContextScope = ConfigureContextScope(module, ctx)
     val moduleMemory = module.createModuleMemory()
-    if (testConfig?.initContextWithModuleMemory == true) {
-      module.writeMemoryToContext(ctx)
-    }
-    if (suiteConfig.initContextsWithGlobals) {
-      module.writeGlobalsToContext(ctx)
-    }
-    suiteConfig.commonContextConfigure.invoke(configureContextScope)
-    testConfig?.testContextConfigure?.invoke(configureContextScope)
+    suiteConfig.initCtx(module, ctx, testConfig)
     ctx.pc = function.entryPoint
     ctx.specificBranches.addAll(trace.elements.filterIsInstance<TraceElement.Branch>().map { it.taken })
     val suiteFunctionLibrary = suiteConfig.functionLibraryProvider.invoke(moduleMemory)
