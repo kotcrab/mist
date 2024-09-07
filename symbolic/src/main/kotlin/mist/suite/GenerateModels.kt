@@ -32,6 +32,10 @@ class GenerateModels(
   }
 
   private fun executeFunctions() {
+    println("\n${functionsToExecute.size} functions to execute:")
+    functionsToExecute.forEach {
+      println(it.name)
+    }
     functionsToExecute.onEachIndexed { index, function ->
       println("\n\nRunning ${index + 1}/${functionsToExecute.size} ${function.name}...")
       executedAddresses.addAll(

@@ -152,13 +152,13 @@ val isofsSuiteConfig = suiteConfig("isofs") {
   test("isofsClearUnitFilesFdw") {
     configureContext {
       assume { a0 eq createUnit() }
-      assume { a1 eq 2.expr }
+      assume { a1 eq 2 }
     }
     proveEquality()
   }
   test("isofsClearUnit") {
     configureContext {
-      assume { a0 le 0.expr }
+      assume { a0 le 0 }
     }
     proveEquality()
   }
@@ -174,7 +174,7 @@ val isofsSuiteConfig = suiteConfig("isofs") {
     configureContext {
       val iob = create("SceIoIob", "iob")
       val file = create("IsofsFile", "file")
-      assume { iob.fieldExpr("i_unit") le 0.expr }
+      assume { iob.fieldExpr("i_unit") le 0 }
       iob.writeField("i_private", file)
 
       assume { a0 eqOrNull iob.address }
@@ -220,7 +220,7 @@ val isofsSuiteConfig = suiteConfig("isofs") {
     configureContext {
       val iob = create("SceIoIob", "iob")
       val file = create("IsofsFile", "file")
-      assume { iob.fieldExpr("i_unit") le 0.expr }
+      assume { iob.fieldExpr("i_unit") le 0 }
       iob.writeField("i_private", file)
 
       assume { a0 eqOrNull iob.address }
@@ -318,7 +318,7 @@ val isofsSuiteConfig = suiteConfig("isofs") {
     configureContext {
       val iob = create("SceIoIob", "iob")
       val dir = create("IsofsDir", "dir")
-      assume { iob.fieldExpr("i_unit") le 0.expr }
+      assume { iob.fieldExpr("i_unit") le 0 }
       iob.writeField("i_private", dir)
 
       assume { a0 eqOrNull iob.address }
@@ -365,7 +365,7 @@ val isofsSuiteConfig = suiteConfig("isofs") {
   test("isofsDrvGetstat") {
     configureContext {
       val iob = create("SceIoIob", "iob")
-      assume { iob.fieldExpr("i_unit") le 0.expr }
+      assume { iob.fieldExpr("i_unit") le 0 }
 
       assume { a0 eqOrNull iob.address }
       assume { a1 eqOrNull allocateString("dir/file") }
@@ -391,7 +391,7 @@ val isofsSuiteConfig = suiteConfig("isofs") {
   test("isofsDrvMount") {
     configureContext {
       val iob = create("SceIoIob", "iob")
-      assume { iob.fieldExpr("i_unit") le 0.expr }
+      assume { iob.fieldExpr("i_unit") le 0 }
 
       assume { a0 eqOrNull iob.address }
       assume { a1 eqOrNull allocate() }
@@ -414,7 +414,7 @@ val isofsSuiteConfig = suiteConfig("isofs") {
   test("isofsDrvUmount") {
     configureContext {
       val iob = create("SceIoIob", "iob")
-      assume { iob.fieldExpr("i_unit") le 0.expr }
+      assume { iob.fieldExpr("i_unit") le 0 }
 
       assume { a0 eqOrNull iob.address }
     }
@@ -495,7 +495,7 @@ val isofsSuiteConfig = suiteConfig("isofs") {
         )
       )
       args(allocateString("some/path"), buffer)
-      assume { a2 eqOrNull 3.expr }
+      assume { a2 eqOrNull 3 }
       assume { a3 eqOrNull allocate(4) }
     }
     initContextWithModuleMemory()
@@ -658,7 +658,7 @@ val isofsSuiteConfig = suiteConfig("isofs") {
     configureContext {
       val paths = create("u8", "paths", 0x300)
       assume { a0 eqOrNull paths.address }
-      assume { a1 le 0x40.expr }
+      assume { a1 le 0x40 }
       assume { a2 eq create("s32", "outRet").address }
     }
     proveEquality()
@@ -668,8 +668,8 @@ val isofsSuiteConfig = suiteConfig("isofs") {
       val paths = create("u8", "paths", 0x300)
       assume { a0 eqOrNull createUnit() }
       assume { a1 eqOrNull paths.address }
-      assume { a2 le 0x10.expr }
-      assume { a3 le 5.expr }
+      assume { a2 le 0x10 }
+      assume { a3 le 5 }
       assume { t0 eq create("s32", "outRet").address }
     }
     functionLibrary {
@@ -817,7 +817,7 @@ private fun ConfigureContextScope.createUnitType(prefix: String = ""): TypedAllo
   unit.writeField("fdw", fdw)
   unit.writeField("pathTable", allocate())
   unit.writeField("handlerIndex", 0)
-  assume { unit.fieldExpr("fdwCount", unsigned = true) le 2.expr }
+  assume { unit.fieldExpr("fdwCount", unsigned = true) le 2 }
   return unit
 }
 

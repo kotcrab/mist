@@ -16,28 +16,56 @@ class ExprBuilder(private val ctx: Context) {
 
   val GprReg.expr get() = ctx.readGpr(this)
 
+  infix fun BvExpr.eqOrNull(right: Int): BoolExpr {
+    return eqOrNull(right.expr)
+  }
+
   infix fun BvExpr.eqOrNull(right: BvExpr): BoolExpr {
-    return (this eq right) or (this eq 0.expr)
+    return (this eq right) or (this eq 0)
+  }
+
+  infix fun BvExpr.eq(right: Int): BoolExpr {
+    return eq(right.expr)
   }
 
   infix fun BvExpr.eq(right: BvExpr): BoolExpr {
     return Expr.Condition.of(ConditionOp.Eq, this, right)
   }
 
+  infix fun BvExpr.neq(right: Int): BoolExpr {
+    return neq(right.expr)
+  }
+
   infix fun BvExpr.neq(right: BvExpr): BoolExpr {
     return Expr.Not.of(Expr.Condition.of(ConditionOp.Eq, this, right))
+  }
+
+  infix fun BvExpr.ge(right: Int): BoolExpr {
+    return ge(right.expr)
   }
 
   infix fun BvExpr.ge(right: BvExpr): BoolExpr {
     return Expr.Condition.of(ConditionOp.Ge, this, right)
   }
 
+  infix fun BvExpr.gt(right: Int): BoolExpr {
+    return gt(right.expr)
+  }
+
   infix fun BvExpr.gt(right: BvExpr): BoolExpr {
     return Expr.Condition.of(ConditionOp.Gt, this, right)
   }
 
+  infix fun BvExpr.le(right: Int): BoolExpr {
+    return le(right.expr)
+  }
+
   infix fun BvExpr.le(right: BvExpr): BoolExpr {
     return Expr.Condition.of(ConditionOp.Le, this, right)
+  }
+
+  infix fun BvExpr.lt(right: Int): BoolExpr {
+    return lt(right.expr)
   }
 
   infix fun BvExpr.lt(right: BvExpr): BoolExpr {
