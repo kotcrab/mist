@@ -8,6 +8,7 @@ import kio.util.child
 import kio.util.execute
 import kotlinx.coroutines.*
 import mist.module.Module
+import mist.module.ModuleSymbol
 import mist.symbolic.*
 import mist.util.cached
 import java.io.File
@@ -112,22 +113,35 @@ class CompareFromModels(
         solverCtx.solver.assert(solverCtx.kCtx.mkEq(fwKExpr, uofwKExpr))
       }
 
+      fun assetSymbolRange(fwSymbol: ModuleSymbol, uofwSymbol: ModuleSymbol) {
+        repeat(fwSymbol.length) { offset ->
+          assertExpr(
+            fwCtx.memory.selectByte(Expr.Const.of(fwSymbol.address + offset)),
+            uofwCtx.memory.selectByte(Expr.Const.of(uofwSymbol.address + offset)),
+          )
+        }
+      }
+
+      val globalsToProve = suite.fwModule.globals()
+        .filterNot { it.symbol.name in proveConfig.excludedAllocations }
+      val uofwGlobals = suite.uofwModule.globals()
+      globalsToProve.forEach { fwGlobal ->
+        val uofwGlobal = uofwGlobals.find { it.symbol.name == fwGlobal.symbol.name && it.symbol.length == fwGlobal.symbol.length }
+          ?: error("Missing matching uOFW global for: ${fwGlobal.symbol}")
+        assetSymbolRange(fwGlobal.symbol, uofwGlobal.symbol)
+      }
+
       val allocationNamesToProve = fwTrace.additionalAllocations.map { it.first.name }
         .toSet()
         .plus(uofwTrace.additionalAllocations.map { it.first.name })
         .filterNot { it in proveConfig.excludedAllocations }
 
       allocationNamesToProve.forEach { allocationName ->
-        val (fwSymbol, _) = fwTrace.additionalAllocations.firstOrNull { it.first.name == allocationName }
+        val (fwSymbol) = fwTrace.additionalAllocations.firstOrNull { it.first.name == allocationName }
           ?: error("No such named FW allocation: $allocationName")
-        val (uofwSymbol, _) = uofwTrace.additionalAllocations.firstOrNull { it.first.name == allocationName }
+        val (uofwSymbol) = uofwTrace.additionalAllocations.firstOrNull { it.first.name == allocationName }
           ?: error("No such named uOFW allocation: $allocationName")
-        repeat(fwSymbol.length) { offset ->
-          assertExpr(
-            fwCtx.memory.selectByte(Expr.Const.of(fwSymbol.address).plus(offset)),
-            uofwCtx.memory.selectByte(Expr.Const.of(uofwSymbol.address).plus(offset)),
-          )
-        }
+        assetSymbolRange(fwSymbol, uofwSymbol)
       }
 
       if (proveConfig.functionCalls) {
@@ -175,6 +189,9 @@ class CompareFromModels(
     if (testConfig?.initContextWithModuleMemory == true) {
       module.writeMemoryToContext(ctx)
     }
+    if (suiteConfig.initContextsWithGlobals) {
+      module.writeGlobalsToContext(ctx)
+    }
     suiteConfig.commonContextConfigure.invoke(configureContextScope)
     testConfig?.testContextConfigure?.invoke(configureContextScope)
     ctx.pc = function.entryPoint
@@ -203,6 +220,9 @@ class CompareFromModels(
     val moduleMemory = module.createModuleMemory()
     if (testConfig?.initContextWithModuleMemory == true) {
       module.writeMemoryToContext(ctx)
+    }
+    if (suiteConfig.initContextsWithGlobals) {
+      module.writeGlobalsToContext(ctx)
     }
     suiteConfig.commonContextConfigure.invoke(configureContextScope)
     testConfig?.testContextConfigure?.invoke(configureContextScope)

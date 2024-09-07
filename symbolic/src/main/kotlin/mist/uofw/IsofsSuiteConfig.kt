@@ -2,7 +2,6 @@ package mist.uofw
 
 import mist.asm.mips.GprReg
 import mist.suite.ConfigureContextScope
-import mist.suite.SuiteConfig
 import mist.suite.TypedAllocation
 import mist.suite.suiteConfig
 import mist.symbolic.Expr

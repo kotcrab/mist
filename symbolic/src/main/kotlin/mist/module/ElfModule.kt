@@ -41,10 +41,10 @@ class ElfModule(
     }
   }
 
-  fun registerGlobal(name: String, type: GhidraType) {
+  fun registerGlobal(name: String, lengthOverride: Int?, type: GhidraType, init: Boolean): ModuleGlobal {
     val symbol = symbols.globals.find { it.name == name }
       ?: error("No such symbol: $name")
-    registerGlobal(ModuleSymbol(symbol.name, symbol.address, symbol.length), type)
+    return registerGlobal(ModuleSymbol(symbol.name, symbol.address, lengthOverride ?: symbol.length), type, init)
   }
 
   private fun symbolsToModuleFunctions(symbols: Symbols, exports: List<ModuleExport>): Map<Int, ModuleFunction> {
@@ -63,7 +63,7 @@ class ElfModule(
     val lines = mapFile.readLines()
     val functions = parseSymbolsSection(lines, ".text")
     val imports = parseSymbolsSection(lines, ".sceStub.text")
-    val globals = listOf(".bss", ".data", ".rodata", ".testdata")
+    val globals = listOf(".bss", ".data", ".rodata", ".test.bss", ".test.data", ".test.rodata")
       .flatMap { section -> parseSymbolsSection(lines, section) }
     return Symbols(functions, imports, globals)
   }

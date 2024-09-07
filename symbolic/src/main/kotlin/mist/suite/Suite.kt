@@ -27,15 +27,15 @@ class Suite(
       disassembler,
       moduleTypes,
       uofwDir.child("src/kd/${config.moduleName}/${config.moduleName}.elf"),
-      uofwDir.child("map/${config.moduleName}.map"),
+      uofwDir.child("debug/map/${config.moduleName}.map"),
       moduleExports,
       config.elfFunctionNameOverrides,
     )
     println("Modules loaded")
 
-    config.globals.forEach {
-      val (_, type) = fwModule.registerGlobal(it)
-      uofwModule.registerGlobal(it, type)
+    config.globals.forEach { (name, init) ->
+      val global = fwModule.registerGlobal(name, init)
+      uofwModule.registerGlobal(global.symbol.name, global.symbol.length, global.type, init)
     }
 
     checkModulesFunctions()
@@ -56,17 +56,21 @@ class Suite(
       val functionArgs = moduleTypes.getFunctionArgs(functionName)
       val fwArgsPathNames = fwGhidraFunction?.parameters?.map { it.dataTypePathName }
       if (functionArgs == null) {
-        messages.add("Unknown args for: $functionName, assuming from fw: $fwArgsPathNames")
         if (fwArgsPathNames != null) {
+          messages.add("Unknown args for: $functionName, assuming from fw: $fwArgsPathNames")
           moduleTypes.addFunctionArgsOverrideFromDataTypes(functionName, fwArgsPathNames)
+        } else {
+          messages.add("Unknown args for: $functionName")
         }
       }
       val returnSize = moduleTypes.getFunctionReturnSize(functionName)
       val fwReturns = fwGhidraFunction?.returnTypePathName?.let { moduleTypes.get(it)?.length?.div(4) }
       if (returnSize == null) {
-        messages.add("Unknown return size for: $functionName, assuming from fw: $fwReturns")
         if (fwReturns != null) {
+          messages.add("Unknown return size for: $functionName, assuming from fw: $fwReturns")
           moduleTypes.addFunctionReturnSizeOverride(functionName, fwReturns)
+        } else {
+          messages.add("Unknown return size for: $functionName")
         }
       }
     }

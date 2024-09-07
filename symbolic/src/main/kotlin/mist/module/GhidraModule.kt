@@ -6,7 +6,6 @@ import mist.asm.mips.MipsInstr
 import mist.asm.mips.MipsOpcode
 import mist.ghidra.GhidraClient
 import mist.ghidra.model.GhidraFunction
-import mist.ghidra.model.GhidraType
 import mist.io.BinLoader
 import mist.symbolic.Context
 import mist.symbolic.Expr
@@ -44,13 +43,12 @@ class GhidraModule(
       .associateBy { it.entryPoint }
   }
 
-  fun registerGlobal(name: String): Pair<ModuleSymbol, GhidraType> {
+  fun registerGlobal(name: String, init: Boolean): ModuleGlobal {
     val symbol = ghidraSymbols.find { it.name == name }
       ?: error("No such symbol: $name")
     val dataType = types.getOrThrow(symbol.dataTypePathName!!)
     val moduleSymbol = ModuleSymbol(symbol.name, symbol.address.toInt(), dataType.length)
-    registerGlobal(moduleSymbol, dataType)
-    return moduleSymbol to dataType
+    return registerGlobal(moduleSymbol, dataType, init)
   }
 
   private fun classifyFunction(disassembler: Disassembler<MipsInstr>, loader: BinLoader, function: GhidraFunction): ModuleFunction.Type {

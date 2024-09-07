@@ -17,23 +17,25 @@ class SuiteConfig(
   val moduleName: String,
   val additionalFunctionsToExecute: Set<String>,
   val excludedFunctions: Set<String>,
-  val globals: Set<String>,
+  val globals: Set<SuiteGlobal>,
   val functionLibraryProvider: (ModuleMemory) -> FunctionLibrary,
   val commonContextConfigure: ConfigureContextScope.() -> Unit,
   val testConfigs: Map<String, SuiteTestConfig>,
   val functionArgsIgnoredForCompare: Map<String, Set<Int>>,
   val elfFunctionNameOverrides: Map<String, String>,
+  val initContextsWithGlobals: Boolean,
 ) {
   @SuiteConfigDsl
   class Builder(private val moduleName: String) {
     private val testConfigs = mutableMapOf<String, SuiteTestConfig>()
     private val additionalFunctionsToExecute = mutableSetOf<String>()
     private val excludedFunctions = mutableSetOf<String>()
-    private val globals = mutableSetOf<String>()
+    private val globals = mutableSetOf<SuiteGlobal>()
     private var functionLibraryProvider: (ModuleMemory) -> FunctionLibrary = { FunctionLibrary() }
     private var commonContextConfigure: ConfigureContextScope.() -> Unit = { }
     private val functionArgsIgnoredForCompare = mutableMapOf<String, Set<Int>>()
     private val elfFunctionNameOverrides = mutableMapOf<String, String>()
+    private var initContextsWithGlobals = false
 
     fun test(functionName: String, configure: (SuiteTestConfig.Builder.() -> Unit)? = null) {
       additionalFunctionsToExecute.add(functionName)
@@ -48,8 +50,8 @@ class SuiteConfig(
       excludedFunctions.add(functionName)
     }
 
-    fun global(name: String) {
-      globals.add(name)
+    fun global(name: String, init: Boolean = true) {
+      globals.add(SuiteGlobal(name, init))
     }
 
     fun functionLibrary(provide: (ModuleMemory) -> FunctionLibrary) {
@@ -68,6 +70,10 @@ class SuiteConfig(
       elfFunctionNameOverrides[actualName] = overrideName
     }
 
+    fun initContextsWithGlobals() {
+      initContextsWithGlobals = true
+    }
+
     fun build(): SuiteConfig {
       return SuiteConfig(
         moduleName,
@@ -78,10 +84,13 @@ class SuiteConfig(
         commonContextConfigure,
         testConfigs,
         functionArgsIgnoredForCompare,
-        elfFunctionNameOverrides
+        elfFunctionNameOverrides,
+        initContextsWithGlobals
       )
     }
   }
+
+  data class SuiteGlobal(val name: String, val init: Boolean)
 }
 
 @SuiteConfigDsl
@@ -89,7 +98,7 @@ class SuiteTestConfig(
   val testContextConfigure: ConfigureContextScope.() -> Unit,
   val functionLibraryTransform: (FunctionLibrary) -> FunctionLibrary,
   val functionArgsIgnoredForCompare: Map<String, Set<Int>>,
-  val initContextWithModuleMemory: Boolean,
+  val initContextWithModuleMemory: Boolean, // TODO replace uses with initContextsWithGlobals
   val prove: Prove?,
 ) {
   class Builder {
@@ -115,16 +124,17 @@ class SuiteTestConfig(
       initContextWithModuleMemory = true
     }
 
-    // TODO prove globals
     fun proveEquality(
       functionCalls: Boolean = true,
       functionReturns: Boolean = true,
+      excludedGlobals: Set<String> = emptySet(),
       excludedAllocations: Set<String> = emptySet(),
       timeout: Duration = 1.minutes
     ) {
       prove = Prove(
         functionCalls = functionCalls,
         functionReturns = functionReturns,
+        excludedGlobals = excludedGlobals,
         excludedAllocations = excludedAllocations,
         timeout = timeout,
       )
@@ -144,6 +154,7 @@ class SuiteTestConfig(
   data class Prove(
     val functionCalls: Boolean,
     val functionReturns: Boolean,
+    val excludedGlobals: Set<String>,
     val excludedAllocations: Set<String>,
     val timeout: Duration
   )

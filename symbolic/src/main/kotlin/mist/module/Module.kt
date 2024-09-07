@@ -5,6 +5,7 @@ import mist.asm.FunctionDef
 import mist.asm.mips.MipsInstr
 import mist.ghidra.model.GhidraType
 import mist.symbolic.Context
+import mist.symbolic.Expr
 
 abstract class Module(
   private val disassembler: Disassembler<MipsInstr>,
@@ -12,25 +13,43 @@ abstract class Module(
 ) {
   abstract val functions: Map<Int, ModuleFunction>
 
-  private val typedGlobals = mutableListOf<Pair<ModuleSymbol, GhidraType>>()
+  private val typedGlobals = mutableListOf<ModuleGlobal>()
 
   abstract fun createModuleMemory(): ModuleMemory
 
   abstract fun writeMemoryToContext(ctx: Context)
 
-  protected fun registerGlobal(symbol: ModuleSymbol, types: GhidraType) {
-    typedGlobals.add(symbol to types)
+  fun writeGlobalsToContext(ctx: Context) {
+    val moduleMemory = createModuleMemory()
+    typedGlobals
+      .filter { it.init }
+      .forEach { (symbol) ->
+        repeat(symbol.length) { offset ->
+          val at = symbol.address + offset
+          ctx.memory.writeByte(Expr.Const.of(at), Expr.Const.of(moduleMemory.readByte(at)))
+        }
+      }
+  }
+
+  protected fun registerGlobal(symbol: ModuleSymbol, types: GhidraType, init: Boolean): ModuleGlobal {
+    val global = ModuleGlobal(symbol, types, init)
+    typedGlobals.add(global)
+    return global
+  }
+
+  fun globals(): List<ModuleGlobal> {
+    return typedGlobals.toList()
   }
 
   fun lookupGlobal(name: String): Pair<Int, Int> {
-    val (symbol, _) = typedGlobals.find { (symbol, _) -> symbol.name == name }
+    val (symbol) = typedGlobals.find { it.symbol.name == name }
       ?: error("No such typed global: $name")
     return symbol.address to symbol.length
   }
 
   fun lookupGlobalMember(path: String): Pair<Int, Int> {
     val parts = path.split(".")
-    val (symbol, type) = typedGlobals.find { (symbol, _) -> symbol.name == parts[0] }
+    val (symbol, type) = typedGlobals.find { it.symbol.name == parts[0] }
       ?: error("No such typed global: ${parts[0]}")
     val (fieldOffset, fieldLength) = types.lookupStructMember(type, parts.drop(1))
     return (symbol.address + fieldOffset) to fieldLength
@@ -39,12 +58,12 @@ abstract class Module(
   fun lookupAddress(address: Int, additionalAllocations: List<Pair<ModuleSymbol, GhidraType>>): ModuleAddress {
     val moduleAddress = ModuleAddress(address, null)
     val checkAddress = if (moduleAddress.isUncached()) moduleAddress.cachedAddress() else address
-    val global = (typedGlobals.asSequence() + additionalAllocations).find { (symbol, type) ->
+    val typedSymbol = (typedGlobals.map { it.symbol to it.type } + additionalAllocations).find { (symbol, type) ->
       checkAddress.toUInt() >= symbol.address.toUInt() &&
         checkAddress.toUInt() <= symbol.address.toUInt() + type.length.toUInt() - 1u
     }
-    return if (global != null) {
-      val (symbol, type) = global
+    return if (typedSymbol != null) {
+      val (symbol, type) = typedSymbol
       val localOffset = checkAddress - symbol.address
       moduleAddress.copy(symbol = ModuleAddress.Symbol(symbol.name, localOffset, types.memberPathForOffset(type, localOffset)))
     } else {

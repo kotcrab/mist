@@ -60,6 +60,9 @@ class GenerateModels(
     if (testConfig?.initContextWithModuleMemory == true) {
       module.writeMemoryToContext(ctx)
     }
+    if (suiteConfig.initContextsWithGlobals) {
+      module.writeGlobalsToContext(ctx)
+    }
     suiteConfig.commonContextConfigure.invoke(configureContextScope)
     testConfig?.testContextConfigure?.invoke(configureContextScope)
     ctx.pc = function.entryPoint

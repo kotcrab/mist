@@ -1,7 +1,6 @@
 package mist.symbolic
 
 import mist.util.Counter
-import java.util.concurrent.ConcurrentHashMap
 
 class BranchCounters(
   private val branches: MutableMap<Int, MutableMap<Int, Counter>> = mutableMapOf(),
