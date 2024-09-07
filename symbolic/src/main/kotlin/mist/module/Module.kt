@@ -1,5 +1,6 @@
 package mist.module
 
+import kio.util.toWHex
 import mist.asm.Disassembler
 import mist.asm.FunctionDef
 import mist.asm.mips.MipsInstr
@@ -66,10 +67,10 @@ abstract class Module(
       return moduleAddress
     }
     val (symbol, type) = typedSymbol
-    if (type == null) {
-      return moduleAddress
-    }
     val localOffset = checkAddress - symbol.address
+    if (type == null) {
+      return moduleAddress.copy(symbol = ModuleAddress.Symbol(symbol.name, localOffset, "+${localOffset.toWHex()}"))
+    }
     // TODO member path won't work for array
     return moduleAddress.copy(symbol = ModuleAddress.Symbol(symbol.name, localOffset, types.memberPathForOffset(type, localOffset)))
   }

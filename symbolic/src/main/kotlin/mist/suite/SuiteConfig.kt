@@ -26,6 +26,7 @@ class SuiteConfig(
   val elfFunctionNameOverrides: Map<String, String>,
   val initContextsWithGlobals: Boolean,
   val requiredSourceData: List<UIntRange>,
+  val defaultProveConfig: ProveConfig?,
 ) {
   @SuiteConfigDsl
   class Builder(private val moduleName: String) {
@@ -39,6 +40,7 @@ class SuiteConfig(
     private val elfFunctionNameOverrides = mutableMapOf<String, String>()
     private var initContextsWithGlobals = false
     private val requiredSourceData = mutableListOf<UIntRange>()
+    private var defaultProveConfig: ProveConfig? = null
 
     fun test(functionName: String, configure: (SuiteTestConfig.Builder.() -> Unit)? = null) {
       additionalFunctionsToExecute.add(functionName)
@@ -81,6 +83,10 @@ class SuiteConfig(
       requiredSourceData.add(range)
     }
 
+    fun proveAllFunctions() {
+      defaultProveConfig = ProveConfig()
+    }
+
     fun build(): SuiteConfig {
       return SuiteConfig(
         moduleName,
@@ -94,6 +100,7 @@ class SuiteConfig(
         elfFunctionNameOverrides,
         initContextsWithGlobals,
         requiredSourceData,
+        defaultProveConfig,
       )
     }
   }
@@ -131,7 +138,7 @@ class SuiteTestConfig(
   val functionLibraryTransform: (FunctionLibrary) -> FunctionLibrary,
   val functionArgsIgnoredForCompare: Map<String, Set<Int>>,
   val initContextWithModuleMemory: Boolean, // TODO replace uses with initContextsWithGlobals
-  val prove: Prove?,
+  val proveConfig: ProveConfig?,
   val maxFinishedPaths: Int?,
 ) {
   class Builder {
@@ -139,7 +146,7 @@ class SuiteTestConfig(
     private var functionLibraryTransform: (FunctionLibrary) -> FunctionLibrary = { it }
     private val functionArgsIgnoredForCompare = mutableMapOf<String, Set<Int>>()
     private var initContextWithModuleMemory: Boolean = false
-    private var prove: Prove? = null
+    private var proveConfig: ProveConfig? = null
     private var maxFinishedPaths: Int? = null
 
     fun configureContext(configure: ConfigureContextScope.() -> Unit) {
@@ -165,7 +172,7 @@ class SuiteTestConfig(
       excludedAllocations: Set<String> = emptySet(),
       timeout: Duration = 1.minutes
     ) {
-      prove = Prove(
+      proveConfig = ProveConfig(
         functionCalls = functionCalls,
         functionReturns = functionReturns,
         excludedGlobals = excludedGlobals,
@@ -184,20 +191,20 @@ class SuiteTestConfig(
         functionLibraryTransform,
         functionArgsIgnoredForCompare,
         initContextWithModuleMemory,
-        prove,
+        proveConfig,
         maxFinishedPaths,
       )
     }
   }
-
-  data class Prove(
-    val functionCalls: Boolean,
-    val functionReturns: Boolean,
-    val excludedGlobals: Set<String>,
-    val excludedAllocations: Set<String>,
-    val timeout: Duration
-  )
 }
+
+data class ProveConfig(
+  val functionCalls: Boolean = true,
+  val functionReturns: Boolean = true,
+  val excludedGlobals: Set<String> = emptySet(),
+  val excludedAllocations: Set<String> = emptySet(),
+  val timeout: Duration = 1.minutes,
+)
 
 @SuiteConfigDsl
 class ConfigureContextScope(
