@@ -44,7 +44,7 @@ class TraceWriter {
       }
   }
 
-  fun writeElementToString(module: Module, additionalAllocations: List<Pair<ModuleSymbol, GhidraType>>, element: TraceElement): String {
+  fun writeElementToString(module: Module, additionalAllocations: List<Pair<ModuleSymbol, GhidraType?>>, element: TraceElement): String {
     return when (element) {
       is TraceElement.ExecutionStart -> {
         "start args: ${element.arguments.joinToString(separator = ", ")}"

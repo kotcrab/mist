@@ -230,12 +230,12 @@ class ConfigureContextScope(
   }
 
   fun allocate(size: Int = 0x1000, initByte: Int? = null): Expr.Const {
-    return ctx.memory.allocate(size, initByte)
+    return ctx.memory.allocate(size, initByte, track = true)
   }
 
   fun allocateString(text: String): Expr.Const {
     val bytes = text.toByteArray()
-    val buffer = ctx.memory.allocate(bytes.size + 1, initByte = 0)
+    val buffer = ctx.memory.allocate(bytes.size + 1, initByte = 0, track = false)
     writeBytes(buffer, bytes)
     return buffer
   }

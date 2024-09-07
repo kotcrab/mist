@@ -379,7 +379,7 @@ val isofsSuiteConfig = suiteConfig("isofs") {
           SymbolicFunctionHandler("isofsReadIsoDir", constraints = {
             listOf(
               Expr.ZERO,
-              ctx.memory.allocate(0x100)
+              ctx.memory.allocate(0x100, track = true)
             )
           }),
         )
@@ -622,7 +622,7 @@ val isofsSuiteConfig = suiteConfig("isofs") {
           SymbolicFunctionHandler("isofsParsePathTableEntries", constraints = {
             listOf(
               Expr.ZERO,
-              ctx.memory.allocate(0x100)
+              ctx.memory.allocate(0x100, track = true)
             )
           }),
         )

@@ -66,7 +66,11 @@ class Engine(
     mode = EngineMode.CONCRETE
     ctx.memory.concrete = true
     executionLoop(ctx)
-    return Trace(ctx.traceElements, allExecutedAddresses, ctx.memory.typedAllocations)
+    return Trace(
+      elements = ctx.traceElements,
+      executedAddresses = allExecutedAddresses,
+      additionalAllocations = ctx.memory.typedAllocations + ctx.memory.additionalAllocations.map { it to null }
+    )
   }
 
   fun executeSymbolic(ctx: Context): Set<Int> {

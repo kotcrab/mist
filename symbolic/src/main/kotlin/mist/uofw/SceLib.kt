@@ -65,7 +65,7 @@ fun sceSymbolicFunctionLibrary(moduleMemory: ModuleMemory): FunctionLibrary {
       ResultFunctionHandler("sceKernelDcacheWritebackRange"),
       ResultFunctionHandler("sceKernelDcacheWritebackInvalidateRange"),
 
-      ResultFunctionHandler("sceKernelDmaOpAlloc") { memory.allocate(0x40, 0xCD) },
+      ResultFunctionHandler("sceKernelDmaOpAlloc") { memory.allocate(0x40, 0xCD, track = true) },
       SymbolicFunctionHandler("sceKernelDmaOpAssign"),
       SymbolicFunctionHandler("sceKernelDmaOpConcatenate"),
       ResultFunctionHandler("sceKernelDmaOpDeQueue"),
@@ -86,7 +86,7 @@ fun sceSymbolicFunctionLibrary(moduleMemory: ModuleMemory): FunctionLibrary {
       SymbolicFunctionHandler("sceKernelAllocHeapMemory", constraints = {
         listOf(
           Expr.ZERO,
-          ctx.memory.allocate(0x1000, 0xCD)
+          ctx.memory.allocate(0x1000, 0xCD, track = true)
         )
       }),
 
@@ -134,6 +134,18 @@ fun sceSymbolicFunctionLibrary(moduleMemory: ModuleMemory): FunctionLibrary {
       SymbolicFunctionHandler("sceUmdMan_driver_65E2B3E0"),
       SymbolicFunctionHandler("sceUmdManRegisterInsertEjectUMDCallBack"),
       SymbolicFunctionHandler("sceUmdManUnRegisterInsertEjectUMDCallBack"),
+
+      SymbolicFunctionHandler("sceAudiocodecReleaseEDRAM"),
+      SymbolicFunctionHandler("sceAudiocodecGetEDRAM"),
+      SymbolicFunctionHandler("sceAudiocodec_3DD7EE1A"),
+      SymbolicFunctionHandler("sceAudiocodecInit"),
+      SymbolicFunctionHandler("sceAudiocodecDecode"),
+      SymbolicFunctionHandler("sceAudiocodecCheckNeedMem"),
+
+      ProvidedFunctionHandler("sceKernelMemcpy", moduleMemory) {
+        j(compileResult.functions.getValue("memcpy"))
+        nop()
+      }
     ) +
       listOf(
         "memcmp",

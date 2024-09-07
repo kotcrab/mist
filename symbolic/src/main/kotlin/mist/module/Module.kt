@@ -55,20 +55,23 @@ abstract class Module(
     return (symbol.address + fieldOffset) to fieldLength
   }
 
-  fun lookupAddress(address: Int, additionalAllocations: List<Pair<ModuleSymbol, GhidraType>>): ModuleAddress {
+  fun lookupAddress(address: Int, additionalAllocations: List<Pair<ModuleSymbol, GhidraType?>>): ModuleAddress {
     val moduleAddress = ModuleAddress(address, null)
     val checkAddress = if (moduleAddress.isUncached()) moduleAddress.cachedAddress() else address
-    val typedSymbol = (typedGlobals.map { it.symbol to it.type } + additionalAllocations).find { (symbol, type) ->
+    val typedSymbol = (typedGlobals.map { it.symbol to it.type } + additionalAllocations).find { (symbol) ->
       checkAddress.toUInt() >= symbol.address.toUInt() &&
-        checkAddress.toUInt() <= symbol.address.toUInt() + type.length.toUInt() - 1u
+        checkAddress.toUInt() <= symbol.address.toUInt() + symbol.length.toUInt() - 1u
     }
-    return if (typedSymbol != null) {
-      val (symbol, type) = typedSymbol
-      val localOffset = checkAddress - symbol.address
-      moduleAddress.copy(symbol = ModuleAddress.Symbol(symbol.name, localOffset, types.memberPathForOffset(type, localOffset)))
-    } else {
-      moduleAddress
+    if (typedSymbol == null) {
+      return moduleAddress
     }
+    val (symbol, type) = typedSymbol
+    if (type == null) {
+      return moduleAddress
+    }
+    val localOffset = checkAddress - symbol.address
+    // TODO member path won't work for array
+    return moduleAddress.copy(symbol = ModuleAddress.Symbol(symbol.name, localOffset, types.memberPathForOffset(type, localOffset)))
   }
 
   fun findTypeOrThrow(typeName: String): GhidraType {

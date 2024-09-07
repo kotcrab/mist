@@ -12,7 +12,8 @@ class Memory private constructor(
   var hwWordsReadsSinceLastBranch: Int = 0,
   var writesSinceLastBranch: Int = 0,
   private var currentBufferAlloc: Int = BUFFER_ALLOC_START,
-  val typedAllocations: MutableList<Pair<ModuleSymbol, GhidraType>> = mutableListOf()
+  val typedAllocations: MutableList<Pair<ModuleSymbol, GhidraType>> = mutableListOf(),
+  val additionalAllocations: MutableList<ModuleSymbol> = mutableListOf(),
 ) {
   companion object {
     private const val BUFFER_ALLOC_START = 0x08800000
@@ -36,6 +37,7 @@ class Memory private constructor(
       writesSinceLastBranch = writesSinceLastBranch,
       currentBufferAlloc = currentBufferAlloc,
       typedAllocations = typedAllocations.toMutableList(),
+      additionalAllocations = additionalAllocations.toMutableList(),
     )
   }
 
@@ -46,7 +48,7 @@ class Memory private constructor(
 
   fun allocate(type: GhidraType, name: String, elements: Int, initByte: Int? = null): Expr.Const {
     val allocSize = type.length * elements
-    val buffer = allocate(allocSize, initByte)
+    val buffer = allocate(allocSize, initByte, track = false)
     if (typedAllocations.find { it.first.name == name } != null) {
       error("Typed allocation already exists: $name")
     }
@@ -54,7 +56,7 @@ class Memory private constructor(
     return Expr.Const.of(buffer.value)
   }
 
-  fun allocate(size: Int, initByte: Int? = null): Expr.Const {
+  fun allocate(size: Int, initByte: Int? = null, track: Boolean): Expr.Const {
     val buffer = currentBufferAlloc
     repeat(size) {
       if (initByte != null) {
@@ -64,6 +66,9 @@ class Memory private constructor(
     currentBufferAlloc += size
     val pad = 0x10
     currentBufferAlloc = (currentBufferAlloc / pad + 1) * pad
+    if (track) {
+      additionalAllocations.add(ModuleSymbol("__buffer${additionalAllocations.size}", buffer, size))
+    }
     return Expr.Const.of(buffer)
   }
 

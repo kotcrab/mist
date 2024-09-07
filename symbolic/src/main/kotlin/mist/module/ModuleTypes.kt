@@ -119,7 +119,10 @@ class ModuleTypes(
       return "+${offset.toWHex()}"
     }
     val members = (type.properties as GhidraType.CompositeProperties).members
-    val member = members.sortedByDescending { it.offset }.first { it.offset <= offset }
+    val member = members.sortedByDescending { it.offset }.firstOrNull { it.offset <= offset }
+    if (member == null) {
+      return "+<unknown>${offset.toWHex()}"
+    }
     val innerOffset = offset - member.offset
     return if (innerOffset == 0) {
       ".${member.fieldName}"
