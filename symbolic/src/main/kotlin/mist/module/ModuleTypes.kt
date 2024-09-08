@@ -60,7 +60,7 @@ class ModuleTypes(
     val functionType = getFunctionType(name)
     val returnType = (functionType?.properties as? GhidraType.FunctionDefinitionProperties)?.returnTypePathName
       ?: return null
-    return getOrThrow(returnType).length.div(4)
+    return getOrThrow(returnType).length
   }
 
   private fun getFunctionType(name: String): GhidraType? {

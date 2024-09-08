@@ -35,12 +35,13 @@ class TraceWriter {
       .filter { it !is TraceElement.Branch }
       .joinToString(separator = "\n", postfix = "\n") {
         val prefix = "[${it.pc.toWHex()}] " + "%03d|".format(level)
+        val suffix = if (it is TraceSyncPoint) "\n" else ""
         when (it) {
           is TraceElement.FunctionCall -> level++
           is TraceElement.FunctionReturn -> level--
           else -> {} // ignore
         }
-        prefix + writeElementToString(module, trace.additionalAllocations, it)
+        prefix + writeElementToString(module, trace.additionalAllocations, it) + suffix
       }
   }
 
@@ -54,10 +55,10 @@ class TraceWriter {
         "${element.name}(${element.arguments.joinToString(separator = ", ")})$knownSuffix"
       }
       is TraceElement.FunctionReturn -> {
-        when (element.returnSize) {
-          0 -> "return"
-          1 -> "return ${element.v0}"
-          2 -> "return ${element.v1}, ${element.v0}"
+        when {
+          element.returnsV1() -> "return ${element.v1}, ${element.v0}"
+          element.returnsV0() -> "return ${element.v0}"
+          element.returnSize == 0 -> "return"
           else -> "return ${element.v1}, ${element.v0} [!!! unknown return size !!!]"
         }
       }
@@ -81,9 +82,6 @@ class TraceWriter {
     if (traceCompareMessages.isEmpty()) {
       return "No trace compare messages."
     }
-    val noPcSet = " (none) "
-    return traceCompareMessages.joinToString(separator = "\n", prefix = "Trace compare messages:\n", postfix = "\n\n") {
-      "${it.level.shortName} [${it.relatedExpectedPc?.toWHex() ?: noPcSet}/${it.relatedActualPc?.toWHex() ?: noPcSet}]: ${it.message}"
-    }
+    return traceCompareMessages.joinToString(separator = "\n", prefix = "Trace compare messages:\n", postfix = "\n\n")
   }
 }

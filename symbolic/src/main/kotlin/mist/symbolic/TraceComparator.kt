@@ -1,5 +1,6 @@
 package mist.symbolic
 
+import kio.util.toWHex
 import mist.module.Module
 import mist.symbolic.TraceComparator.MessageLevel.*
 
@@ -272,7 +273,15 @@ class TraceComparator(private val traceWriter: TraceWriter) {
     return "[${traceWriter.writeElementToString(module, trace.additionalAllocations, this)}]"
   }
 
-  data class Message(val level: MessageLevel, val relatedExpectedPc: Int?, val relatedActualPc: Int?, val message: String)
+  data class Message(val level: MessageLevel, val relatedExpectedPc: Int?, val relatedActualPc: Int?, val message: String) {
+    companion object {
+      private const val NO_PC_SET = " (none) "
+    }
+
+    override fun toString(): String {
+      return "${level.shortName} [${relatedExpectedPc?.toWHex() ?: NO_PC_SET}/${relatedActualPc?.toWHex() ?: NO_PC_SET}]: $message"
+    }
+  }
 
   enum class MessageLevel(val value: Int, val shortName: String) {
     INFO(0, "I"),

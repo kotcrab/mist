@@ -72,7 +72,8 @@ class CompareFromModels(
           CompletedCase(
             fwTrace = fwTrace,
             uofwTrace = uofwTrace,
-            outName = "${functionDir.name}.${modelFile.nameWithoutExtension}.txt",
+            functionName = functionDir.name,
+            testCaseName = modelFile.nameWithoutExtension,
             traceComparator.compareTraces(
               functionArgsIgnoredForCompare,
               suite.fwModule,
@@ -246,7 +247,7 @@ class CompareFromModels(
 
     println("Writing FW results")
     completedCases.forEach {
-      val outFile = outDirs.getValue(it.traceCompareMessages.highestMessageLevel()).child(it.outName)
+      val outFile = outDirs.getValue(it.traceCompareMessages.highestMessageLevel()).child(it.testCaseOutName())
       traceWriter.writeToFile(suite.fwModule, it.fwTrace, outFile, it.traceCompareMessages, it.proveMessages)
     }
     execute("git", listOf("add", "-A"), workingDirectory = suiteOutDir)
@@ -254,16 +255,34 @@ class CompareFromModels(
 
     println("Writing uOFW results")
     completedCases.forEach {
-      val outFile = outDirs.getValue(it.traceCompareMessages.highestMessageLevel()).child(it.outName)
+      val outFile = outDirs.getValue(it.traceCompareMessages.highestMessageLevel()).child(it.testCaseOutName())
       traceWriter.writeToFile(suite.uofwModule, it.uofwTrace, outFile, it.traceCompareMessages, it.proveMessages)
     }
+    writeMessageSummary(suiteOutDir, completedCases)
+  }
+
+  private fun writeMessageSummary(suiteOutDir: File, completedCases: List<CompletedCase>) {
+    completedCases
+      .groupBy { it.functionName }
+      .forEach { (functionName, cases) ->
+        val messageSummary = cases.flatMap { it.traceCompareMessages }
+          .groupingBy { it }
+          .eachCount()
+          .entries
+          .sortedBy { it.value }
+          .joinToString(separator = "\n") { "${it.value}: ${it.key}" }
+        suiteOutDir.child("$functionName.summary.txt").writeText(messageSummary)
+      }
   }
 
   private data class CompletedCase(
     val fwTrace: Trace,
     val uofwTrace: Trace,
-    val outName: String,
+    val functionName: String,
+    val testCaseName: String,
     val traceCompareMessages: List<TraceComparator.Message>,
     val proveMessages: List<String>,
-  )
+  ) {
+    fun testCaseOutName() = "${functionName}.${testCaseName}.txt"
+  }
 }

@@ -64,7 +64,7 @@ class Suite(
         }
       }
       val returnSize = moduleTypes.getFunctionReturnSize(functionName)
-      val fwReturns = fwGhidraFunction?.returnTypePathName?.let { moduleTypes.get(it)?.length?.div(4) }
+      val fwReturns = fwGhidraFunction?.returnTypePathName?.let { moduleTypes.get(it)?.length }
       if (returnSize == null) {
         if (fwReturns != null) {
           messages.add("Unknown return size for: $functionName, assuming from fw: $fwReturns")

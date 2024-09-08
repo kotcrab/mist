@@ -25,9 +25,9 @@ sealed interface TraceElement {
     val v0: BvExpr,
     val v1: BvExpr
   ) : TraceElement, TraceSyncPoint {
-    fun returnsV0() = (returnSize ?: 0) >= 1
+    fun returnsV0() = (returnSize ?: 0) > 0
 
-    fun returnsV1() = (returnSize ?: 0) >= 2
+    fun returnsV1() = (returnSize ?: 0) > 4
   }
 
   data class JumpOutOfFunctionBody(
