@@ -255,13 +255,22 @@ class Engine(
 
       // Shifts
       is MipsOpcode.Sll, MipsOpcode.Sllv -> {
-        ctx.writeGpr(instr.op0AsReg(), Expr.Binary.of(BinaryOp.Sll, instr.op1AsExpr(ctx), instr.op2AsExpr(ctx)))
+        ctx.writeGpr(
+          instr.op0AsReg(),
+          Expr.Binary.of(BinaryOp.Sll, instr.op1AsExpr(ctx), Expr.Binary.of(BinaryOp.And, instr.op2AsExpr(ctx), Expr.Const.of(0x1f)))
+        )
       }
       is MipsOpcode.Srl, MipsOpcode.Srlv -> {
-        ctx.writeGpr(instr.op0AsReg(), Expr.Binary.of(BinaryOp.Srl, instr.op1AsExpr(ctx), instr.op2AsExpr(ctx)))
+        ctx.writeGpr(
+          instr.op0AsReg(),
+          Expr.Binary.of(BinaryOp.Srl, instr.op1AsExpr(ctx), Expr.Binary.of(BinaryOp.And, instr.op2AsExpr(ctx), Expr.Const.of(0x1f)))
+        )
       }
       is MipsOpcode.Sra, MipsOpcode.Srav -> {
-        ctx.writeGpr(instr.op0AsReg(), Expr.Binary.of(BinaryOp.Sra, instr.op1AsExpr(ctx), instr.op2AsExpr(ctx)))
+        ctx.writeGpr(
+          instr.op0AsReg(),
+          Expr.Binary.of(BinaryOp.Sra, instr.op1AsExpr(ctx), Expr.Binary.of(BinaryOp.And, instr.op2AsExpr(ctx), Expr.Const.of(0x1f)))
+        )
       }
 
       // Set less than
