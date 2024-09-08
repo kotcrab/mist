@@ -66,21 +66,26 @@ class Engine(
     mode = EngineMode.CONCRETE
     ctx.memory.concrete = true
     executionLoop(ctx)
-    return Trace(
-      elements = ctx.traceElements,
-      executedAddresses = allExecutedAddresses,
-      additionalAllocations = ctx.memory.typedAllocations + ctx.memory.additionalAllocations.map { it to null }
-    )
+    return createTrace(ctx)
   }
 
-  fun executeSymbolic(ctx: Context): Set<Int> {
+  fun executeSymbolic(ctx: Context): Trace {
     mode = EngineMode.SYMBOLIC_FORKING
     if (ctx.specificBranches.isNotEmpty()) {
       mode = EngineMode.SYMBOLIC_SPECIFIC
     }
     ctx.memory.concrete = false
     executionLoop(ctx)
-    return allExecutedAddresses
+    return createTrace(ctx)
+  }
+
+  private fun createTrace(ctx: Context): Trace {
+    return Trace(
+      elements = ctx.traceElements,
+      executedAddresses = allExecutedAddresses,
+      additionalAllocations = ctx.memory.typedAllocations + ctx.memory.additionalAllocations.map { it to null },
+      stats.snapshot()
+    )
   }
 
   private fun executionLoop(ctx: Context) = runBlocking {

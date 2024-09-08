@@ -101,9 +101,17 @@ class CompareFromModels(
       ?: return emptyList()
     val proveConfig = (testConfig.proveConfig ?: suiteConfig.defaultProveConfig)
       ?: return emptyList()
-    val fwCtx = executeSymbolicSpecific(modelFile, suite.fwModule, fwTrace)
-    val uofwCtx = executeSymbolicSpecific(modelFile, suite.uofwModule, uofwTrace)
+    val (fwCtx, fwSymbolicTrace) = executeSymbolicSpecific(modelFile, suite.fwModule, fwTrace)
+    val (uofwCtx, uofwSymbolicTrace) = executeSymbolicSpecific(modelFile, suite.uofwModule, uofwTrace)
     val proveMessages = mutableListOf<String>()
+
+    if (fwSymbolicTrace.engineStats.executionErrors > 0) {
+      proveMessages.add("Execution error in the source module")
+    }
+    if (uofwSymbolicTrace.engineStats.executionErrors > 0) {
+      proveMessages.add("Execution error in the target module")
+    }
+
     SolverContext().use { solverCtx ->
       val fwSolver = fwCtx.createDetachedSolver(solverCtx, "fw_")
       val uofwSolver = uofwCtx.createDetachedSolver(solverCtx, "uofw_")
@@ -204,7 +212,7 @@ class CompareFromModels(
     ).executeConcrete(ctx)
   }
 
-  private fun executeSymbolicSpecific(modelFile: File, module: Module, trace: Trace): Context {
+  private fun executeSymbolicSpecific(modelFile: File, module: Module, trace: Trace): Pair<Context, Trace> {
     val functionName = modelFile.parentFile.name
     val function = module.getFunctionOrThrow(functionName)
     val ctx = Context.presetSymbolic()
@@ -215,17 +223,17 @@ class CompareFromModels(
     ctx.specificBranches.addAll(trace.elements.filterIsInstance<TraceElement.Branch>().map { it.taken })
     val suiteFunctionLibrary = suiteConfig.functionLibraryProvider.invoke(moduleMemory)
     val testFunctionLibrary = testConfig?.functionLibraryTransform?.invoke(suiteFunctionLibrary) ?: suiteFunctionLibrary
-    Engine(
+    val symbolicTrace = Engine(
       binLoader = moduleMemory.loader,
       disassembler = suite.disassembler.cached(),
       module = module,
       moduleTypes = suite.moduleTypes,
       functionLibrary = testFunctionLibrary,
       name = function.name,
-      tracing = true,
+      tracing = false,
       modelsOutDir = null
     ).executeSymbolic(ctx)
-    return ctx
+    return ctx to symbolicTrace
   }
 
   private fun writeTestResults(completedCases: List<CompletedCase>) {

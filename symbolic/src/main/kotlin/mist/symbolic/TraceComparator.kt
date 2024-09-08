@@ -16,6 +16,13 @@ class TraceComparator(private val traceWriter: TraceWriter) {
     val expectedElements = ArrayDeque(expectedTrace.elements)
     val actualElements = ArrayDeque(actualTrace.elements)
 
+    if (actualTrace.engineStats.executionErrors > 0) {
+      messages.add(Message(ERROR, null, null, "Execution error in the actual trace"))
+    }
+    if (expectedTrace.engineStats.executionErrors > 0) {
+      messages.add(Message(ERROR, null, null, "Execution error in the expected trace"))
+    }
+
     val currentExpectedElements = mutableListOf<TraceElement>()
     val currentActualElements = mutableListOf<TraceElement>()
     while (true) {

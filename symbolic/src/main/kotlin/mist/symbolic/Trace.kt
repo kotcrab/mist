@@ -7,4 +7,5 @@ class Trace(
   val elements: List<TraceElement>,
   val executedAddresses: Set<Int>,
   val additionalAllocations: List<Pair<ModuleSymbol, GhidraType?>>,
+  val engineStats: EngineStats.Snapshot,
 )

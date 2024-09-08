@@ -85,7 +85,7 @@ class GenerateModels(
       tracing = false,
       modelsOutDir = functionModelsOutDir,
       maxFinishedPaths = testConfig?.maxFinishedPaths ?: Engine.DEFAULT_MAX_FINISHED_PATHS
-    ).executeSymbolic(ctx)
+    ).executeSymbolic(ctx).executedAddresses
     functionModelsOutDir.child("_coverage.txt").writeText(module.disassembleWithCoverage(function, executedAddresses))
     executedAddressesFile.writeJson(executedAddresses)
     return executedAddresses
