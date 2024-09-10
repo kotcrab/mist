@@ -27,6 +27,7 @@ class CompareFromModels(
   private val traceComparator = TraceComparator(traceWriter)
   private val functionsDirs = modelsDir.listFiles()?.filter { it.isDirectory }
     ?.filterNot { it.name in suiteConfig.excludedFunctions }
+    ?.let { funcs -> if (suiteConfig.onlyTestFunctions.isEmpty()) funcs else funcs.filter { it.name in suiteConfig.onlyTestFunctions } }
     ?: error("Function models dir can't be read")
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -255,7 +256,7 @@ class CompareFromModels(
 
     println("Writing FW results")
     completedCases.forEach {
-      val outFile = outDirs.getValue(it.traceCompareMessages.highestMessageLevel()).child(it.testCaseOutName())
+      val outFile = outDirs.getValue(it.highestMessageLevel()).child(it.testCaseOutName())
       traceWriter.writeToFile(suite.fwModule, it.fwTrace, outFile, it.traceCompareMessages, it.proveMessages)
     }
     execute("git", listOf("add", "-A"), workingDirectory = suiteOutDir)
@@ -263,7 +264,7 @@ class CompareFromModels(
 
     println("Writing uOFW results")
     completedCases.forEach {
-      val outFile = outDirs.getValue(it.traceCompareMessages.highestMessageLevel()).child(it.testCaseOutName())
+      val outFile = outDirs.getValue(it.highestMessageLevel()).child(it.testCaseOutName())
       traceWriter.writeToFile(suite.uofwModule, it.uofwTrace, outFile, it.traceCompareMessages, it.proveMessages)
     }
     writeMessageSummary(suiteOutDir, completedCases)
@@ -292,5 +293,12 @@ class CompareFromModels(
     val proveMessages: List<String>,
   ) {
     fun testCaseOutName() = "${functionName}.${testCaseName}.txt"
+
+    fun highestMessageLevel(): TraceComparator.MessageLevel {
+      if (proveMessages.isNotEmpty()) {
+        return TraceComparator.MessageLevel.ERROR
+      }
+      return traceCompareMessages.highestMessageLevel() ?: TraceComparator.MessageLevel.INFO
+    }
   }
 }

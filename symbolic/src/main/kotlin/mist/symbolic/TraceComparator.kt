@@ -304,6 +304,6 @@ class TraceComparator(private val traceWriter: TraceWriter) {
   )
 }
 
-fun List<TraceComparator.Message>.highestMessageLevel(): TraceComparator.MessageLevel {
-  return map { it.level }.maxBy { it.value }
+fun List<TraceComparator.Message>.highestMessageLevel(): TraceComparator.MessageLevel? {
+  return map { it.level }.maxByOrNull { it.value }
 }

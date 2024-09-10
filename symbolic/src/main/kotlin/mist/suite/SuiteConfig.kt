@@ -18,6 +18,7 @@ class SuiteConfig(
   val moduleName: String,
   val additionalFunctionsToExecute: Set<String>,
   val excludedFunctions: Set<String>,
+  val onlyTestFunctions: Set<String>,
   val globals: Set<SuiteGlobal>,
   val functionLibraryProvider: (ModuleMemory) -> FunctionLibrary,
   val commonContextConfigure: ConfigureContextScope.() -> Unit,
@@ -33,6 +34,7 @@ class SuiteConfig(
     private val testConfigs = mutableMapOf<String, SuiteTestConfig>()
     private val additionalFunctionsToExecute = mutableSetOf<String>()
     private val excludedFunctions = mutableSetOf<String>()
+    private val onlyTestFunctions = mutableSetOf<String>()
     private val globals = mutableSetOf<SuiteGlobal>()
     private var functionLibraryProvider: (ModuleMemory) -> FunctionLibrary = { FunctionLibrary() }
     private var commonContextConfigure: ConfigureContextScope.() -> Unit = { }
@@ -53,6 +55,10 @@ class SuiteConfig(
 
     fun exclude(functionName: String) {
       excludedFunctions.add(functionName)
+    }
+
+    fun onlyTest(functionName: String) {
+      onlyTestFunctions.add(functionName)
     }
 
     fun global(name: String, init: Boolean = true) {
@@ -92,6 +98,7 @@ class SuiteConfig(
         moduleName,
         additionalFunctionsToExecute,
         excludedFunctions,
+        onlyTestFunctions,
         globals,
         functionLibraryProvider,
         commonContextConfigure,

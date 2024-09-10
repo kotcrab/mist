@@ -24,6 +24,7 @@ class GenerateModels(
         it.name in suiteConfig.additionalFunctionsToExecute
     }
     .filterNot { it.name in suiteConfig.excludedFunctions }
+    .let { funcs -> if (suiteConfig.onlyTestFunctions.isEmpty()) funcs else funcs.filter { it.name in suiteConfig.onlyTestFunctions } }
 
   fun execute() {
     modelsOutDir.mkdir()
