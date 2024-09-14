@@ -10,4 +10,5 @@ fun uofwSuiteConfigForName(moduleName: String): SuiteConfig {
 val uofwSuiteConfigs = listOf(
   audioSuiteConfig,
   isofsSuiteConfig,
+  libatrac3plusSuiteConfig,
 )
