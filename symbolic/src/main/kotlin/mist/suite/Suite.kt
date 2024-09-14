@@ -8,7 +8,8 @@ import java.io.File
 
 class Suite(
   uofwDir: File,
-  private val config: SuiteConfig
+  private val config: SuiteConfig,
+  private val checkFunctionLibrary: Boolean = true,
 ) {
   // TODO more generic names
   val fwModule: GhidraModule
@@ -79,6 +80,10 @@ class Suite(
   }
 
   private fun checkFunctionLibrary(module: Module) {
+    if (!checkFunctionLibrary) {
+      println("Checking function library skipped")
+      return
+    }
     val moduleMemory = module.createModuleMemory()
     val moduleFunctionLibrary = config.functionLibraryProvider.invoke(moduleMemory)
     module.functions.values
@@ -96,5 +101,9 @@ class Suite(
 
   fun generateModels(modelsOutDir: File) {
     GenerateModels(this, config, modelsOutDir).execute()
+  }
+
+  fun delink(outDir: File) {
+    Delink(this, config, outDir).execute()
   }
 }
