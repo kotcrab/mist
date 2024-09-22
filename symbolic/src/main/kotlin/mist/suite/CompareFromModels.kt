@@ -98,9 +98,8 @@ class CompareFromModels(
     functionArgsIgnoredForCompare: Map<String, Set<Int>>
   ): List<String> {
     val functionName = modelFile.parentFile.name
-    val testConfig = suiteConfig.testConfigs[functionName]
-      ?: return emptyList()
-    val proveConfig = (testConfig.proveConfig ?: suiteConfig.defaultProveConfig)
+    val proveConfig = suiteConfig.testConfigs[functionName]?.proveConfig
+      ?: suiteConfig.defaultProveConfig
       ?: return emptyList()
     val (fwCtx, fwSymbolicTrace) = executeSymbolicSpecific(modelFile, suite.fwModule, fwTrace)
     val (uofwCtx, uofwSymbolicTrace) = executeSymbolicSpecific(modelFile, suite.uofwModule, uofwTrace)
