@@ -56,20 +56,44 @@ class Memory private constructor(
     return Expr.Const.of(buffer.value)
   }
 
-  fun allocate(size: Int, initByte: Int? = null, track: Boolean): Expr.Const {
+  fun allocate(
+    size: Int,
+    initByte: Int? = null,
+    track: Boolean,
+    name: String = "__buffer${additionalAllocations.size}"
+  ): Expr.Const {
     val buffer = currentBufferAlloc
-    repeat(size) {
-      if (initByte != null) {
-        writeByte(Expr.Const.of(buffer + it), Expr.Const.of(initByte))
-      }
-    }
+    initAllocation(buffer, size, initByte)
     currentBufferAlloc += size
     val pad = 0x10
     currentBufferAlloc = (currentBufferAlloc / pad + 1) * pad
     if (track) {
-      additionalAllocations.add(ModuleSymbol("__buffer${additionalAllocations.size}", buffer, size))
+      additionalAllocations.add(ModuleSymbol(name, buffer, size))
     }
     return Expr.Const.of(buffer)
+  }
+
+  fun allocateAt(
+    address: Int,
+    size: Int,
+    initByte: Int? = null,
+    track: Boolean,
+    name: String = "__buffer${additionalAllocations.size}"
+  ): Expr.Const {
+    initAllocation(address, size, initByte)
+    if (track) {
+      additionalAllocations.add(ModuleSymbol(name, address, size))
+    }
+    return Expr.Const.of(address)
+  }
+
+  private fun initAllocation(address: Int, size: Int, initByte: Int? = null) {
+    if (initByte == null) {
+      return
+    }
+    repeat(size) {
+      writeByte(Expr.Const.of(address + it), Expr.Const.of(initByte))
+    }
   }
 
   fun write(at: BvExpr, size: Int, value: BvExpr) {

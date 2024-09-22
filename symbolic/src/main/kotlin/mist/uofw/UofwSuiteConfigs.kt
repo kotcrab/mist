@@ -11,4 +11,5 @@ val uofwSuiteConfigs = listOf(
   audioSuiteConfig,
   isofsSuiteConfig,
   libatrac3plusSuiteConfig,
+  systimerSuiteConfig,
 )

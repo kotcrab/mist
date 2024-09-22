@@ -254,6 +254,10 @@ class ConfigureContextScope(
     return buffer
   }
 
+  fun allocateAt(at: Int, size: Int, initByte: Int? = null, name: String): Expr.Const {
+    return ctx.memory.allocateAt(at, size, initByte, track = true, name)
+  }
+
   fun writeBytes(buffer: Expr.Const, bytes: ByteArray) {
     bytes.forEachIndexed { index, byte ->
       ctx.memory.writeByte(buffer.plus(index), Expr.Const.of(byte.toInt()))

@@ -47,8 +47,12 @@ fun sceSymbolicFunctionLibrary(moduleMemory: ModuleMemory): FunctionLibrary {
       ResultFunctionHandler("sceKernelCpuResumeIntrWithSync"),
 
       ResultFunctionHandler("sceKernelEnableIntr"),
+      ResultFunctionHandler("sceKernelDisableIntr"),
+      SymbolicFunctionHandler("sceKernelIsIntrContext"),
       ResultFunctionHandler("sceKernelRegisterIntrHandler"),
       ResultFunctionHandler("sceKernelReleaseIntrHandler"),
+      ResultFunctionHandler("sceKernelRegisterResumeHandler"),
+      ResultFunctionHandler("sceKernelRegisterSuspendHandler"),
       ResultFunctionHandler("sceKernelRegisterSysEventHandler"),
       ResultFunctionHandler("sceKernelUnregisterSysEventHandler"),
 
