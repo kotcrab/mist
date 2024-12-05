@@ -345,7 +345,8 @@ val isofsSuiteConfig = suiteConfig("isofs") {
       it.extendWith(
         listOf(
           SymbolicFunctionHandler("isofsReadDir"),
-          SymbolicFunctionHandler("isofsSetDirentFromIsoDirectory", symbolicExecutionLimit = 2, constValueV0 = 0,
+          SymbolicFunctionHandler(
+            "isofsSetDirentFromIsoDirectory", symbolicExecutionLimit = 2, constValueV0 = 0,
             constraints = {
               listOf(
                 Expr.ZERO,

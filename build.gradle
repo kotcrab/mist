@@ -31,7 +31,7 @@ allprojects {
     maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
     maven { url "https://oss.sonatype.org/content/repositories/releases/" }
   }
-  
+
   kotlin {
     jvmToolchain(11)
   }
@@ -44,6 +44,12 @@ project(':core') {
     api "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.0.1"
     api "com.github.kotcrab:kio:9111dcc"
     api "org.apache.commons:commons-collections4:4.0"
+  }
+}
+
+project(':asm') {
+  dependencies {
+    api project(":core")
     testImplementation "com.kotcrab.kmips:kmips:1.2"
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.3.1"
     testImplementation "org.junit.jupiter:junit-jupiter-params:5.3.1"
@@ -55,12 +61,37 @@ project(':core') {
   }
 }
 
+project(':decompiler') {
+  dependencies {
+    api project(":core")
+    api project(":asm")
+  }
+}
+
+project(':symbolic') {
+  dependencies {
+    api project(":core")
+    api project(":asm")
+    api "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1"
+    api "io.github.rybalkinsd:kohttp:0.12.0"
+    api "com.fasterxml.jackson.core:jackson-core:$jacksonVersion"
+    api "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
+    api "com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion"
+    api "io.ksmt:ksmt-core:0.5.23"
+    api "io.ksmt:ksmt-bitwuzla:0.5.23"
+    api "com.kotcrab.kmips:kmips:1.7"
+    api "com.github.kotcrab:kmipsx:87feb7a"
+  }
+}
+
 project(':ui-gdx') {
   apply plugin: 'application'
   mainClassName = "mist.AppKt"
 
   dependencies {
     api project(":core")
+    api project(":asm")
+    api project(":decompiler")
     api "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
     api "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion"
     api "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.0.1"
@@ -73,20 +104,5 @@ project(':ui-gdx') {
     api "io.github.libktx:ktx-async:$ktxVersion"
     api "io.github.libktx:ktx-assets:$ktxVersion"
     api "io.github.libktx:ktx-inject:$ktxVersion"
-  }
-}
-
-project(':symbolic') {
-  dependencies {
-    api project(":core")
-    api "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1"
-    api "io.github.rybalkinsd:kohttp:0.12.0"
-    api "com.fasterxml.jackson.core:jackson-core:$jacksonVersion"
-    api "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
-    api "com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion"
-    api "io.ksmt:ksmt-core:0.5.23"
-    api "io.ksmt:ksmt-bitwuzla:0.5.23"
-    api "com.kotcrab.kmips:kmips:1.7"
-    api "com.github.kotcrab:kmipsx:87feb7a"
   }
 }

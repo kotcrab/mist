@@ -1,21 +1,3 @@
-/*
- * mist - interactive disassembler and decompiler
- * Copyright (C) 2018 Pawel Pastuszak
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
-
 package mist.ui.node
 
 import com.badlogic.gdx.Gdx
@@ -47,9 +29,7 @@ import mist.shl.*
 import mist.shl.ShlExpr.*
 import mist.shl.ShlType.ShlStruct
 import mist.ui.dialog.TextAreaInputDialog
-import mist.util.DecompLog
-
-/** @author Kotcrab */
+import mist.util.MistLogger
 
 class GraphNode(
   context: Context,
@@ -66,7 +46,7 @@ class GraphNode(
   private val tag = javaClass.simpleName
   private val appStage: Stage = context.inject()
   private val projectIO: ProjectIO = context.inject()
-  private val log: DecompLog = context.inject()
+  private val logger: MistLogger = context.inject()
   private val types = projectIO.getTypes()
   private val globals = projectIO.getGlobals()
 
@@ -134,7 +114,7 @@ class GraphNode(
       is ShlMemStoreInstr -> renderExpr(line, instr, instr.expr)
       is ShlStructStoreInstr -> renderExpr(line, instr, instr.expr)
       is ShlNopInstr -> line.asmLabel(instr, instr.toString())
-      else -> log.panic(tag, "missing ShlInstr renderer")
+      else -> logger.panic(tag, "missing ShlInstr renderer")
     }
     if (instr.comment.isNotBlank()) {
       line.asmMiscLabel(instr, " # ", yellowSyntaxColor)
@@ -208,7 +188,7 @@ class GraphNode(
       is ShlStructLoad -> renderStructLoadExpr(target, relInstr, expr)
       is ShlStructStore -> renderStructStoreExpr(target, relInstr, expr)
       is ShlCall -> renderCallExpr(target, relInstr, expr)
-      else -> log.panic(tag, "missing ShlExpr renderer")
+      else -> logger.panic(tag, "missing ShlExpr renderer")
     }
   }
 
@@ -223,7 +203,7 @@ class GraphNode(
 
   private fun renderFuncPointerExpr(target: HorizontalGroup, relInstr: ShlInstr, expr: ShlFuncPointer) {
     val jalDef = projectIO.getFuncDefByOffset(expr.addr)
-      ?: log.panic(tag, "failed to find function definition for ShlFunctionPointer addr: ${expr.addr}")
+      ?: logger.panic(tag, "failed to find function definition for ShlFunctionPointer addr: ${expr.addr}")
     target.asmExprLabel(relInstr, expr, jalDef.name, darkBlueSyntaxColor)
   }
 
@@ -288,7 +268,7 @@ class GraphNode(
     val struct = types.getType(expr.refTid) as? ShlStruct ?: error("refTid is not a struct")
     val (field, accessString) = types.getAccessedStructField(struct, memOffset.value)
     if (field == null) {
-      log.warn(tag, "struct store fallback render used")
+      logger.warn(tag, "struct store fallback render used")
       childTarget.asmLabel(relInstr, "__struct_fail ", redSyntaxColor)
       childTarget.asmMiscLabel(relInstr, expr.op.toString().toLowerCase())
       childTarget.asmMiscLabel(relInstr, "[")
@@ -320,7 +300,7 @@ class GraphNode(
     val struct = types.getType(expr.refTid) as? ShlStruct ?: error("refTid is not a struct")
     val (field, accessString) = types.getAccessedStructField(struct, memOffset.value)
     if (field == null) {
-      log.warn(tag, "struct load fallback render used")
+      logger.warn(tag, "struct load fallback render used")
       childTarget.asmLabel(relInstr, "__struct_fail ", redSyntaxColor)
       childTarget.asmMiscLabel(relInstr, expr.op.toString().toLowerCase())
       childTarget.asmMiscLabel(relInstr, "[")
@@ -357,7 +337,7 @@ class GraphNode(
   private fun renderCallExpr(target: HorizontalGroup, relInstr: ShlInstr, expr: ShlCall) {
     val childTarget = HorizontalGroup()
     val jalDef = projectIO.getFuncDefByOffset(expr.dest)
-      ?: log.panic(tag, "failed to find function definition for ShlCallInstr destination ${expr.dest}")
+      ?: logger.panic(tag, "failed to find function definition for ShlCallInstr destination ${expr.dest}")
 
     val nameLabel = childTarget.asmLabel(relInstr, jalDef.name)
     nameLabel.addListener(object : ClickListener() {
@@ -373,7 +353,7 @@ class GraphNode(
     // fill args to render
     val freeArgs = shlArgRegisters.toMutableList()
     jalDef.arguments.forEach { jalArg ->
-      if (freeArgs.remove(jalArg.register) == false) log.panic(
+      if (freeArgs.remove(jalArg.register) == false) logger.panic(
         tag,
         "conflicting func. arg definitions (free arg list exhausted)"
       )
@@ -496,9 +476,9 @@ class GraphNode(
         val dumpCtxs = false
         override fun touchDown(event: InputEvent?, x: Float, y: Float, pointer: Int, button: Int): Boolean {
           if (dumpCtxs) {
-            relInstr.dataFlowCtx.dump(log)
-            relInstr.reachFlowCtx.dump(log)
-            relInstr.nextLiveFlowCtx.dump(log)
+            relInstr.dataFlowCtx.dump(logger)
+            relInstr.reachFlowCtx.dump(logger)
+            relInstr.nextLiveFlowCtx.dump(logger)
           }
           if (canHighlight) {
             listener.onHighlight(getText().toString())
@@ -527,7 +507,8 @@ class GraphNode(
 
     private fun createContextMenu() = popupMenu {
       createCopyAddrMenuItems()
-      condSubMenu(text = "To struct",
+      condSubMenu(
+        text = "To struct",
         entries = types.getStructs(),
         entryTransform = { it.name },
         wantSeparator = true,
@@ -536,7 +517,8 @@ class GraphNode(
           exprMutator.mutateToStructAccess(relInstr, struct)
           this@GraphNode.listener.init()
         })
-      condMenuItem(text = "To memory access",
+      condMenuItem(
+        text = "To memory access",
         wantSeparator = true,
         condition = { relInstr is ShlStructStoreInstr || (relInstr is ShlAssignInstr && relInstr.src is ShlStructLoad) },
         change = {
@@ -578,7 +560,7 @@ class GraphNode(
         is ShlString -> shlExpr.addr
         is ShlGlobalRef -> shlExpr.addr
         is ShlFuncPointer -> shlExpr.addr
-        else -> log.panic(tag, "unsupported expression type for conversion")
+        else -> logger.panic(tag, "unsupported expression type for conversion")
       }
       menuItem("Convert") {
         subMenu {
@@ -630,7 +612,8 @@ class GraphNode(
 
     private fun PopupMenu.createShlVarMenuItems() {
       if (shlExpr !is ShlVar) return
-      condMenuItem(text = "Rename assigned variable",
+      condMenuItem(
+        text = "Rename assigned variable",
         condition = {
           (relInstr is ShlAssignInstr && relInstr.dest.compareExpr(shlExpr)) ||
             (relInstr is ShlCallInstr && relInstr.returnReg != null && relInstr.returnReg!!.compareExpr(
@@ -697,7 +680,8 @@ class GraphNode(
         relInstr.retVal == null -> {
           menuItem("Add return value") {
             onChange {
-              Dialogs.showInputDialog(appStage, "Enter variable", "Variable", true,
+              Dialogs.showInputDialog(
+                appStage, "Enter variable", "Variable", true,
                 object : InputDialogAdapter() {
                   override fun finished(varName: String) {
                     exprMutator.addReturnValue(relInstr, ShlVar(varName))

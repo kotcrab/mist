@@ -1,21 +1,3 @@
-/*
- * mist - interactive disassembler and decompiler
- * Copyright (C) 2018 Pawel Pastuszak
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
-
 package mist
 
 import com.badlogic.gdx.ApplicationListener
@@ -58,11 +40,9 @@ import mist.ui.node.TabProvidesMenu
 import mist.ui.util.MixedRenderingTab
 import mist.ui.util.RemoteDebugger
 import mist.ui.util.startForResult
-import mist.util.DecompLog
+import mist.util.MistLogger
 import mist.util.logTag
 import java.io.File
-
-/** @author Kotcrab */
 
 fun main(args: Array<String>) {
   if (args.isEmpty() || File(args[0]).exists() == false) error("specify project directory as first argument")
@@ -83,7 +63,7 @@ class App(val projectDir: File) : ApplicationListener {
   private val tag = logTag()
   private val context = Context()
 
-  private val log = DecompLog()
+  private val log = MistLogger()
   private val projectIO = ProjectIO(projectDir, log)
   private val remoteDebugger = RemoteDebugger(log)
 
@@ -156,7 +136,7 @@ class App(val projectDir: File) : ApplicationListener {
       }
       menuItem("Disconnect") {
         onChange {
-          remoteDebugger.disonnect()
+          remoteDebugger.disconnect()
         }
       }
       menuItem("Open memory viewer") {
@@ -201,7 +181,7 @@ class App(val projectDir: File) : ApplicationListener {
       if (existingTab != null) {
         tabbedPane.switchTab(existingTab)
       } else {
-        val asmFunctionIO = AsmFunctionIO(projectIO, def, DecompLog())
+        val asmFunctionIO = AsmFunctionIO(projectIO, def, MistLogger())
         val newTab = GraphTab(context, asmFunctionIO, def, { disassembleFunc(it.name) })
         openGraphTabs[def.offset] = newTab
         tabbedPane.add(newTab)

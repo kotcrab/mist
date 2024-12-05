@@ -1,21 +1,3 @@
-/*
- * mist - interactive disassembler and decompiler
- * Copyright (C) 2018 Pawel Pastuszak
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
-
 package mist.ui.node
 
 import com.badlogic.gdx.math.Vector2
@@ -27,14 +9,12 @@ import org.apache.commons.exec.PumpStreamHandler
 import java.io.ByteArrayOutputStream
 import java.io.File
 
-/** @author Kotcrab */
-
-class ExternalLayout(private val layoutExe: File, private val log: DecompLog) {
+class ExternalLayout(private val layoutExe: File, private val logger: MistLogger) {
   val tag = logTag()
 
   fun layout(nodes: List<GraphNode>) {
     if (layoutExe.exists() == false) error("layout executable is missing")
-    log.trace(tag, "processing graph layout")
+    logger.trace(tag, "processing graph layout")
     val gml = writeGml(nodes)
     val processedGml = runLayout(gml)
     reimportGml(processedGml, nodes)

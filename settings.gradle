@@ -1,2 +1,6 @@
-include 'core', 'symbolic', 'ui-gdx'
 rootProject.name = "mist"
+include 'asm'
+include 'core'
+include 'decompiler'
+include 'symbolic'
+include 'ui-gdx'

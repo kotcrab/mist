@@ -7,7 +7,7 @@ import mist.io.ElfFile
 import mist.io.PspElfLoader
 import mist.symbolic.Context
 import mist.symbolic.Expr
-import mist.util.DecompLog
+import mist.util.MistLogger
 import java.io.File
 
 class ElfModule(
@@ -18,7 +18,7 @@ class ElfModule(
   exports: List<ModuleExport>,
   private val functionNameOverrides: Map<String, String>
 ) : Module(disassembler, moduleTypes) {
-  private val loader = PspElfLoader(ElfFile(elfFile), DecompLog())
+  private val loader = PspElfLoader(ElfFile(elfFile), MistLogger())
   private val symbols = parseSymbols(mapFile)
 
   override val functions = symbolsToModuleFunctions(symbols, exports)

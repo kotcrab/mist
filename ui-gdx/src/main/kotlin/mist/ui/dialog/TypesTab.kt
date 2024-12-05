@@ -1,21 +1,3 @@
-/*
- * mist - interactive disassembler and decompiler
- * Copyright (C) 2018 Pawel Pastuszak
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
-
 package mist.ui.dialog
 
 import com.badlogic.gdx.scenes.scene2d.Stage
@@ -34,14 +16,13 @@ import mist.io.ProjectIO
 import mist.shl.ShlType
 import mist.shl.ShlType.*
 import mist.ui.util.StaticListAdapter
-import mist.util.DecompLog
+import mist.util.MistLogger
 import mist.util.logTag
 
-/** @author Kotcrab */
 class TypesTab(context: Context, val commit: () -> Unit) : Tab(true, false) {
   private val tag = logTag()
 
-  private val log: DecompLog = context.inject()
+  private val logger: MistLogger = context.inject()
   private val projectIO: ProjectIO = context.inject()
   private val appStage: Stage = context.inject()
   private val types = projectIO.getTypes()
@@ -96,7 +77,7 @@ class TypesTab(context: Context, val commit: () -> Unit) : Tab(true, false) {
   }
 
   override fun dispose() {
-    log.info(tag, "dispose $tag")
+    logger.info(tag, "dispose $tag")
     super.dispose()
   }
 
@@ -109,7 +90,7 @@ class TypesTab(context: Context, val commit: () -> Unit) : Tab(true, false) {
   }
 
   private fun switchTypeView(item: TypeCategory) {
-    log.trace(tag, "switch to '$item' category")
+    logger.trace(tag, "switch to '$item' category")
     typesPanel.clear()
 
     if (item == TypeCategory.Globals) {
@@ -193,7 +174,7 @@ class TypesTab(context: Context, val commit: () -> Unit) : Tab(true, false) {
     }
   }
 
-  private class TypeCategoryAdapter : StaticListAdapter<TypeCategory>(TypeCategory.values().toList()) {
+  private class TypeCategoryAdapter : StaticListAdapter<TypeCategory>(TypeCategory.entries) {
     override fun createView(type: TypeCategory): VisTable {
       return table {
         touchable = Touchable.enabled

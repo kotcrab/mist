@@ -14,7 +14,7 @@ see my [ghidra-allegrex](https://github.com/kotcrab/ghidra-allegrex) plugin.
 
 As of now the tool is in a prototype / proof of concept state and not intended for public use.
 
-Currently the disassembly is automatically lifted into higher level representation and only basic
+Currently, the disassembly is automatically lifted into higher level representation and only basic
 stack frame analysis is done. Further optimizations have to be invoked manually, those include:
 
 - propagation of constants and variables

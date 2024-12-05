@@ -1,32 +1,14 @@
-/*
- * mist - interactive disassembler and decompiler
- * Copyright (C) 2018 Pawel Pastuszak
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
-
 package mist.io
 
 import kio.KioInputStream
 import kio.util.arrayCopy
 import kio.util.toHex
 import kio.util.toWHex
-import mist.util.DecompLog
+import mist.util.MistLogger
 import mist.util.logTag
 import java.nio.charset.Charset
 
-class PspElfLoader(private val elf: ElfFile, private val log: DecompLog) : BinLoader {
+class PspElfLoader(private val elf: ElfFile, private val logger: MistLogger) : BinLoader {
   private val tag = logTag()
   private val fragments = mutableMapOf<IntRange, MemoryFragment>()
 
@@ -43,22 +25,22 @@ class PspElfLoader(private val elf: ElfFile, private val log: DecompLog) : BinLo
   }
 
   private fun preLoadCheck() {
-    log.info(tag, "load PSP elf, entry point ${elf.header.entry.toHex()}")
+    logger.info(tag, "load PSP elf, entry point ${elf.header.entry.toHex()}")
     if (elf.ident.clazz != 0x1 || elf.ident.data != 0x1 || elf.ident.version != 0x1 || elf.header.version != 0x1) {
-      log.warn(tag, "expected elf ident class, data and version fields to be set to 0x1, ignoring")
+      logger.warn(tag, "expected elf ident class, data and version fields to be set to 0x1, ignoring")
     }
     if (elf.ident.abi != 0x0 || elf.ident.abiVersion != 0x0) {
-      log.warn(tag, "expected elf ident abi and abi version fields to be set to 0x0, ignoring")
+      logger.warn(tag, "expected elf ident abi and abi version fields to be set to 0x0, ignoring")
     }
     if (elf.header.machine != ElfMachine.MIPS) {
-      log.panic(tag, "expected elf header machine field to be MIPS")
+      logger.panic(tag, "expected elf header machine field to be MIPS")
     }
   }
 
   private fun loadProgramHeaders(elfBytes: KioInputStream) {
     elf.progHeaders.forEach { prog ->
       if (prog.type == ElfProgHeaderType.LOAD) {
-        log.trace(
+        logger.trace(
           tag, "load program header at ${prog.vAddr.toHex()}, memSize: ${prog.memSize.toHex()}, " +
             "fileSize: ${prog.fileSize.toHex()}"
         )
@@ -73,17 +55,17 @@ class PspElfLoader(private val elf: ElfFile, private val log: DecompLog) : BinLo
   }
 
   private fun applyRelocations(elfBytes: KioInputStream) {
-    log.trace(tag, "elf needs relocation")
+    logger.trace(tag, "elf needs relocation")
     elf.sectHeaders.forEach { sect ->
       if (sect.type == ElfSectHeaderType.REL || sect.type == ElfSectHeaderType.RELA) {
-        log.panic(tag, "expected relocation segment to be of PSP specific type but got SHL_REL or SHT_RELA")
+        logger.panic(tag, "expected relocation segment to be of PSP specific type but got SHL_REL or SHT_RELA")
       }
       if (sect.type != ElfSectHeaderType.PSP_RELOC) return@forEach
       if (sect.entSize != 0x8) {
-        log.panic(tag, "expected relocation entry size to be 0x8")
+        logger.panic(tag, "expected relocation entry size to be 0x8")
       }
       val entryCount = sect.size / sect.entSize
-      log.trace(
+      logger.trace(
         tag,
         "apply relocations from section at ${sect.offset.toHex()}, entry count: ${entryCount.toHex()}"
       )
@@ -136,13 +118,13 @@ class PspElfLoader(private val elf: ElfFile, private val log: DecompLog) : BinLo
               }
             }
             if (found == false) {
-              log.panic(tag, "failed to relocate MIPS_HI16")
+              logger.panic(tag, "failed to relocate MIPS_HI16")
             }
           }
           MipsRelocationType.MIPS_LO16 -> {
             newData = relocate(data, 0xFFFF, relocateTo)
           }
-          else -> log.panic(tag, "unsupported relocation type: ${reloc.type.toHex()}")
+          else -> logger.panic(tag, "unsupported relocation type: ${reloc.type.toHex()}")
         }
         if (newData != 0 && newData != data) {
           writeInt(addr, newData)
@@ -161,7 +143,7 @@ class PspElfLoader(private val elf: ElfFile, private val log: DecompLog) : BinLo
         return mem.readByte(at - range.first)
       }
     }
-    log.panic(tag, "${at.toWHex()} not mapped to any elf fragment")
+    logger.panic(tag, "${at.toWHex()} not mapped to any elf fragment")
   }
 
   private fun writeInt(at: Int, newValue: Int) {
@@ -171,7 +153,7 @@ class PspElfLoader(private val elf: ElfFile, private val log: DecompLog) : BinLo
         return
       }
     }
-    log.panic(tag, "${at.toWHex()} not mapped to any elf fragment")
+    logger.panic(tag, "${at.toWHex()} not mapped to any elf fragment")
   }
 
   override fun readInt(at: Int): Int {
@@ -180,7 +162,7 @@ class PspElfLoader(private val elf: ElfFile, private val log: DecompLog) : BinLo
         return mem.readInt(at - range.first)
       }
     }
-    log.panic(tag, "${at.toWHex()} not mapped to any elf fragment")
+    logger.panic(tag, "${at.toWHex()} not mapped to any elf fragment")
   }
 
   override fun readString(at: Int, charset: Charset): String {
@@ -189,7 +171,7 @@ class PspElfLoader(private val elf: ElfFile, private val log: DecompLog) : BinLo
         return mem.readString(at - range.first, charset)
       }
     }
-    log.panic(tag, "${at.toWHex()} not mapped to any elf fragment")
+    logger.panic(tag, "${at.toWHex()} not mapped to any elf fragment")
   }
 
   class MemoryFragment(val bytes: ByteArray) {

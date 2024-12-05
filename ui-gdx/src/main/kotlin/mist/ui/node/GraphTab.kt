@@ -1,21 +1,3 @@
-/*
- * mist - interactive disassembler and decompiler
- * Copyright (C) 2018 Pawel Pastuszak
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
-
 package mist.ui.node
 
 import com.badlogic.gdx.Gdx
@@ -40,8 +22,6 @@ import mist.ui.util.*
 import mist.util.Point
 import mist.util.logTag
 
-/** @author Kotcrab */
-
 class GraphTab(
   context: Context,
   private val asmFunctionIO: AsmFunctionIO,
@@ -50,7 +30,7 @@ class GraphTab(
 ) : VisualNodeTab<GraphNode>(context, closeable = true), ShlDefsChanged,
   TabProvidesMenu {
   private val tag = logTag()
-  private val layout = ExternalLayout(projectIO.getLayoutExe(), log)
+  private val layout = ExternalLayout(projectIO.getLayoutExe(), logger)
   private val remoteDebugger: RemoteDebugger = context.inject()
 
   private lateinit var graph: ShlGraph
@@ -91,8 +71,8 @@ class GraphTab(
   private fun loadFunction(ignoreSaved: Boolean = false) {
     val func = asmFunctionIO.load(ignoreSaved)
     graph = func.graph
-    dataFlowAnalysis = DataFlowAnalysis(graph, log)
-    exprMutator = ExprMutator(graph, log)
+    dataFlowAnalysis = DataFlowAnalysis(graph, logger)
+    exprMutator = ExprMutator(graph, logger)
     initNodes(centerCamera = true, reInitFlow = true, markDirty = false)
     func.layoutData?.forEachIndexed { nodeIdx, pos ->
       nodeList[nodeIdx].setPos(pos.x, pos.y)
@@ -119,7 +99,7 @@ class GraphTab(
   }
 
   override fun dispose() {
-    log.info(tag, "dispose $tag")
+    logger.info(tag, "dispose $tag")
     remoteDebugger.remoteListener(remoteDbgListener)
     super.dispose()
     asmFunctionIO.dispose()
