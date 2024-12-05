@@ -76,13 +76,7 @@ class GhidraModule(
   }
 
   override fun createModuleMemory(): ModuleMemory {
-    val memory = ModuleMemory()
-    initialMemory.forEach { (start, data) ->
-      data.forEachIndexed { index, byte ->
-        memory.writeByte(start + index, byte.toInt())
-      }
-    }
-    return memory
+    return ModuleMemory.fromData(initialMemory)
   }
 
   override fun writeMemoryToContext(ctx: Context) {

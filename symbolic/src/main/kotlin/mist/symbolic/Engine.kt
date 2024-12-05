@@ -182,7 +182,7 @@ class Engine(
     ctx.executedInstrs++
     ctx.executedAddresses.add(address)
     val instr = disassembler.disassembleInstruction(binLoader, address)
-    if (inDelaySlot && (instr.hasFlag(Jump) || instr.hasFlag(Branch))) {
+    if (inDelaySlot && instr.hasFlag(DelaySlot)) {
       error("Tried to execute jump or branch instruction in branch delay slot")
     }
 
@@ -196,82 +196,82 @@ class Engine(
 
     when (instr.opcode) {
       // Arithmetic
-      is MipsOpcode.Add, MipsOpcode.Addu, MipsOpcode.Addi, MipsOpcode.Addiu -> {
+      MipsOpcode.Add, MipsOpcode.Addu, MipsOpcode.Addi, MipsOpcode.Addiu -> {
         ctx.writeGpr(instr.op0AsReg(), Expr.Binary.of(BinaryOp.Add, instr.op1AsExpr(ctx), instr.op2AsExpr(ctx)))
       }
-      is MipsOpcode.Sub, MipsOpcode.Subu -> {
+      MipsOpcode.Sub, MipsOpcode.Subu -> {
         ctx.writeGpr(instr.op0AsReg(), Expr.Binary.of(BinaryOp.Sub, instr.op1AsExpr(ctx), instr.op2AsExpr(ctx)))
       }
 
-      is MipsOpcode.Mult -> {
+      MipsOpcode.Mult -> {
         ctx.lo = Expr.Binary.of(BinaryOp.MultLo, instr.op0AsExpr(ctx), instr.op1AsExpr(ctx))
         ctx.hi = Expr.Binary.of(BinaryOp.MultHi, instr.op0AsExpr(ctx), instr.op1AsExpr(ctx))
       }
-      is MipsOpcode.Multu -> {
+      MipsOpcode.Multu -> {
         ctx.lo = Expr.Binary.of(BinaryOp.MultuLo, instr.op0AsExpr(ctx), instr.op1AsExpr(ctx))
         ctx.hi = Expr.Binary.of(BinaryOp.MultuHi, instr.op0AsExpr(ctx), instr.op1AsExpr(ctx))
       }
-      is MipsOpcode.Div -> {
+      MipsOpcode.Div -> {
         ctx.lo = Expr.Binary.of(BinaryOp.Div, instr.op0AsExpr(ctx), instr.op1AsExpr(ctx))
         ctx.hi = Expr.Binary.of(BinaryOp.Mod, instr.op0AsExpr(ctx), instr.op1AsExpr(ctx))
       }
-      is MipsOpcode.Divu -> {
+      MipsOpcode.Divu -> {
         ctx.lo = Expr.Binary.of(BinaryOp.Divu, instr.op0AsExpr(ctx), instr.op1AsExpr(ctx))
         ctx.hi = Expr.Binary.of(BinaryOp.Modu, instr.op0AsExpr(ctx), instr.op1AsExpr(ctx))
       }
-      is MipsOpcode.Mflo -> {
+      MipsOpcode.Mflo -> {
         ctx.writeGpr(instr.op0AsReg(), ctx.lo)
       }
-      is MipsOpcode.Mfhi -> {
+      MipsOpcode.Mfhi -> {
         ctx.writeGpr(instr.op0AsReg(), ctx.hi)
       }
 
-      is MipsOpcode.Ins -> {
+      MipsOpcode.Ins -> {
         val pos = instr.op2AsImm()
         val size = instr.op3AsImm()
         ctx.writeGpr(instr.op0AsReg(), Expr.Insert.of(instr.op0AsExpr(ctx), instr.op1AsExpr(ctx), pos, size))
       }
-      is MipsOpcode.Ext -> {
+      MipsOpcode.Ext -> {
         val pos = instr.op2AsImm()
         val size = instr.op3AsImm()
         ctx.writeGpr(instr.op0AsReg(), Expr.ExtractZeroExtend.of(instr.op1AsExpr(ctx), pos + size - 1, pos))
       }
 
-      is AllegrexOpcode.Min -> {
+      AllegrexOpcode.Min -> {
         ctx.writeGpr(instr.op0AsReg(), Expr.Binary.of(BinaryOp.Min, instr.op1AsExpr(ctx), instr.op2AsExpr(ctx)))
       }
-      is AllegrexOpcode.Max -> {
+      AllegrexOpcode.Max -> {
         ctx.writeGpr(instr.op0AsReg(), Expr.Binary.of(BinaryOp.Max, instr.op1AsExpr(ctx), instr.op2AsExpr(ctx)))
       }
 
       // Logic
-      is MipsOpcode.And, MipsOpcode.Andi -> {
+      MipsOpcode.And, MipsOpcode.Andi -> {
         ctx.writeGpr(instr.op0AsReg(), Expr.Binary.of(BinaryOp.And, instr.op1AsExpr(ctx), instr.op2AsExpr(ctx)))
       }
-      is MipsOpcode.Or, MipsOpcode.Ori -> {
+      MipsOpcode.Or, MipsOpcode.Ori -> {
         ctx.writeGpr(instr.op0AsReg(), Expr.Binary.of(BinaryOp.Or, instr.op1AsExpr(ctx), instr.op2AsExpr(ctx)))
       }
-      is MipsOpcode.Xor, MipsOpcode.Xori -> {
+      MipsOpcode.Xor, MipsOpcode.Xori -> {
         ctx.writeGpr(instr.op0AsReg(), Expr.Binary.of(BinaryOp.Xor, instr.op1AsExpr(ctx), instr.op2AsExpr(ctx)))
       }
-      is MipsOpcode.Nor -> {
+      MipsOpcode.Nor -> {
         ctx.writeGpr(instr.op0AsReg(), Expr.Binary.of(BinaryOp.Nor, instr.op1AsExpr(ctx), instr.op2AsExpr(ctx)))
       }
 
       // Shifts
-      is MipsOpcode.Sll, MipsOpcode.Sllv -> {
+      MipsOpcode.Sll, MipsOpcode.Sllv -> {
         ctx.writeGpr(
           instr.op0AsReg(),
           Expr.Binary.of(BinaryOp.Sll, instr.op1AsExpr(ctx), Expr.Binary.of(BinaryOp.And, instr.op2AsExpr(ctx), Expr.Const.of(0x1f)))
         )
       }
-      is MipsOpcode.Srl, MipsOpcode.Srlv -> {
+      MipsOpcode.Srl, MipsOpcode.Srlv -> {
         ctx.writeGpr(
           instr.op0AsReg(),
           Expr.Binary.of(BinaryOp.Srl, instr.op1AsExpr(ctx), Expr.Binary.of(BinaryOp.And, instr.op2AsExpr(ctx), Expr.Const.of(0x1f)))
         )
       }
-      is MipsOpcode.Sra, MipsOpcode.Srav -> {
+      MipsOpcode.Sra, MipsOpcode.Srav -> {
         ctx.writeGpr(
           instr.op0AsReg(),
           Expr.Binary.of(BinaryOp.Sra, instr.op1AsExpr(ctx), Expr.Binary.of(BinaryOp.And, instr.op2AsExpr(ctx), Expr.Const.of(0x1f)))
@@ -279,53 +279,53 @@ class Engine(
       }
 
       // Set less than
-      is MipsOpcode.Slt, MipsOpcode.Slti -> {
+      MipsOpcode.Slt, MipsOpcode.Slti -> {
         ctx.writeGpr(instr.op0AsReg(), Expr.Binary.of(BinaryOp.Slt, instr.op1AsExpr(ctx), instr.op2AsExpr(ctx)))
       }
-      is MipsOpcode.Sltu, MipsOpcode.Sltiu -> {
+      MipsOpcode.Sltu, MipsOpcode.Sltiu -> {
         ctx.writeGpr(instr.op0AsReg(), Expr.Binary.of(BinaryOp.Sltu, instr.op1AsExpr(ctx), instr.op2AsExpr(ctx)))
       }
 
       // Sign extend
-      is MipsOpcode.Seb -> {
+      MipsOpcode.Seb -> {
         ctx.writeGpr(instr.op0AsReg(), Expr.Unary.of(UnaryOp.Seb, instr.op1AsExpr(ctx)))
       }
-      is MipsOpcode.Seh -> {
+      MipsOpcode.Seh -> {
         ctx.writeGpr(instr.op0AsReg(), Expr.Unary.of(UnaryOp.Seh, instr.op1AsExpr(ctx)))
       }
 
       // Memory loads
-      is MipsOpcode.Lb -> {
+      MipsOpcode.Lb -> {
         val at = instr.regPlusImm(ctx)
         val value = ctx.memory.readByte(at)
         ctx.trace { TraceElement.MemoryRead(address, at, 1, value) }
         ctx.writeGpr(instr.op0AsReg(), value)
       }
-      is MipsOpcode.Lbu -> {
+      MipsOpcode.Lbu -> {
         val at = instr.regPlusImm(ctx)
         val value = ctx.memory.readByteUnsigned(at)
         ctx.trace { TraceElement.MemoryRead(address, at, 1, value, unsigned = true) }
         ctx.writeGpr(instr.op0AsReg(), value)
       }
-      is MipsOpcode.Lh -> {
+      MipsOpcode.Lh -> {
         val at = instr.regPlusImm(ctx)
         val value = ctx.memory.readHalf(at)
         ctx.trace { TraceElement.MemoryRead(address, at, 2, value) }
         ctx.writeGpr(instr.op0AsReg(), value)
       }
-      is MipsOpcode.Lhu -> {
+      MipsOpcode.Lhu -> {
         val at = instr.regPlusImm(ctx)
         val value = ctx.memory.readHalfUnsigned(at)
         ctx.trace { TraceElement.MemoryRead(address, at, 2, value, unsigned = true) }
         ctx.writeGpr(instr.op0AsReg(), value)
       }
-      is MipsOpcode.Lw -> {
+      MipsOpcode.Lw -> {
         val at = instr.regPlusImm(ctx)
         val value = ctx.memory.readWord(at)
         ctx.trace { TraceElement.MemoryRead(address, at, 4, value) }
         ctx.writeGpr(instr.op0AsReg(), value)
       }
-      is MipsOpcode.Lwl -> {
+      MipsOpcode.Lwl -> {
         val at = instr.regPlusImm(ctx)
         val shift = Expr.Binary.of(BinaryOp.And, at, Expr.Const.of(0b11))
         val effectiveAt = Expr.Binary.of(BinaryOp.Sub, at, shift)
@@ -356,7 +356,7 @@ class Engine(
         }
         ctx.writeGpr(instr.op0AsReg(), Expr.Binary.of(BinaryOp.Or, prevValue, loadValue))
       }
-      is MipsOpcode.Lwr -> {
+      MipsOpcode.Lwr -> {
         val at = instr.regPlusImm(ctx)
         val shift = Expr.Binary.of(BinaryOp.And, at, Expr.Const.of(0b11))
         val effectiveAt = Expr.Binary.of(BinaryOp.Sub, at, shift)
@@ -385,25 +385,25 @@ class Engine(
       }
 
       // Memory stores
-      is MipsOpcode.Sb -> {
+      MipsOpcode.Sb -> {
         val at = instr.regPlusImm(ctx)
         val value = ctx.readGpr(instr.op0AsReg())
         ctx.trace { TraceElement.MemoryWrite(address, at, 1, value) }
         ctx.memory.writeByte(at, value)
       }
-      is MipsOpcode.Sh -> {
+      MipsOpcode.Sh -> {
         val at = instr.regPlusImm(ctx)
         val value = ctx.readGpr(instr.op0AsReg())
         ctx.trace { TraceElement.MemoryWrite(address, at, 2, value) }
         ctx.memory.writeHalf(at, value)
       }
-      is MipsOpcode.Sw -> {
+      MipsOpcode.Sw -> {
         val at = instr.regPlusImm(ctx)
         val value = ctx.readGpr(instr.op0AsReg())
         ctx.trace { TraceElement.MemoryWrite(address, at, 4, value) }
         ctx.memory.writeWord(at, value)
       }
-      is MipsOpcode.Swl -> {
+      MipsOpcode.Swl -> {
         val at = instr.regPlusImm(ctx)
         val shift = Expr.Binary.of(BinaryOp.And, at, Expr.Const.of(0b11))
         val effectiveAt = Expr.Binary.of(BinaryOp.Sub, at, shift)
@@ -434,7 +434,7 @@ class Engine(
         }
         ctx.memory.writeWord(effectiveAt, Expr.Binary.of(BinaryOp.Or, prevValue, storeValue))
       }
-      is MipsOpcode.Swr -> {
+      MipsOpcode.Swr -> {
         val at = instr.regPlusImm(ctx)
         val shift = Expr.Binary.of(BinaryOp.And, at, Expr.Const.of(0b11))
         val effectiveAt = Expr.Binary.of(BinaryOp.Sub, at, shift)
@@ -463,38 +463,38 @@ class Engine(
       }
 
       // Branches
-      is MipsOpcode.Beq, MipsOpcode.Beql -> {
+      MipsOpcode.Beq, MipsOpcode.Beql -> {
         return handleBranch(ctx, address, instr, Expr.Condition.of(ConditionOp.Eq, instr.op0AsExpr(ctx), instr.op1AsExpr(ctx)))
       }
-      is MipsOpcode.Bne, MipsOpcode.Bnel -> {
+      MipsOpcode.Bne, MipsOpcode.Bnel -> {
         return handleBranch(ctx, address, instr, Expr.Condition.of(ConditionOp.Neq, instr.op0AsExpr(ctx), instr.op1AsExpr(ctx)))
       }
-      is MipsOpcode.Bgez, MipsOpcode.Bgezl -> {
+      MipsOpcode.Bgez, MipsOpcode.Bgezl -> {
         return handleBranch(ctx, address, instr, Expr.Condition.of(ConditionOp.Ge, instr.op0AsExpr(ctx), Expr.ZERO))
       }
-      is MipsOpcode.Bgtz, MipsOpcode.Bgtzl -> {
+      MipsOpcode.Bgtz, MipsOpcode.Bgtzl -> {
         return handleBranch(ctx, address, instr, Expr.Condition.of(ConditionOp.Gt, instr.op0AsExpr(ctx), Expr.ZERO))
       }
-      is MipsOpcode.Blez, MipsOpcode.Blezl -> {
+      MipsOpcode.Blez, MipsOpcode.Blezl -> {
         return handleBranch(ctx, address, instr, Expr.Condition.of(ConditionOp.Le, instr.op0AsExpr(ctx), Expr.ZERO))
       }
-      is MipsOpcode.Bltz, MipsOpcode.Bltzl -> {
+      MipsOpcode.Bltz, MipsOpcode.Bltzl -> {
         return handleBranch(ctx, address, instr, Expr.Condition.of(ConditionOp.Lt, instr.op0AsExpr(ctx), Expr.ZERO))
       }
 
       // Jumps
-      is MipsOpcode.J -> {
+      MipsOpcode.J -> {
         handleJump(ctx, address, instr)
       }
-      is MipsOpcode.Jal -> {
+      MipsOpcode.Jal -> {
         handleJumpAndLink(ctx, address, instr)
       }
-      is MipsOpcode.Jr -> {
+      MipsOpcode.Jr -> {
         return handleJumpRegister(ctx, address, instr)
       }
 
       // Misc
-      is MipsOpcode.Movz -> {
+      MipsOpcode.Movz -> {
         ctx.writeGpr(
           instr.op0AsReg(),
           Expr.ValueIf.of(
@@ -504,7 +504,7 @@ class Engine(
           )
         )
       }
-      is MipsOpcode.Movn -> {
+      MipsOpcode.Movn -> {
         ctx.writeGpr(
           instr.op0AsReg(),
           Expr.ValueIf.of(
@@ -514,15 +514,15 @@ class Engine(
           )
         )
       }
-      is MipsOpcode.Lui -> {
+      MipsOpcode.Lui -> {
         ctx.writeGpr(instr.op0AsReg(), Expr.Const.of(instr.op1AsImm() shl 16))
       }
-      is MipsOpcode.Nop -> {
+      MipsOpcode.Nop -> {
       }
-      is MipsOpcode.Sync -> {
+      MipsOpcode.Sync -> {
         ctx.trace { TraceElement.Sync(address, instr.op0AsImm()) }
       }
-      is MipsOpcode.Break -> {
+      MipsOpcode.Break -> {
         ctx.trace { TraceElement.Break(address, instr.op0AsImm()) }
         ctx.breakRaised = true
       }

@@ -103,13 +103,13 @@ class MipsGraphTest {
   }
 
   private val basicSwitchA0Graph = graphFromAsm(size = 0x50) {
-    val postSwtich = Label()
+    val postSwitch = Label()
     val case0 = Label()
     val case1 = Label()
     val case2 = Label()
     // 0x0
     sltiu(v0, s1, 0x5) // cases count (5 total, 3 unique, 1 case is to be ignored)
-    beq(v0, zero, postSwtich)
+    beq(v0, zero, postSwitch)
     lui(v1, 0x0)
     sll(v0, s1, 0x2)
     // 0x10
@@ -121,16 +121,16 @@ class MipsGraphTest {
     nop()
     label(case0)
     addi(a0, zero, 0) // case 0
-    b(postSwtich)
+    b(postSwitch)
     nop()
     label(case1)
     // 0x30
     addi(a0, zero, 1)// case 1
-    b(postSwtich)
+    b(postSwitch)
     nop()
     label(case2)
     addi(a0, zero, 2) // case 2, 3
-    label(postSwtich)
+    label(postSwitch)
     // 0x40
     nop()
     nop()
@@ -146,14 +146,14 @@ class MipsGraphTest {
   }
 
   private val basicSwitchAtGraph = graphFromAsm(size = 0x50) {
-    val postSwtich = Label()
+    val postSwitch = Label()
     val case0 = Label()
     val case1 = Label()
     val case2 = Label()
 
     // 0x0
     slti(a1, a0, 0x5) // cases count (5 total, 3 unique, 1 case is to be ignored)
-    beq(a1, zero, postSwtich)
+    beq(a1, zero, postSwitch)
     nop()
     sll(a0, a0, 0x2)
     // 0x10
@@ -165,16 +165,16 @@ class MipsGraphTest {
     nop()
     label(case0)
     addi(a0, zero, 0) // case 0
-    b(postSwtich)
+    b(postSwitch)
     nop()
     label(case1)
     // 0x30
     addi(a0, zero, 1)// case 1
-    b(postSwtich)
+    b(postSwitch)
     nop()
     label(case2)
     addi(a0, zero, 2) // case 2, 3
-    label(postSwtich)
+    label(postSwitch)
     // 0x40
     nop()
     nop()
@@ -258,9 +258,9 @@ class MipsGraphTest {
       testBranchInSwitchGraph(basicSwitchAtGraph, GprReg.At)
     }
 
-    private fun testBranchInSwitchGraph(graph: MipsGraph, swtichReg: Reg) {
+    private fun testBranchInSwitchGraph(graph: MipsGraph, switchReg: Reg) {
       val (branchSrc, branchTargets) = graph.jumpingTo.toList()
-        .single { it.first.matchesExact(Jr, isReg(swtichReg)) }
+        .single { it.first.matchesExact(Jr, isReg(switchReg)) }
       assertThat(branchTargets.size).isEqualTo(3) // 3 unique cases
       assertThat(graph.switchSrcInstrs).hasSize(1)
       assertThat(graph.switchSrcInstrs).containsKey(branchSrc.addr)

@@ -15,6 +15,16 @@ class ModuleMemory(
     private const val CHUNK_MASK = 0xFFFFFF
 
     const val INITIAL_BUFFER_ALLOC = 0x89000000.toInt()
+
+    fun fromData(initialMemory: List<Pair<Int, ByteArray>>): ModuleMemory {
+      val memory = ModuleMemory()
+      initialMemory.forEach { (start, data) ->
+        data.forEachIndexed { index, byte ->
+          memory.writeByte(start + index, byte.toInt())
+        }
+      }
+      return memory
+    }
   }
 
   val loader: BinLoader = ModuleMemoryBinLoader(this)
