@@ -17,9 +17,9 @@ class IdiomMatcherTest {
   fun `respects max instruction offset`() {
     val matcher = IdiomMatcher<MipsInstr, Unit, Int>(
       2, {}, { _, _ -> 0x42 }, arrayOf(
-      { instr, _ -> instr.matches(Nop) },
-      { instr, _ -> instr.matches(Nop) }
-    ))
+        { instr, _ -> instr.matches(Nop) },
+        { instr, _ -> instr.matches(Nop) }
+      ))
     val instr = listOf(
       MipsInstr(0x0, Nop),
       MipsInstr(0x0, Addiu),
@@ -44,15 +44,15 @@ class IdiomMatcherTest {
     var matchedResultCalled = false
     val matcher = IdiomMatcher<MipsInstr, Int, Int>(
       3, { 0xFF }, { relInstrs, state ->
-      matchedResultCalled = true
-      assertThat(state).isEqualTo(0xFF)
-      assertThat(relInstrs[0].addr).isEqualTo(8)
-      assertThat(relInstrs[1].addr).isEqualTo(0)
-      0x42
-    }, arrayOf(
-      { instr, _ -> instr.matches(Nop) },
-      { instr, _ -> instr.matches(Nop) }
-    ))
+        matchedResultCalled = true
+        assertThat(state).isEqualTo(0xFF)
+        assertThat(relInstrs[0].addr).isEqualTo(8)
+        assertThat(relInstrs[1].addr).isEqualTo(0)
+        0x42
+      }, arrayOf(
+        { instr, _ -> instr.matches(Nop) },
+        { instr, _ -> instr.matches(Nop) }
+      ))
     val instr = listOf(
       MipsInstr(0x0, Nop),
       MipsInstr(0x4, Addiu),

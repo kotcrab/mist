@@ -3,10 +3,7 @@ package mist.asm.mips.allegrex
 import kio.util.execute
 import kio.util.nullStreamHandler
 import kio.util.toHex
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.newFixedThreadPoolContext
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import mist.asm.*
 import mist.asm.mips.GprReg
 import mist.asm.mips.MipsInstr
@@ -27,6 +24,7 @@ fun main(args: Array<String>) {
  * on disk, because it's very large (>120 GB) it can't be provided. This test is expected only to be used in development
  * to discover missing and incorrect instructions and then add standard unit tests based on the results.
  */
+@OptIn(DelicateCoroutinesApi::class)
 private class AllegrexInstructionSpaceTest(val sevenZipExe: File, val instrDataArchive: File, val tmpDir: File) {
   private val disasm = AllegrexDisassembler(strict = false)
   private val def = FunctionDef("Test", 0x8804000, 4)
