@@ -2,5 +2,6 @@ rootProject.name = "mist"
 include 'asm'
 include 'core'
 include 'decompiler'
+include 'ghidra-client'
 include 'symbolic'
 include 'ui-gdx'
