@@ -107,7 +107,6 @@ class ModuleTypes(
       }
     }
     return FunctionArgs.Known(args)
-
   }
 
   fun addFunctionReturnSizeOverride(name: String, returnSize: Int) {
