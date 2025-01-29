@@ -79,6 +79,15 @@ project(':ghidra-client') {
   }
 }
 
+project(':recompiler') {
+  dependencies {
+    api project(":core")
+    api project(":asm")
+    api project(":ghidra-client")
+    api project(":symbolic") // For ModuleMemory
+  }
+}
+
 project(':symbolic') {
   dependencies {
     api project(":core")
