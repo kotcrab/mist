@@ -544,12 +544,12 @@ if (branchCond) {
       MipsOpcode.FpuNegS -> "${instr.op0AsCode()} = -${instr.op1AsCode()};"
       MipsOpcode.FpuAbsS -> "${instr.op0AsCode()} = fabsf(${instr.op1AsCode()});"
       MipsOpcode.FpuSqrtS -> "${instr.op0AsCode()} = sqrtf(${instr.op1AsCode()});"
-      MipsOpcode.FpuCvtSW -> "${instr.op0AsCode()} = (float)((s32)${instr.op1AsCode()});"
-      MipsOpcode.FpuCvtWS -> "${instr.op0AsCode()} = (s32)roundf(${instr.op1AsCode()});" // ignoring rounding modes for now
-      MipsOpcode.FpuRoundWS -> "${instr.op0AsCode()} = (s32)roundf(${instr.op1AsCode()});"
-      MipsOpcode.FpuTruncWS -> "${instr.op0AsCode()} = (s32)${instr.op1AsCode()};"
-      MipsOpcode.FpuCeilWS -> "${instr.op0AsCode()} = (s32)ceilf(${instr.op1AsCode()});"
-      MipsOpcode.FpuFloorWS -> "${instr.op0AsCode()} = (s32)floorf(${instr.op1AsCode()});"
+      MipsOpcode.FpuCvtSW -> "${instr.op0AsCode()} = (float)(*(s32*)&${instr.op1AsCode()});"
+      MipsOpcode.FpuCvtWS -> "*(s32*)(&${instr.op0AsCode()}) = (s32)roundf(${instr.op1AsCode()});" // ignoring rounding modes for now
+      MipsOpcode.FpuRoundWS -> "*(s32*)(&${instr.op0AsCode()}) = (s32)roundf(${instr.op1AsCode()});"
+      MipsOpcode.FpuTruncWS -> "*(s32*)(&${instr.op0AsCode()}) = (s32)${instr.op1AsCode()};"
+      MipsOpcode.FpuCeilWS -> "*(s32*)(&${instr.op0AsCode()}) = (s32)ceilf(${instr.op1AsCode()});"
+      MipsOpcode.FpuFloorWS -> "*(s32*)(&${instr.op0AsCode()}) = (s32)floorf(${instr.op1AsCode()});"
       MipsOpcode.FpuCEqS -> "$CTX_FCOND = ${instr.op0AsCode()} == ${instr.op1AsCode()};"
       MipsOpcode.FpuCLeS -> "$CTX_FCOND = ${instr.op0AsCode()} <= ${instr.op1AsCode()};"
       MipsOpcode.FpuCLtS -> "$CTX_FCOND = ${instr.op0AsCode()} < ${instr.op1AsCode()};"
