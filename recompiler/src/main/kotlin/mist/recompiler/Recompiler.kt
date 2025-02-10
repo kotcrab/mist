@@ -786,6 +786,9 @@ private data class ReimplementationResult(val type: GhidraType) {
     if (type.kind == GhidraType.Kind.POINTER) {
       return "${GprReg.V0.asCode()} = mem->GetAddress(result);"
     }
+    if (type.pathName == "/float") {
+      return "${FpuReg.F0.asCode()} = result;"
+    }
     return when (type.length) {
       0 -> ""
       4 -> "${GprReg.V0.asCode()} = (u32)result;"
