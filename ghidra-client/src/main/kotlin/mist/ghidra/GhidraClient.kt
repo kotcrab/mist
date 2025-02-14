@@ -34,10 +34,14 @@ class GhidraClient(
   }
 
   fun getMemory(address: Long, length: Int): ByteArray {
+    return getMemory(address.toWHex(), length)
+  }
+
+  fun getMemory(address: String, length: Int): ByteArray {
     val response = httpGet {
       url("$baseUrl/v1/memory")
       param {
-        "address" to address.toWHex()
+        "address" to address
         "length" to length
       }
     }
@@ -60,6 +64,14 @@ class GhidraClient(
     }
     check(response.code() == 200)
     return objectMapper.readValue<GhidraSymbols>(response.asStringOrThrow()).symbols
+  }
+
+  fun getRelocations(): List<GhidraRelocation> {
+    val response = httpGet {
+      url("$baseUrl/v1/relocations")
+    }
+    check(response.code() == 200)
+    return objectMapper.readValue<GhidraRelocations>(response.asStringOrThrow()).relocations
   }
 
   fun getTypes(): List<GhidraType> {
