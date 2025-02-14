@@ -466,6 +466,11 @@ if (branchCond) {
 }"""
     }
 
+    fun recompileDivision(cast: TypeCast? = null): String {
+      return "$CTX_LO = (${instr.op1AsCode(cast)} != 0 ? ${instr.op0AsCode(cast)} / ${instr.op1AsCode(cast)} : 0x77777777);\n" +
+        "$CTX_HI = (${instr.op1AsCode(cast)} != 0 ? ${instr.op0AsCode(cast)} % ${instr.op1AsCode(cast)} : 0x77777777);"
+    }
+
     // Unsupported instructions: sync, ll, sc, syscall, bitrev, rotr, rotrv, eret, bitrev, wsbh, wsbw, mtc0, mfc0, cfc1, ctc1,
     // bltzal, bltzall, bgezal, bgezall, many of FPU compares, VFPU
     return when (instr.opcode) {
@@ -475,10 +480,8 @@ if (branchCond) {
 
       MipsOpcode.Mult -> "temp64 = ${instr.op0AsCode(S64)} * ${instr.op1AsCode(S64)};\n$TEMP64_TO_LO_HI"
       MipsOpcode.Multu -> "temp64 = ${instr.op0AsCode(U64)} * ${instr.op1AsCode(U64)};\n$TEMP64_TO_LO_HI"
-      MipsOpcode.Div -> "$CTX_LO = ${instr.op0AsCode(S32)} / ${instr.op1AsCode(S32)};\n" +
-        "$CTX_HI = ${instr.op0AsCode(S32)} % ${instr.op1AsCode(S32)};"
-      MipsOpcode.Divu -> "$CTX_LO = ${instr.op0AsCode()} / ${instr.op1AsCode()};\n" +
-        "$CTX_HI = ${instr.op0AsCode()} % ${instr.op1AsCode()};"
+      MipsOpcode.Div -> recompileDivision(S32)
+      MipsOpcode.Divu -> recompileDivision()
       MipsOpcode.Mflo -> "${instr.op0AsCode()} = $CTX_LO;"
       MipsOpcode.Mfhi -> "${instr.op0AsCode()} = $CTX_HI;"
       MipsOpcode.Mtlo -> "$CTX_LO = ${instr.op0AsCode()};"
